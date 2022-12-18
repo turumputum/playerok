@@ -1,0 +1,18 @@
+[Unit]
+Description=Test Service
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+Environment=DISPLAY=:0
+User=root
+Type=simple
+WorkingDirectory = /home/playerok/workSol_1/supervisor/
+ExecStart=sudo node /home/playerok/workSol_1/supervisor/usb_storage.js
+StandardError=append:/home/playerok/workSol_1/logs/supervisor.log
+StandardInput=tty-force
+StandardError=syslog
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

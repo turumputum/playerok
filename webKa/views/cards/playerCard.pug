@@ -1,0 +1,127 @@
+
+card.card.card_shadow.h-100
+    .bg-secondary.card-img-top
+        .row.mt-1
+            .col-4
+                .h5.d-flex.justify-content-end Current Task
+            .col
+                .b#playlist_name_title none
+    .card-body 
+        .container 
+            .row
+                .col
+                    .row
+                        .col-4.d-flex.justify-content-end
+                            h5 status
+                        .col
+                            .b#card_player_status_title stop
+
+                    .row
+                        .col-4.d-flex.justify-content-end
+                            h5 on/off time
+                        .col
+                            .b#time_vals --:--/--:--
+                    .hr
+                        .btn-group(role='group' aria-label='Basic example')
+                            button#bt_play.btn.btn-outline-secondary(type='button') 
+                                span.bi.bi-play-btn
+                                    b#bt_play_title.m-2 Play
+                            button#bt_stop.btn.btn-outline-secondary(type='button') 
+                                span.bi.bi-stop-fill
+                                    b.m-2 Stop
+                            button#bt_prev.btn.btn-outline-secondary(type='button') 
+                                span.bi.bi-caret-left-fill
+                                    b.m-2 Prev
+                            button#bt_next.btn.btn-outline-secondary(type='button') 
+                                span.bi.bi-caret-right-fill
+                                    b.m-2 Next
+                            button#bt_restart.btn.btn-outline-secondary(type='button') 
+                                span.bi.bi-arrow-repeat
+                                    b.m-2 Restart
+                //.col.ms-auto(style='width:10%')
+                .col.col-2 
+                    //label.form-label(for='customRange1') Example range
+                    .row
+                        .col
+                            .bi.bi-volume-up(style='transform: translate(40px, 45px) scale(150%);')
+                        .col
+                            input#volumeRange.form-range(type='range' style='transform: translate(20px, 20px) rotate(270deg); width: 110px;')
+
+    script.
+        let config = !{JSON.stringify(config)}
+        
+        let brokerAddress = `ws://${config.net.IP.replace(' ','')}:1890/mqtt`
+        //console.log(brokerAddress)
+        client = mqtt.connect(brokerAddress)
+
+        //----------------MQTT------------------------------
+        client.on('connect', function () {
+        //console.log("mqtt brocker connected!");
+        
+        client.subscribe('player/state')
+        client.subscribe('player/volume_val')
+        client.subscribe('scheduler/current_playlist')
+        client.subscribe('scheduler/on_off_time')
+        })
+
+        client.on('message', function (topic, message) {
+            // message is Buffer
+            //console.log(topic + ':'+message.toString())
+            if(topic=='player/state'){
+            $('#card_player_status_title').text(message.toString())
+
+            if(message.toString().split(' ').slice(0,1)=='Playing'){
+                $('#bt_play_title').text('Pause')
+            }else if(message.toString().split(' ').slice(0,1)=='Pause'){
+                $('#bt_play_title').text(' Play ')
+            }
+            }
+            if(topic=='player/volume_val'){
+            console.log("mqtt set volume val")
+            $('#volumeRange').val(parseInt(message))
+            }
+            if(topic=='scheduler/current_playlist'){
+            //console.log('set playlist name')
+            $('#playlist_name_title').text(message)
+            }
+            if(topic=='scheduler/on_off_time'){
+            //console.log('set time vals')
+            $('#time_vals').text(message)
+            }
+
+        })
+
+        $('#volumeRange').on("mouseup", function(){
+        client.publish('player/volume_val', $('#volumeRange').val(),{ retain: true })
+        })
+
+        $('#bt_play').on('click', function(){
+        if($('#bt_play_title').text()=='Pause'){
+            client.publish('player/play_pause', '1')
+        }else{
+            client.publish('player/play_pause', '0')
+        }
+        })
+
+        $('#bt_stop').on('click', function(){
+            client.publish('player/stop', '1')
+        })
+
+        $('#bt_prev').on('click', function(){
+        client.publish('player/prev', '1')
+        })
+        $('#bt_next').on('click', function(){
+        //console.log('pressed next button')
+        client.publish('player/next', '1')
+        })
+        $('#bt_restart').on('click', function(){
+        //console.log('pressed next button')
+        client.publish('scheduler/restart', '1')
+        })
+
+        $( document ).ready(function() {
+            //console.log( "ready!" );
+        }); 
+
+        
+

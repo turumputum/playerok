@@ -1,0 +1,92 @@
+{
+  "playlist_name": "interactive_playlist",
+  "version": "1.0",
+  "next_topic": "",
+  "prev_topic": "",
+  "play_pause_topic": "",
+  "stop_topic": "",
+  "state_topic": "",
+  "volume_val_topic": "",
+  "volume_up_topic": "",
+  "volume_down_topic": "",
+  "tracks": [
+    {
+      "order_num": 1,
+      "name": "track_1",
+      "path": "data/content/track_1.mp3",
+      "content_group": "sound",
+      "type": "interactive",
+      "error": "",
+      "loop": false,
+      "triger_on": "button_module_1/button_1  :  1",
+      "triger_off": "  :  ",
+      "pub_on_start": "button_module_1/led_1   :  1",
+      "pub_on_end": "button_module_1/led_1  :  0"
+    },
+    {
+      "order_num": 2,
+      "name": "track_2",
+      "path": "data/content/track_2.mp3",
+      "content_group": "sound",
+      "type": "interactive",
+      "error": "",
+      "loop": false,
+      "triger_on": "button_module_1/button_2 : 1",
+      "triger_off": " : ",
+      "pub_on_start": "button_module_1/led_2  : 1",
+      "pub_on_end": "button_module_1/led_2 : 0"
+    },
+    {
+      "order_num": 3,
+      "name": "track_3",
+      "path": "data/content/track_3.mp3",
+      "content_group": "sound",
+      "type": "interactive",
+      "error": "",
+      "loop": false,
+      "triger_on": "button_module_1/button_3 : 1",
+      "triger_off": " : ",
+      "pub_on_start": "button_module_1/led_3 : 1",
+      "pub_on_end": "button_module_1/led_3 : 0"
+    },
+    {
+      "order_num": 4,
+      "name": "track_4",
+      "path": "data/content/track_4.mp3",
+      "content_group": "sound",
+      "type": "interactive",
+      "error": "",
+      "loop": false,
+      "triger_on": "button_module_1/button_4 : 1",
+      "triger_off": " : ",
+      "pub_on_start": "button_module_1/led_4 : 1",
+      "pub_on_end": "button_module_1/led_4 : 0"
+    },
+    {
+      "order_num": 5,
+      "name": "track_5",
+      "path": "data/content/track_5.mp3",
+      "content_group": "sound",
+      "type": "interactive",
+      "error": "",
+      "loop": false,
+      "triger_on": "button_module_1/button_5 : 1",
+      "triger_off": " : ",
+      "pub_on_start": "button_module_1/led_5 : 1",
+      "pub_on_end": "button_module_1/led_5 : 0"
+    },
+    {
+      "order_num": 6,
+      "name": "track_6",
+      "path": "data/content/track_6.mp3",
+      "content_group": "sound",
+      "type": "interactive",
+      "error": "",
+      "loop": false,
+      "triger_on": "button_module_1/button_6 : 1",
+      "triger_off": " : ",
+      "pub_on_start": "button_module_1/led_6 : 1",
+      "pub_on_end": "button_module_1/led_6 : 0"
+    }
+  ]
+}

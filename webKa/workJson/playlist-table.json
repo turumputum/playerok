@@ -1,0 +1,14 @@
+[
+
+{
+          "name": "playlist_1.json", // отображаемое имя
+    	  "path": "/data/playlist_1.json", // путь к файлу
+          "type": "multimedia", // тип задачи: multimedia – аудио и видео файлы utility – фоновые приложения
+},
+{
+          "name": "playlist_2.json", // отображаемое имя
+    	  "path": "/data/playlist_2.json", // путь к файлу
+          "type": "multimedia", // тип задачи: multimedia – аудио и видео файлы utility – фоновые приложения
+}
+
+]

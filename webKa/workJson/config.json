@@ -1,0 +1,35 @@
+{ 
+ "net": {
+"DHCP": "1", 
+"IP": "192.168.0.11"  
+"net_mask": "255.255.255.0",
+"gateway": "192.168.0.1",    
+"DNS": "192.168.0.1"  
+"mDNS_name": "playerok_<<mac>>" 
+},
+"time": {
+ "NTP": "1"    
+ "time_zone": "+3"    // UTC 
+},
+"security": {
+ "admin_pass": "1234" ,
+ "SFTP": "1" ,
+ "SSH": "1" ,
+ "ext_MQTT": "1" , //внешние MQTT подключения
+ "MQTT_login": "1" , 
+"MQTT_pass": "1"
+},
+"intractivity": {
+  "UART_to_MQTT": "1" ,
+},
+"sound": {
+  "volume": "80" ,
+},
+"screen": {
+  "rotation": "0" , // 0,90,180,270 градусов
+},
+"boot": {
+  "net_info_on_start": "1" , // показать сетевые параметры при запуске
+  "logo_path": "data/logo.jpeg" , 
+},
+}

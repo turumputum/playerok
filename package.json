@@ -1,0 +1,7 @@
+{
+  "dependencies": {
+    "log-timestamp": "^0.3.0",
+    "mqtt": "^4.3.7",
+    "node-watch": "^0.7.3"
+  }
+}

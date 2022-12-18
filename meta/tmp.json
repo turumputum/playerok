@@ -1,0 +1,91 @@
+[
+    {
+        "name": "playlist_1.json",
+        "path": "/data/playlist/playlist_1.json",
+        "type": "multimedia",
+        "start_time": "10:02",
+        "end_time": "12:00",
+        "day_of_week": "2,3,4,5,6,7"
+    },
+    {
+        "name": "playlist_2.json",
+        "path": "/data/playlist/playlist_2.json",
+        "type": "multimedia",
+        "start_time": "13:00",
+        "end_time": "20:00",
+        "day_of_week": "1,2,4,5"
+    },
+    {
+        "name": "script_1.py",
+        "path": "/data/utility/script_1.py",
+        "type": "utility",
+        "start_time": "00:00",
+        "end_time": "00:00",
+        "day_of_week": "1,2,3,4,5"
+    }
+]
+
+        //card.card.card_shadow.h-100.mt-4
+        .card-img-top(style='background-color: rgb(177, 220, 226);')
+        //ul.my-2.list-group
+            //li.list-group-item
+        .row.px-2
+            .col
+                nav.mt-2(aria-label='breadcrumb' class="d-flex justify-content-start") 
+                    - var block = "../"   
+                    - var tmpPath = ''
+                    each dir, index in dirs ? dirs : []
+                        if (dir != '')
+                            - tmpPath = block.repeat(dirs.length - 2 - index)
+                            a(class="breadcrumb"  href=tmpPath)  #{dir}/ 
+            
+            .col-1.d-flex.justify-content-center.align-items-center
+                .dropdown
+                    button.btn.btn-secondary.dropdown-toggle(type='button' data-bs-toggle='dropdown' aria-expanded='false') 
+                        | Tools
+                    ul.dropdown-menu
+                        li
+                            a.dropdown-item(href='#') Upload
+                        li
+                            a.dropdown-item(href='#') Remove selected
+                        li
+                            a.dropdown-item(href='#') Download selected
+                        li
+                            a.dropdown-item(href='#') Make directory
+            //.col.d-flex.justify-content-end
+                    button.m-1.btn.btn-secondary(type='button') new dir
+                    button.m-1.btn.btn-secondary(type='button') upload
+                    button.m-1.btn.btn-secondary(type='button') download
+                    button.m-1.btn.btn-secondary(type='button') remove
+                    button.m-1.btn.btn-secondary(type='button') rename
+    .card_body.p-2
+        ul.list-group
+            each file in files ? files : []
+                li.list-group-item
+                    label.stretched-invisible-label(for='check  index')
+                        .form-check
+                            input.form-check-input.multi-select(type='checkbox' data-select='{{name}}' data-select-size='{{size}}' id='check{{@index}}')
+                            span.form-check-label.d-flex.align-items-start.justify-content-between
+                                a(href='./' + file.name + '/' class="name" ) 
+                                    if file.isdirectory
+                                        i.me-1.bi.bi-folder
+                                    | #{file.name}
+                                ol.align-bottom
+                                    button.btn.btn-sm(type="button" data-bs-toggle="tooltip" data-bs-title="rename" onclick = `show_modal_rename( ${JSON.stringify(file.name)} )` )
+                                        i#rename-icon.mx-1.bi.bi-input-cursor-text
+                                    button.btn.btn-sm(type="button" data-bs-toggle="tooltip" data-bs-title="download" onclick = `download( ${JSON.stringify(file.name)} )` )
+                                        i#rename-icon.mx-1.bi.bi-download
+                                    button.btn.btn-sm(type="button" data-bs-toggle="tooltip" data-bs-title="download" onclick = `download( ${JSON.stringify(file.name)} )` )
+                                        i#rename-icon.mx-1.bi.bi-download
+                                    if file.issmallimage
+                                        span.badge.rounded-pill.picIcon pic
+                                    if file.isdirectory
+                                        span.badge.rounded-pill.dirIcon dir
+                                    span.badge.rounded-pill.dopIcon #{(file.size/(1024*1024)).toFixed(1)} MB
+
+                            //span.badge.rounded-pill.bg-secondary.badge-alignment #{file.size}
+                            
+                            //img.mt-1(src='./' + file.name, style='max-height: 6em; max-width: 100%;')
+            else 
+                li.list-group-item
+                    a(href='../') ...

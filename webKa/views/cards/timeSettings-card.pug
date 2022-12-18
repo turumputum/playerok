@@ -1,0 +1,142 @@
+card.card(style='width: 20rem;')
+    .card-body
+        h5.card-title Time settings
+        p.card-text
+    ul.list-group.list-group-flush
+        li.list-group-item 
+            .row.mb-2
+                .col
+                    span.input-group-text(style='width:8em;') NTP service
+                .col(style='transform: translate(-15px, 2px);')
+                    //input(type='checkbox' data-toggle='switchbutton' checked='off' data-onlabel='On' data-offlabel='Off')                       
+                    input#ntp_Enable_toggle(type='checkbox'  data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off' ) 
+            .row.mb-2
+                .input-group
+                    label.input-group-text(for='inputGroupSelect01' style='width:8em;') Timezone
+                    select#inputGroup_timezone.form-select
+                        option(value='-12') UTC -12:00
+                        option(value='-11') UTC -11:00
+                        option(value='-10') UTC -10:00
+                        option(value='-9') UTC -09:00
+                        option(value='-8') UTC -08:00
+                        option(value='-7') UTC -07:00
+                        option(value='-6') UTC -06:00
+                        option(value='-5') UTC -05:00
+                        option(value='-4') UTC -04:00
+                        option(value='-3') UTC -03:00
+                        option(value='-2') UTC -02:00
+                        option(value='-1') UTC -01:00
+                        option(selected='') UTC 00:00
+                        option(value='1') UTC +01:00
+                        option(value='2') UTC +02:00
+                        option(value='3') UTC +03:00
+                        option(value='4') UTC +04:00
+                        option(value='5') UTC +05:00
+                        option(value='6') UTC +06:00
+                        option(value='7') UTC +07:00
+                        option(value='8') UTC +08:00
+                        option(value='9') UTC +09:00
+                        option(value='10') UTC +10:00
+                        option(value='11') UTC +11:00
+                        option(value='12') UTC +12:00
+
+            .row.mb-2
+                .input-group
+                    span.input-group-text(style='width:8em;') Set time 
+                    input#e_time_new.form-control(type='time' disabled placeholder='' aria-label='')
+            
+            .row.mb-2
+                .input-group
+                    span.input-group-text(style='width:8em;') Set date 
+                    input#e_date_new.form-control(type='date' placeholder='' aria-label='')
+
+    .card-body
+        button.btn.btn-outline-secondary(type='button' onclick='save_time_settings()') Save
+
+script.
+    function pad(
+        a, // the number to convert 
+        b // number of resulting characters
+        ){
+        return (
+            1e15 + a + // combine with large number
+            "" // convert to string
+        ).slice(-b) // cut leading "1"
+    }
+    
+    $( document ).ready(function() {
+        console.log("document redy")
+
+        if(config.time.NTP==1){
+            $('#ntp_Enable_toggle').bootstrapToggle('on')
+        }else{
+            $('#ntp_Enable_toggle').bootstrapToggle('off')
+        }
+        $('#inputGroup_timezone').val(config.time.time_zone)
+        
+        fetch(`/get_time`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            }).then((res) => res.json()
+            ).then((dat) => {
+                //console.log("GET time, res: "+ pad(dat.h,2)+":"+pad(dat.m,2))
+                $('#e_time_new').val(`${pad(dat.h,2)}:${pad(dat.m,2)}`)
+            })
+
+        fetch(`/get_date`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            }).then((res) => res.json()
+            ).then((dat) => {
+            //console.log("GET time, res: "+ dat.h+":"+dat.m) 
+                $('#e_date_new').val(`${pad(dat.y,4)}-${pad(dat.m,2)}-${pad(dat.d,2)}`)
+            })
+            
+    });
+
+    $('#ntp_Enable_toggle').on("change",function() {
+        if($('#ntp_Enable_toggle').prop('checked') == true){
+            //console.log(`${$('#DHCP_Enable_toggle').prop('checked')}`)
+            $('#inputGroup_timezone').prop('disabled', false)
+            $('#e_time_new').prop('disabled', true)
+            $('#e_date_new').prop('disabled', true)
+        }else if($('#ntp_Enable_toggle').prop('checked') == false){
+            $('#inputGroup_timezone').prop('disabled', true)
+            $('#e_time_new').prop('disabled', false)
+            $('#e_date_new').prop('disabled', false)
+        }
+    })
+
+    function save_time_settings(){
+        if($('#ntp_Enable_toggle').prop('checked') == true){
+            config.time.NTP = +$('#ntp_Enable_toggle').prop('checked')
+            config.time.time_zone = $('#inputGroup_timezone').val()
+            fetch_save_config()
+        }else if($('#ntp_Enable_toggle').prop('checked') == false){
+            fetch('/set_time', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify({
+                    "time": $('#e_time_new').val(),
+                    "date": $('#e_date_new').val()
+                })
+            }).then((res) => {
+                console.log("POST time OK, res: ", res)
+                //window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+            })
+        }
+    }
+
+    
+

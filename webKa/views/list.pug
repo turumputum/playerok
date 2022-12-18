@@ -1,0 +1,423 @@
+
+extends layout.pug
+
+mixin table-row(file_name, file_type, file_size)
+    tr  
+        td(data-label="#")
+            input.form-check-input.multi-select(type='checkbox' data-select='{{name}}' data-select-size='{{size}}' id='check{{@index}}' disabled)
+        td(data-label="type")
+            case file_type
+                when 'dir'
+                    i.bi.bi-folder.d-flex.justify-content-center.mt-2
+                when 'pic'
+                    i.bi.bi-image.d-flex.justify-content-center.mt-2
+                when 'video'
+                    i.bi.bi-file-earmark-play.d-flex.justify-content-center.mt-2
+                when 'sound'
+                    i.bi.bi-file-earmark-music.d-flex.justify-content-center.mt-2
+                when 'script'
+                    i.bi.bi-filetype-py.d-flex.justify-content-center.mt-2
+                when 'json'
+                    i.bi.bi-filetype-json.d-flex.justify-content-center.mt-2
+                
+        td(data-label="Name")
+            a(href='./' + file_name + '/' )
+                | #{file_name}
+        td(data-label="size")
+            - var tSize = (file_size/(1024*1024)).toFixed(1)
+            | #{tSize} MB
+        td(data-label="controls")
+            .dropdown
+                button.btn.btn-sm.btn-light.dropdown-toggle(type='button' data-bs-toggle='dropdown' aria-expanded='false')
+                    i.mx-1.bi.bi-three-dots
+                ul.dropdown-menu
+                    li
+                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' d-name=file_name) Move
+                    li
+                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#renameModal' d-name=file_name ) Rename
+                        //onclick=`open_rename_modal( '${file_name}' )`
+                    li
+                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#deleteModal' d-name=file_name )  Delete
+                    li
+                        - tmpPath = '#{path}'+'#{file_name}'
+                        a.dropdown-item(href=file_name download=file_name) Download
+
+
+block content
+    
+    div(style='padding-top: 56px;').container-xxl
+        card.card.card_shadow.h-100.mt-4
+            .card-img-top(style='background-color: rgb(177, 220, 226);')
+                .row.px-2
+                    .col
+                        nav.mt-2(aria-label='breadcrumb' class="d-flex justify-content-start") 
+                            - var block = "../"   
+                            - var tmpPath = ''
+                            each dir, index in dirs ? dirs : []
+                                if (dir != '')
+                                    - tmpPath = block.repeat(dirs.length - 2 - index)
+                                    a(class="breadcrumb"  href=tmpPath)  #{dir}/
+                    .col-1.d-flex.justify-content-center.align-items-center
+                        .dropdown
+                            button.btn.btn-secondary.dropdown-toggle(type='button' data-bs-toggle='dropdown' aria-expanded='false') 
+                                | Tools
+                            ul.dropdown-menu
+                                li
+                                    a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#uploadModal' ) Upload
+                                li
+                                    a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#mkdirModal' ) Make directory
+                                //li
+                                    //a.dropdown-item(href='#' disabled) Remove selected
+                                //li
+                                    //a.dropdown-item(href='#' disabled) Download selected
+                                
+
+            .card_body.p-2
+                table.table.table-hover
+                    thead
+                        tr
+                            th(scope='col' style="width: 20px;") #
+                            th(scope='col' style="width: 40px;") Type
+                            th(scope='col') Name
+                            th(scope='col' style="width: 10%;") Size
+                            th(scope='col' style="width: 5%;") Controls
+                    tbody
+                        each file in files ? files : []
+                            +table-row(file.name, file.type, file.size)
+            
+                           
+                        
+        
+        
+        
+
+        //include toolbar.pug
+    form(action='@upload' method='post' enctype='multipart/form-data' acceptcharset="utf-8" )
+        #uploadModal.modal.fade(aria-hidden='true' aria-labelledby='uploadModalLabel' tabindex='-1')
+            .modal-dialog.modal-dialog-centered
+                .modal-content
+                    .modal-header.bg-light
+                        h5.modal-title Upload a file
+                        button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                    .modal-body
+                        input(type='hidden' name='hidenName' value='0')
+                        input#upload_file.form-control(type='file' name='file')
+                    .modal-footer.bg-light
+                        button#conf_btn.btn.btn-secondary( onclick = 'fetch_upload()') Confirm
+                        button.btn.btn-secondary(type='reset' data-bs-dismiss='modal') Cancel
+                        //button.btn.btn-primary(type='submit') Upload
+
+    #moveModal.modal.fade(aria-hidden='true' aria-labelledby='moveModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header
+                    .hstack 
+                        h4 Move:  &nbsp
+                        h4.m_file-name(style='color: rgb(106, 143, 148)')
+                .modal-body
+                    h5 Select folder
+                    #tree
+                .modal-footer
+                    button#confirm_btn.btn.btn-secondary(data-bs-dismiss="modal" disabled="true" onclick = 'fetch_move()') Confirm
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+   
+    #renameModal.modal.fade(aria-hidden='true' aria-labelledby='renameModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header
+                    .hstack 
+                        h4 Rename:&nbsp 
+                        h4.old-name
+                .modal-body
+                    .input-group
+                        span.input-group-text New name
+                        input.new_name.form-control(type="text" )
+                .modal-footer
+                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_rename()') Confirm
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+
+    #mkdirModal.modal.fade(aria-hidden='true' aria-labelledby='mkdirModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header
+                    .hstack 
+                        h4 Make folder
+                .modal-body
+                    .input-group
+                        span.input-group-text Folder name
+                        input#mkdir_name.form-control(type="text" )
+                .modal-footer
+                    button#mkdir_confirm.btn.btn-secondary(data-bs-dismiss="modal" disabled="true" onclick = 'fetch_mkdir()') Confirm
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+
+    #deleteModal.modal.fade(aria-hidden='true' aria-labelledby='deleteModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header
+                    .hstack 
+                        h4 Confirm delete:  &nbsp
+                        h4.file-name(style='color: rgb(106, 143, 148)')
+                .modal-footer
+                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_delete()') Ok
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+    
+    
+    script.
+        const tooltipTriggerList = document.querySelectorAll('[data-bs-toggle="tooltip"]')
+        const tooltipList = [...tooltipTriggerList].map(tooltipTriggerEl => new bootstrap.Tooltip(tooltipTriggerEl))
+
+
+
+       
+        let $select = $(".multi-select")
+        //disabled="true"
+        //- $select.on("change", (e, files) => {
+        //-     $('#conf_btn').attr('disabled')
+        //-     console.log("set disable on start")
+        //- })
+
+        //-----------------------UPLOAD--------------------
+        $("#upload_file").on("change", (e, files) => {
+            //$(".multi-files-value").val(JSON.stringify(files.map((f) => f.name)));
+            let input = $("#upload_file").val()
+            console.log("upload file name lenght:" + input.length)
+            if(input.length > 0){
+                $('#upload_btn').attr('disabled',  false)
+            } else {
+                $('#upload_btn').attr('disabled',  true)
+            }
+        })
+
+        //const formElement = $("form[action='@upload']");
+        const $file = $("#upload-file");
+
+
+        function fetch_upload(){
+            var upload_mw = document.getElementById('uploadModal')
+            //var file_input_g = upload_mw.querySelector('#upload_file')
+            var file_input_g = document.getElementById('upload_file')
+            //var form_up = document.getElementById("form[action='@upload']")
+            var formData = new FormData()
+            
+            console.log("ttt: " + file_input_g.files[0].name)
+
+            //$('#hidenName').val('1')
+
+            //formData.append('file', file_input_g.files[0], file_input_g.files[0].name)
+            formData.append('file',file_input_g.files[0])
+            //formData.append('fileName', 'govnishe')
+            //console.log("Upload file : " + file_input_g.files[0].name)
+            //console.log("Upload file : " + formData.fileName)
+            for (var p of formData) {
+                console.log(p);
+            }
+
+            fetch('@upload', {
+                method: 'POST',
+                //- headers: {
+                //- //- 'Accept': 'application/json',
+                //-     'Content-Type': 'multipart/form-data',
+                //-     //- 'Accept-Charset': 'utf-8',
+                //-     //- 'boundary': '—-WebKitFormBoundaryfgtsKTYLsT7PNUVD'
+                //- },
+                body: formData
+            }).then((res) => {
+                console.log("upload POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+        //-----------------------MAKE DIR--------------------
+        $("#mkdir_name").on("change", (e, files) => {
+            //$(".multi-files-value").val(JSON.stringify(files.map((f) => f.name)));
+            let input = $("#mkdir_name").val()
+            console.log("input lenght:" + input.length)
+            if(input.length > 0){
+                $('#mkdir_confirm').attr('disabled',  false)
+            } else {
+                $('#mkdir_confirm').attr('disabled',  true)
+            }
+        })
+
+        function fetch_mkdir(){
+            let folder_name = $("#mkdir_name").val()
+
+            console.log("Make dir: " + folder_name) 
+            var data = {
+                folder_name: folder_name
+            }
+
+            fetch('@mkdir', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(data)
+            }).then((res) => {
+                console.log("mkdir POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+        //-----------------------MOVE--------------------
+
+        var move_mw = document.getElementById('moveModal')
+        var m_file_name_p = move_mw.querySelector('.m_file-name')
+        
+        move_mw.addEventListener('show.bs.modal', function (event) {//get data on load
+            //---
+            var move_button = event.relatedTarget
+            const file_name = move_button.getAttribute('d-name')
+            m_file_name_p.innerHTML = file_name
+            console.log("open move modal for file: " + file_name)
+        })
+
+        $('#tree').treeview({//create tree
+            data: !{JSON.stringify(dDirs)},
+            collapseIcon: "bi bi-caret-down-fill",
+            expandIcon: "bi bi-caret-right-fill",
+            emptyIcon: "bi bi-caret-down"
+        })
+        //$('#tree').treeview('collapseAll', { silent: true });
+        $('#tree').on('nodeSelected', function(event, data) { //enable confirm button if dest selected
+            //$('#conf_btn').attr('disabled',  'disabled')
+            //$('#conf_btn').attr('disabled',false)
+            //$('#conf_btn').prop('disabled',false)
+            console.log("set disable false" + JSON.stringify($('#confirm_btn').prop('disabled',false)))
+        });
+
+
+        function searchTree(tree, nodesProp, prop, value) {//too for search path by name
+            var i, f = null; // iterator, found node
+            if (Array.isArray(tree)) { // if entry object is array objects, check each object
+                for (i = 0; i < tree.length; i++) {
+                    f = searchTree(tree[i], nodesProp, prop, value);
+                    if (f) { // if found matching object, return it.
+                        return f;
+                    }
+                }
+            } else if (typeof tree === 'object') { // standard tree node (one root)
+                if (tree[prop] !== undefined && tree[prop] === value) {
+                    return tree; // found matching node
+                }
+            }
+            if (tree[nodesProp] !== undefined && tree[nodesProp].length > 0) { // if this is not maching node, search nodes, children (if prop exist and it is not empty)
+                return searchTree(tree[nodesProp], nodesProp, prop, value);
+            } else {
+                return null; // node does not match and it neither have children
+            }
+        }
+        
+        function fetch_move(){
+            let folder_name = $('.node-selected').text()
+            let new_path_val = searchTree(!{JSON.stringify(dDirs)}, "nodes", "text", folder_name).path
+            let file_name = m_file_name_p.innerHTML
+            console.log("fetch move: " + file_name + "  to  " + new_path_val) 
+            var data = {
+                file_name: file_name,
+                new_path_val: new_path_val
+
+            }
+
+            const move_rename = '@move'
+            fetch(move_rename, {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(data)
+            }).then((res) => {
+                console.log("move POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+
+        //-----------------------RENAME--------------------
+        var rename_mm = document.getElementById('renameModal')
+        var old_name = rename_mm.querySelector('.old-name')
+        var input_new_name = rename_mm.querySelector('.new_name')
+
+        rename_mm.addEventListener('show.bs.modal', function (event) {
+            var rename_button = event.relatedTarget
+            
+            const file_name = rename_button.getAttribute('d-name')
+            input_new_name.value = file_name
+            old_name.innerHTML = file_name
+            console.log("open rename modal for file: " + file_name)
+        })
+
+        function fetch_rename(){
+            const old_name_val = old_name.innerHTML
+            const new_name_val = input_new_name.value
+            console.log("fetch rename file: " + old_name_val + " to " + new_name_val + " path " + '!{path}') 
+            var data = {
+                old_name_val : old_name_val,
+                new_name_val: new_name_val
+            }
+            const path_rename = '@rename'
+            fetch(path_rename, {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(data)
+            }).then((res) => {
+                console.log("delete POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+        //-----------------------DELETE--------------------
+        var delete_mm = document.getElementById('deleteModal')
+        var file_name_p = delete_mm.querySelector('.file-name')
+
+        delete_mm.addEventListener('show.bs.modal', function (event) {
+            var del_button = event.relatedTarget
+            
+            const file_name = del_button.getAttribute('d-name')
+            file_name_p.innerHTML = file_name
+            console.log("open delete modal for file: " + file_name)
+        })
+
+        function fetch_delete(){
+            const del_name_val = file_name_p.innerHTML
+            console.log("fetch delete file: " + del_name_val) 
+            var data = {
+                del_name_val: del_name_val
+            }
+            const path_rename = '@delete'
+            fetch(path_rename, {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(data)
+            }).then((res) => {
+                console.log("delete POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+
+
+
+
+
+
+
+    

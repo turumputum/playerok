@@ -1,0 +1,39 @@
+.name {
+  overflow: hidden;
+  word-wrap: break-word;
+}
+.badge-alignment {
+  margin-top: 0.25em;
+}
+.stretched-invisible-label {
+  display: block;
+}
+.stretched-invisible-label > * {
+  position: relative;
+  z-index: 1;
+}
+.stretched-invisible-label::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 0;
+}
+
+.picIcon{
+  background-color: cornflowerblue;
+  margin: 5px;
+}
+
+.dirIcon{
+  background-color: rgb(53, 116, 47);
+  margin: 5px; 
+}
+
+.dopIcon{
+  background-color: rgb(106, 143, 148);
+  background-color: rgb(177, 220, 226);
+}
+

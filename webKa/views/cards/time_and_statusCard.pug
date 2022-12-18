@@ -1,0 +1,52 @@
+card.card.card_shadow.h-100
+    .bg-success.card-img-top
+        .row.mt-1
+            .col-4
+                .h5.d-flex.justify-content-end System status
+            .col
+                .b RUN
+    .card-body 
+        .row
+            .col-4.d-flex.justify-content-end
+                h6 CPU load
+            .col
+                .b#cpu_load
+        .row
+            .col-4.d-flex.justify-content-end
+                h6 RAM usage
+            .col
+                .b#ram_usage
+        .row
+            .col-4.d-flex.justify-content-end
+                h6 HDD usage
+            .col
+                .b#hdd_usage
+        .row
+            .col-4.d-flex.justify-content-end
+                h6 SOC temp
+            .col
+                .b#soc_temp
+
+script.
+    
+    function update_status(){
+        //console.log("Fetch update")
+        fetch(`/get_system_status`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            }).then((res) => res.json()
+            ).then((dat) => {
+                //console.log("GET status, res: "+ JSON.stringify(dat) )
+                $('#cpu_load').text(`${dat.status.cpu_load}%`)
+                $('#ram_usage').text(`${dat.status.ram_usage}Gb`)
+                $('#hdd_usage').text(`${dat.status.hdd_usage}Gb`)
+                $('#soc_temp').text(`${dat.status.soc_temp}`+`°C`)
+            })
+
+        setTimeout(update_status, 10000); 
+    }
+
+    update_status()

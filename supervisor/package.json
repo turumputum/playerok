@@ -1,0 +1,24 @@
+{
+  "name": "supervisor",
+  "version": "1.0.0",
+  "description": "",
+  "main": "supervisor.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "log-timestamp": "^0.3.0",
+    "log-to-file": "^3.0.3",
+    "netmask": "^2.0.2",
+    "node-watch": "^0.7.3",
+    "nodemon": "^2.0.20",
+    "sudo-js": "^1.0.2",
+    "usb": "^2.5.2",
+    "usb-detection": "^4.14.1"
+  },
+  "devDependencies": {
+    "electron-rebuild": "^3.2.9"
+  }
+}

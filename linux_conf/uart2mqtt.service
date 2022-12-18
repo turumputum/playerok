@@ -1,0 +1,18 @@
+[Unit]
+Description=Test Service
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+Environment=DISPLAY=:0
+User=root
+Type=simple
+WorkingDirectory = /home/playerok/workSol_1/uart2mqtt/
+ExecStart=sudo node /home/playerok/workSol_1/uart2mqtt/uart2mqtt.js
+StandardError=append:/home/playerok/workSol_1/logs/uart2mqtt.log
+StandardInput=tty-force
+StandardError=syslog
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

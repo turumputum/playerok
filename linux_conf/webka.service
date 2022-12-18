@@ -1,0 +1,17 @@
+[Unit]
+Description=Test Service
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+Environment=DISPLAY=:0
+User=root
+Type=simple
+WorkingDirectory = /home/playerok/workSol_1/webKa/
+ExecStart=/usr/bin/node /home/playerok/workSol_1/webKa/index.js
+StandardError=append:/home/playerok/workSol_1/logs/webKa.log
+StandardInput=tty-force
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

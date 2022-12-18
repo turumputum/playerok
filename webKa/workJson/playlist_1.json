@@ -1,0 +1,45 @@
+{
+    "version": "1.0",
+
+    "defaults": {
+        "time": "now",
+        "eff_on_begin": "fade in",
+        "eff_on_end": "fade out",
+        "duration": "original"
+    },
+
+    "loop": true,
+
+    "tracks": [
+        {
+	    	"order": "1",
+            "content id": "012345678",
+	    	"type": "interactive",     // simple or interactive
+	    	"pub_on_start": "button_module_1/led_1 : 1",   // публикует при старте
+	    	"duration": "50000", // ms
+	    	"pub_on_end": "button_module_1/led_1 : 0",    //  в конце или при 
+        },
+        {
+	    	"order": "2",
+            "content id": "012345679",
+	    	"type": "interactive",     // simple or interactive
+	    	"duration": "50000", // ms
+	    	"pub_on_start": "button_module_1/led_2 : 1",   // публикует при старте
+	    	"pub_on_end": "button_module_1/led_2 : 0",    //  в конце или при 
+        }
+    ]
+
+    "effects": [
+	{
+	    "name": "fade in",
+	    "type": "fadein",
+    	    "duration": "4000"
+	},
+	{
+	    "name": "fade out",
+	    "type": "fadeout",
+    	    "duration": "4000"
+	}
+}
+
+

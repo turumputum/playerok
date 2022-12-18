@@ -1,0 +1,297 @@
+extends layout.pug
+
+//----------------------Fill main table data----------------------------
+mixin table-row(index, name, path, type, start_time, end_time, day_of_week)
+    tr  
+        td.w-5(data-label="#")= index 
+        td(data-label="Name")= name 
+        td(data-label="Path")= path
+        td(data-label="Type")= type
+        td(data-label="Start time")= start_time
+        td(data-label="End time")= end_time
+        td(data-label="Week days")= day_of_week
+        td(data-label="Controls")
+            button.mx-1.btn.btn-outline-secondary.btn-sm(
+                type='button' 
+                data-bs-toggle='modal' 
+                data-bs-target='#editTaskModal' 
+                d-index=index
+                d-name=name 
+                d-path=path 
+                d-type=type
+                d-s-time=start_time 
+                d-e-time=end_time 
+                d-days=day_of_week
+                ) edit
+            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' data-bs-toggle='modal' data-bs-target='#verify_delete' d-name=name d-index=index) delete
+
+block content
+    div(style='padding-top: 56px; ').container-xxl
+        card.card.card_shadow.h-100.mt-4
+            .bg-secondary.card-img-top
+                .h4.mx-2.mt-2 Scheduled tasks
+            .card_body.p-2
+                table.table
+                    thead
+                        tr
+                            th(scope='col') #
+                            th(scope='col') Name
+                            th(scope='col') Path
+                            th(scope='col') Type
+                            th(scope='col') Start time
+                            th(scope='col') End time
+                            th(scope='col') Week days
+                            th(scope='col') Controls
+                    tbody
+                        each task, index in tasks
+                            - var pt_ind = playlist_table.findIndex(o => o.path == task.path)
+                            //- console.log(playlist_table[0].name)
+                            +table-row(index+1, playlist_table[pt_ind].name, playlist_table[pt_ind].path, playlist_table[pt_ind].type, task.start_time, task.end_time, task.day_of_week)
+                        
+                        tr
+                            td(colspan='7')
+                            td(data-label="Controls") 
+                                button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' data-bs-toggle='modal' data-bs-target='#newTaskModal') add
+
+    //----------------------Edit task MODAL----------------------------
+    #editTaskModal.modal.fade(tabindex='-1' aria-labelledby='editTaskModalLabel' aria-hidden='true')
+        .modal-dialog.modal-xl.modal-fullscreen-xl-down
+            .modal-content
+                .modal-header
+                    h5#editTaskModalLabel.modal-title Edit task
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                .modal-body
+                    table.table
+                        thead
+                            tr
+                                th(scope='col') #
+                                th(scope='col') Name
+                                th(scope='col') Path
+                                th(scope='col') Type
+                                th(scope='col') Start time
+                                th(scope='col') End time
+                                th(scope='col') Week days
+                        tbody
+                            tr  
+                                td(data-label="#" style="width: 20px;" )
+                                    p.my-2.index_input
+                                    //input.index_input.form-control(type='number' placeholder='' aria-label='')
+                                td(data-label="Name")
+                                    select.name_input.form-select
+                                        each playlist, p_index in playlist_table
+                                            option(value=playlist.name )= playlist.name
+                                td(data-label="Path")
+                                    input.path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                td(data-label="Type" style="width: 150px;" )
+                                    input.type_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                td(data-label="Start time")
+                                    input.s_time_input.form-control(type='time' placeholder='' aria-label='')
+                                td(data-label="End time")
+                                    input.e_time_input.form-control(type='time' placeholder='' aria-label='')
+                                td(data-label="Week days")
+                                    input.days_input.form-control(type='text' placeholder='' aria-label='')
+                .modal-footer
+                    button.btn.btn-primary(data-bs-dismiss="modal" onclick = 'edit_task()') Save
+
+
+    //----------------------New task MODAL----------------------------
+    #newTaskModal.modal.modal-xl.modal-fullscreen-xl-down.fade(tabindex='-1' aria-labelledby='newTaskModalLabel' aria-hidden='true')
+        .modal-dialog
+            .modal-content
+                .modal-header
+                    h5#editTaskModalLabel.modal-title Edit task
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                .modal-body
+                    table.table
+                        thead
+                            tr
+                                th(scope='col') Name
+                                th(scope='col') Path
+                                th(scope='col') Type
+                                th(scope='col') Start time
+                                th(scope='col') End time
+                                th(scope='col') Week days
+                        tbody
+                            tr  
+                                td(data-label="Name" style="width: 20%")
+                                    select.name_new.form-select
+                                        each playlist, p_index in playlist_table
+                                            option(value=playlist.name )= playlist.name
+                                td(data-label="Path" style="width: 30%")
+                                    input.path_new.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                td(data-label="Type" style="width: 150px;" )
+                                    input.type_new.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                td(data-label="Start time")
+                                    input.s_time_new.form-control(type='time' placeholder='' aria-label='')
+                                td(data-label="End time")
+                                    input.e_time_new.form-control(type='time' placeholder='' aria-label='')
+                                td(data-label="Week days" style="width: 10%")
+                                    input.days_new.form-control(type='text' placeholder='' aria-label='')
+                .modal-footer
+                    button.btn.btn-primary(data-bs-dismiss="modal" onclick = 'new_task()') Save
+
+    //----------------------Confirm delete MODAL----------------------------
+    #verify_delete.modal.fade(aria-hidden='true' aria-labelledby='verify_deleteModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header
+                    h1#verify_delete.modal-title.fs-5 Confirm delete
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                .modal-body
+                    h2.name_to_delete
+                .modal-footer
+                    button.btn.btn-primary(data-bs-dismiss="modal" onclick = 'delete_task()') Delete
+                    button.btn.btn-primary(data-bs-dismiss="modal") Cancel
+
+
+
+    script.
+
+        //----------------------Edit task----------------------------
+        var exampleModal = document.getElementById('editTaskModal')
+        
+        var index_input = exampleModal.querySelector('.index_input')
+        var name_input = exampleModal.querySelector('.name_input')
+        var path_input = exampleModal.querySelector('.path_input')
+        var type_input = exampleModal.querySelector('.type_input')
+        var s_time_input = exampleModal.querySelector('.s_time_input')
+        var e_time_input = exampleModal.querySelector('.e_time_input')
+        var days_input = exampleModal.querySelector('.days_input')
+
+        function update_inputs_edit(){
+            let playlist_table = !{JSON.stringify(playlist_table)}
+            let curent_playlist = playlist_table.find(x => x.name === name_input.value)
+            path_input.value = curent_playlist.path
+            type_input.value = curent_playlist.type
+        }
+
+        exampleModal.addEventListener('change', function (event) {
+            update_inputs_edit()
+            })
+
+        exampleModal.addEventListener('show.bs.modal', function (event) {
+            var button = event.relatedTarget
+
+            index_input.innerHTML  = button.getAttribute('d-index')
+            name_input.value = button.getAttribute('d-name')
+            path_input.value = button.getAttribute('d-path')
+            type_input.value  = button.getAttribute('d-type')
+            s_time_input.value = button.getAttribute('d-s-time')
+            e_time_input.value = button.getAttribute('d-e-time')
+            days_input.value = button.getAttribute('d-days')
+            })
+
+        function edit_task(){
+            var task={
+                index: parseInt(index_input.innerHTML,10),
+                name: name_input.value,
+                path: path_input.value,
+                type: type_input.value,
+                start_time: s_time_input.value,
+                end_time: e_time_input.value,
+                day_of_week: days_input.value
+            }
+
+            console.log('Task index to edit: ' + task.index)
+            fetch('/Scheduler/edit', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(task)
+            }).then((res) => {
+                console.log("Edit task POST OK, res: ", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+        //----------------------New task----------------------------
+        var newTaskModal = document.getElementById('newTaskModal')
+        var name_new = newTaskModal.querySelector('.name_new')
+        var path_new = newTaskModal.querySelector('.path_new')
+        var type_new = newTaskModal.querySelector('.type_new')
+        var s_time_new = newTaskModal.querySelector('.s_time_new')
+        var e_time_new = newTaskModal.querySelector('.e_time_new')
+        var days_new = newTaskModal.querySelector('.days_new')
+        var id_md5 = 0 
+        
+        function update_inputs(){
+            let playlist_table = !{JSON.stringify(playlist_table)}
+            let curent_playlist = playlist_table.find(x => x.name === name_new.value)
+            path_new.value = curent_playlist.path
+            type_new.value = curent_playlist.type
+            id_md5 = curent_playlist.id_md5
+        }
+
+        newTaskModal.addEventListener('show.bs.modal', function (event) {
+            update_inputs()
+            })
+        name_new.addEventListener('change', function (event) {
+            update_inputs()
+            })
+
+        function new_task(){
+            var new_task={
+                path: path_new.value,
+                type: type_new.type,
+                start_time: s_time_new.value,
+                end_time: e_time_new.value,
+                day_of_week: days_new.value
+            }
+
+            fetch('/Scheduler/new', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(new_task)
+            }).then((res) => {
+                console.log("New task POST OK, res: ", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+
+        //----------------------Delete task----------------------------
+        var confirm_delete = document.getElementById('verify_delete')
+        var delete_index = 0
+        confirm_delete.addEventListener('show.bs.modal', function (event) {
+            var delete_button = event.relatedTarget
+
+            var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
+
+            modal_header_task_name.innerHTML = delete_button.getAttribute('d-name')
+            delete_index = delete_button.getAttribute('d-index')
+        })
+        
+        function delete_task(index){
+            var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
+            var delete_button = event.relatedTarget
+            var data = {
+                index_to_delete : delete_index,
+                name_to_delete: modal_header_task_name.innerHTML
+            }
+            console.log('Task name to delete: ' + data.index_to_delete)
+            fetch('/Scheduler/delete', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(data)
+            }).then((res) => {
+                console.log("delete POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+
+

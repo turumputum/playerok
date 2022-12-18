@@ -1,0 +1,40 @@
+nav.navbar.navbar-light.bg-light.fixed-top
+  .container-fluid.px-2
+    .d-flex
+      .btn-group.me-2(role='group')
+        a.btn.btn-primary(href='@upload' data-bs-toggle='modal' data-bs-target='#upload' title='Upload a file' data-bs-placement='top')
+          | {{octicon &quot;upload&quot;}}
+          span.d-none.d-sm-inline.align-text-bottom Upload
+        a.btn.btn-secondary(href='@mkdir' data-bs-toggle='modal' data-bs-target='#mkdir' title='Create a new folder' data-bs-placement='top')
+          | {{octicon &quot;file-directory&quot;}}
+          span.d-none.d-md-inline.align-text-bottom New folder
+      | &#x9;&#x9;&#x9;{{#either cmdable shellable}}
+      .btn-group.me-2(role='group')
+        | {{#if cmdable}}
+        a.btn.btn-info(href='@cmd' data-bs-toggle='modal' data-bs-target='#cmd' title='Run a command' data-bs-placement='top')
+          | {{octicon &quot;terminal&quot;}}
+          span.d-none.d-lg-inline.align-text-bottom Run command
+        | &#x9;&#x9;&#x9;&#x9;{{/if}}
+        | &#x9;&#x9;&#x9;&#x9;{{#if shellable}}
+        a.btn.btn-warning(href='@shell' title='Open a new shell' data-bs-placement='top')
+          | {{octicon &quot;terminal&quot;}}
+          span.d-none.d-md-inline.align-text-bottom Open shell
+        | &#x9;&#x9;&#x9;&#x9;{{/if}}
+      | &#x9;&#x9;&#x9;{{/either}}
+      .btn-group.me-2(role='group')
+        a.btn.btn-success(href='@download' data-bs-toggle='modal' data-bs-target='#download' title='Download file archive' data-bs-placement='top')
+          | {{octicon &quot;file-zip&quot;}}
+          span.d-none.d-lg-inline.align-text-bottom Download
+      .btn-group.me-2(role='group')
+        a.btn.btn-secondary(href='@rename' data-bs-toggle='modal' data-bs-target='#rename' title='Rename selected files' data-bs-placement='top')
+          | {{octicon &quot;pencil&quot;}}
+          span.d-none.d-lg-inline.align-text-bottom Rename
+      .btn-group.me-2(role='group')
+        a.btn.btn-danger(href='@delete' data-bs-toggle='modal' data-bs-target='#delete' title='Delete selected files' data-bs-placement='top')
+          | {{octicon &quot;trash&quot;}}
+          span.d-none.d-lg-inline.align-text-bottom Delete
+    .d-flex
+      .btn-group.ms-2(role='group')
+        a.btn.btn-warning(href='./' title='Refresh list' data-bs-placement='top')
+          | {{octicon &quot;sync&quot;}}
+          span.d-none.d-lg-inline.align-text-bottom Refresh

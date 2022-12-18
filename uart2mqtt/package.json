@@ -1,0 +1,17 @@
+{
+  "name": "uart2mqtt",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^4.3.7",
+    "node-watch": "^0.7.3",
+    "serialport": "^10.5.0"
+  }
+}

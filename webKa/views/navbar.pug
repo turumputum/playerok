@@ -1,0 +1,68 @@
+//script(src='/assets/index.js')
+
+nav.navbar.navbar-light.bg-light.fixed-top.navbar-expand-md
+  .container-xxl
+    a.navbar-brand(href='/') playerOk
+    button.navbar-toggler(type='button' data-bs-toggle='collapse' data-bs-target='#navbarNav' aria-controls='navbarNav' aria-expanded='false' aria-label='Toggle navigation')
+      span.navbar-toggler-icon
+
+    .collapse.navbar-collapse(id="navbarNav")
+      ul.navbar-nav.mr-auto
+        //a.nav-item(class='nav-link' href=path) #{path}
+        li.nav-item(class = (pageName == 'home') ? 'activeNav' : '')
+          a.nav-link.mx-2.if(class="<% (activeNav === 'Home') { %>activeNav<%}%>" aria-current='page' href='/') Home
+        li.nav-item(class = (pageName == 'FileManager') ? 'activeNav' : '')
+          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/data') FileManager
+        li.nav-item(class = (pageName == 'Editor') ? 'activeNav' : '')
+          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Editor') Editor
+        li.nav-item(class = (pageName == 'Scheduler') ? 'activeNav' : '')
+          a.nav-link.mx-2.if(class="<% (activeNav === 'Scheduler') { %>activeNav<%}%>" href='/Scheduler') Scheduler
+        li.nav-item(class = (pageName == 'Settings') ? 'activeNav' : '')
+          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Settings') Settings
+
+    #MyClockDisplay.p-2.rounded-3.clock(style='background-color: rgb(177, 220, 226);' onload='showTime()')
+
+
+
+script. 
+  function showTime(){
+    var h // 0 - 23
+    var m // 0 - 59
+    var session = "AM";
+
+    fetch(`/get_time`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'Content-Type': 'application/x-www-form-urlencoded'
+      }
+        }).then((res) => res.json()
+        ).then((dat) => {
+          //console.log("GET time, res: "+ dat.h+":"+dat.m) 
+          h=dat.h
+          m=dat.m
+
+          if(h == 0){
+            h = 12;
+          }
+
+          if(h > 12){
+            h = h - 12;
+            session = "PM";
+          }
+
+          h = (h < 10) ? "0" + h : h;
+          m = (m < 10) ? "0" + m : m;
+
+          var time = h + ":" + m + " " + session;
+          document.getElementById("MyClockDisplay").innerText = time;
+          document.getElementById("MyClockDisplay").textContent = time;
+
+          setTimeout(showTime, 10000); 
+      }).catch((err) => {
+        console.log(err)
+      })
+  }
+
+  showTime();  
+

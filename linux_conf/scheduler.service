@@ -1,0 +1,18 @@
+[Unit]
+Description=Test Service
+After=multi-user.target
+Conflicts=getty@tty1.service
+
+[Service]
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/playerok/.Xauthority"
+User=playerok
+Type=simple
+WorkingDirectory = /home/playerok/workSol_1/scheduler/
+ExecStart=node /home/playerok/workSol_1/scheduler/scheduler.js
+StandardError=append:/home/playerok/workSol_1/logs/scheduler.log
+StandardInput=tty-force
+Restart=on-failure
+
+[Install]
+WantedBy=graphical.target

@@ -1,0 +1,32 @@
+.card  
+    .card-body.h-100
+        .media.d-flex
+            .align-self-center
+                img.align-center.card-img-top(class="center-block" src='icons/deadline.png' style='margin-top: 1em; height: 3em; width:3em;' )
+            .media-body.text-right
+                h5(style='margin-left: auto; margin-right: 0em;') Scheduler
+                p.card-text
+        //| Some quick example text to build on the card title and make up the bulk of the card&apos;s content.
+    ul.list-group.list-group-flush
+        li.list-group-item
+            .input-group.mb-1                      
+                span#basic-addon1.input-group-text Current task
+                b.lead.form-control(type='text' aria-label='Current task' style='margin-left: auto; margin-right: 0em;' ) Play_list_1
+        li.list-group-item  
+            .input-group.mb-2
+                span#basic-addon1.input-group-text Status
+                a(type='text' aria-label='Current task' style='margin-left: auto; margin-right: 0em;' ) RUN
+            .input-group.mb-2
+                span#basic-addon1.input-group-text Start time
+                h4(type='text' aria-label='Current task' style='margin-left: auto; margin-right: 0em;' ) 10:00
+            .input-group.mb-2
+                span#basic-addon1.input-group-text End time
+                h4(type='text' aria-label='Current task' style='margin-left: auto; margin-right: 0em;' ) 22:00
+    .card-body
+        .btn-group(role='group' aria-label='Basic radio toggle button group')
+            input#btnradio1.btn-check(type='radio' name='btnradio' autocomplete='off' checked='')
+            label.btn.btn-outline-primary(for='btnradio1') Radio 1
+            input#btnradio2.btn-check(type='radio' name='btnradio' autocomplete='off')
+            label.btn.btn-outline-primary(for='btnradio2') Radio 2
+            input#btnradio3.btn-check(type='radio' name='btnradio' autocomplete='off')
+            label.btn.btn-outline-primary(for='btnradio3') Radio 3

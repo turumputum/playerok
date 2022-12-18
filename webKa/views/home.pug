@@ -1,0 +1,31 @@
+extends layout.pug
+
+block content
+    script(src="node_modules/mqtt/dist/mqtt.min.js")  
+    
+    //script(src="assets/mqttws31.min.js")
+    div(style='padding-top: 56px;').container-xxl
+        .row.row-cols-1.row-cols-xl-2
+            .col.mt-4
+                include cards/playerCard.pug
+            .col.mt-4
+                include cards/time_and_statusCard.pug
+
+        //- .card.text-center.mt-4.card_shadow
+        //-     .card-header
+        //-         ul.nav.nav-tabs.card-header-tabs
+        //-             li.nav-item
+        //-                 a.nav-link.active(aria-current='true' href='#') Screenshot
+        //-             li.nav-item
+        //-                 a.nav-link(href='#') Log
+        //-             //li.nav-item
+        //-             button.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh
+
+            .card-body
+                img.card-img-top(src='/data/screen.png' href=src style = "object-fit: contain;")
+    //script(src="assets/home.js")
+    script.
+        
+            
+        
+
