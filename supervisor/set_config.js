@@ -3,10 +3,13 @@ var sudo = require('sudo-js');
 sudo.setPassword('playerok');
 require('log-timestamp');
 
+const { networkInterfaces } = require('os');
+
 
 var Netmask = require('netmask').Netmask
 const fs = require("fs");
 
+var netStatus
 const log_file = require('log-to-file');
 
 function netmask2CIDR(netmask){
@@ -72,14 +75,17 @@ async function set_config(){
     process.exit(1);
   }
 
-  exec(`echo "playerok" | sudo -S ifconfig`, (error, stdout, stderr) => {
+  exec(`echo "playerok" | sudo ip addr show`, (error, stdout, stderr) => {
     if ((error) || (stderr)) {
       console.warn(error)
       //reject(error + stderr)
     }
-    //console.log(`sudo OK: ${stdout}`)
-  })
 
+    //const nets = networkInterfaces();
+    //console.log(`nets: ${JSON.stringify(nets,null,2)}`)
+    console.log(`nets: ${stdout.slice(stdout.search('enp1s0'))}`)
+  })
+  /*
   while(await deleteActiveConnection()){}
 
   if(config.net.DHCP =='1'){  //----------------DHCP-------------
@@ -171,7 +177,7 @@ async function set_config(){
       console.log("Set volume OK")
     }catch{}
   }
- 
+  */
 }
 
 set_config()
