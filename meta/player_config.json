@@ -1,10 +1,33 @@
 {
   "net": {
-    "DHCP": 0,
-    "IP": " 192.168.88.135",
-    "net_mask": " 255.255.255.0",
-    "gateway": " 192.168.88.1",
-    "DNS": "192.168.88.1",
+    "enp1s0": {
+      "enable": 1,
+      "DHCP": 0,
+      "IP": "192.168.88.135",
+      "net_mask": "255.255.255.0",
+      "gateway": "192.168.88.1",
+      "DNS": "192.168.88.1" 
+    },
+    "enp2s0":{
+      "enable": 0,
+      "DHCP": 0,
+      "IP": "192.168.88.135",
+      "net_mask": "255.255.255.0",
+      "gateway": "192.168.88.1",
+      "DNS": "192.168.88.1" 
+    },
+    "wlp3s0":{
+      "name":"wlp3s0",
+      "enable": 1,
+      "mode":"",
+      "SSID":"Ap",
+      "password":"123456q!",
+      "DHCP": 1,
+      "IP": "",
+      "net_mask": "",
+      "gateway": "",
+      "DNS": "" 
+    },
     "mDNS_name": "playerok"
   },
   "time": {
@@ -18,6 +41,13 @@
     "ext_MQTT": "1",
     "MQTT_login": "1",
     "MQTT_pass": "1"
+  },
+  "usb":{
+    "enableAll":0,
+    "whiteList":[
+      "0003:17EF:6099.0001",
+      "0003:17EF:6099.0002"
+    ]
   },
   "intractivity": {
     "UART_to_MQTT": "1"
