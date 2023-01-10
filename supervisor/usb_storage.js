@@ -7,16 +7,16 @@ let usb_watcher = watch('/dev');
 
 function search_usb_storage_dev(path){
   let name = path.split('/').slice(-1)
-  if(path.slice(0,7)=='/dev/sd'){
+  if((path.slice(0,7)=='/dev/sd')&&(path.slice(0,8)!='/dev/sda')){
     if(path.slice(-1)=='1'){
       //console.log(path)
       if(fs.existsSync(path)){
-        if(fs.existsSync(`/home/playerok/workSol_1/data/${name}`)==0){
+        if(fs.existsSync(`/home/playerok/playerok/data/${name}`)==0){
           usb_storages.add_device(path)
         }
       }else{
-        console.log(`remove dev: /home/playerok/workSol_1/data/${name}`)
-        if(fs.existsSync(`/home/playerok/workSol_1/data/${name}`)==1){
+        console.log(`remove dev: /home/playerok/playerok/data/${name}`)
+        if(fs.existsSync(`/home/playerok/playerok/data/${name}`)==1){
           usb_storages.remove_device(path)
         }
       }
@@ -57,9 +57,9 @@ let usb_storages = class{
   static async mount(path){
     let name = path.split('/').slice(-1)
     try{
-      await execPromise(`mkdir /home/playerok/workSol_1/data/${name}`)
-      await execPromise(`chmod -R 777 /home/playerok/workSol_1/data/${name}`)
-      await execPromise(`mount ${path} /home/playerok/workSol_1/data/${name}`)
+      await execPromise(`mkdir /home/playerok/playerok/data/${name}`)
+      await execPromise(`chmod -R 777 /home/playerok/playerok/data/${name}`)
+      await execPromise(`mount ${path} /home/playerok/playerok/data/${name}`)
     }catch(err){
       console.warn(`Umount FAIL: ${err}`)
     }
@@ -68,8 +68,8 @@ let usb_storages = class{
   static async unmount(path){
     let name = path.split('/').slice(-1)
     try{
-      await execPromise(`umount /home/playerok/workSol_1/data/${name}`)
-      await execPromise(`rm -r /home/playerok/workSol_1/data/${name}`)
+      await execPromise(`umount /home/playerok/playerok/data/${name}`)
+      await execPromise(`rm -r /home/playerok/playerok/data/${name}`)
       console.log(`unmount ${name} OK`)
     }catch(err){
       console.warn(`Umount FAIL: ${err}`)

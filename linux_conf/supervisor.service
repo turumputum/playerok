@@ -7,9 +7,9 @@ Conflicts=getty@tty1.service
 Environment=DISPLAY=:0
 User=root
 Type=simple
-WorkingDirectory = /home/playerok/workSol_1/supervisor/
-ExecStart=/usr/bin/node /home/playerok/workSol_1/supervisor/supervisor.js
-StandardError=append:/home/playerok/workSol_1/logs/supervisor.log
+WorkingDirectory = /home/playerok/playerok/supervisor/
+ExecStart=/usr/bin/node /home/playerok/playerok/supervisor/supervisor.js
+StandardError=append:/home/playerok/playerok/logs/supervisor.log
 StandardInput=tty-force
 Restart=on-failure
 

@@ -1,30 +1,14 @@
 {
   "image": [],
-  "video": [],
-  "sound": [
+  "video": [
     {
-      "path": "data/content/track_1.mp3",
-      "name": "track_1"
+      "path": "data/content/video_1.mp4",
+      "name": "video_1"
     },
     {
-      "path": "data/content/track_2.mp3",
-      "name": "track_2"
-    },
-    {
-      "path": "data/content/track_3.mp3",
-      "name": "track_3"
-    },
-    {
-      "path": "data/content/track_4.mp3",
-      "name": "track_4"
-    },
-    {
-      "path": "data/content/track_5.mp3",
-      "name": "track_5"
-    },
-    {
-      "path": "data/content/track_6.mp3",
-      "name": "track_6"
+      "path": "data/content/video_2.mp4",
+      "name": "video_2"
     }
-  ]
+  ],
+  "sound": []
 }

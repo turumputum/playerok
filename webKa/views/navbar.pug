@@ -20,11 +20,54 @@ nav.navbar.navbar-light.bg-light.fixed-top.navbar-expand-md
         li.nav-item(class = (pageName == 'Settings') ? 'activeNav' : '')
           a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Settings') Settings
 
-    #MyClockDisplay.p-2.rounded-3.clock(style='background-color: rgb(177, 220, 226);' onload='showTime()')
+    a(href='/logout')
+      button#bt_logout.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Log out") 
+        span.bi.bi-box-arrow-right
+    
+    a(href='/reboot')
+      button#bt_reboot.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reboot") 
+        span.bi.bi-bootstrap-reboot
+
+    a(href='/power_off')
+      button#bt_powerOff.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Power off") 
+        span.bi.bi-power
+      
+    #MyClockDisplay.p-2.rounded-3.clock(style='background-color: rgb(177, 220, 226);' onload='showTime()' data-bs-toggle="tooltip" data-bs-placement="bottom" data-original-title='bb')
 
 
 
 script. 
+  var date
+
+  $(document).ready(function() {
+    if(config.security.auth==1){
+      document.getElementById("bt_logout").disabled = false
+    }else{
+      document.getElementById("bt_logout").disabled = true
+    }
+
+    fetch(`/get_date`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            }).then((res) => res.json()
+            ).then((dat) => {
+                
+                date =dat.d+"-"+dat.m+"-"+ dat.y
+                //console.log(date)
+                $('#MyClockDisplay').tooltip("dispose");
+                $('#MyClockDisplay') .tooltip({
+                      title: date
+                  });
+                //$('#MyClockDisplay').attr('data-original-title', date)
+            })
+
+  }); 
+
+  
+
   function showTime(){
     var h // 0 - 23
     var m // 0 - 59
@@ -39,6 +82,7 @@ script.
         }).then((res) => res.json()
         ).then((dat) => {
           //console.log("GET time, res: "+ dat.h+":"+dat.m) 
+          
           h=dat.h
           m=dat.m
 

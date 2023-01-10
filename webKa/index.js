@@ -6,48 +6,49 @@
 
 const helperFuncs = require('./assets/helperFuncs');
 
+
 const express = require("express");
 const session = require("express-session");
-const Busboy = require("connect-busboy");
+const basicAuth = require('express-basic-auth')
 const fileUpload = require('express-fileupload');
 const flash = require("connect-flash");
-//const querystring = require("querystring");
 //const assets = require("./assets");
 const archiver = require("archiver");
-
-//const notp = require("notp");
-//const base32 = require("thirty-two");
-
+var xrandrParse = require('xrandr-parse');
 const fs = require("fs");
 const rimraf = require("rimraf");
 const path = require("path");
 
 const { exec } = require('child_process');
+const fastFolderSizeSync = require('fast-folder-size/sync')
 
-//const filesize = require("filesize");
-//const dirTree = require('directory-tree');
-//const recursiveFilter = require("recursive-filter");
-//const octicons = require("@primer/octicons");
 const file_tools = require("../meta/tools/file_tools");
-//const tmpSupervisor = require("./tools/tmpSupervisor");
 
 var bodyParser = require('body-parser');
 
-const mqtt = require("mqtt");
-//const client  = mqtt.connect('mqtt://127.0.0.1:1883')
+function execPromise(cmd) {
+  return new Promise((resolve, reject) => {
+    exec(cmd, (error, stdout, stderr) => {
+      if (error) {
+        console.warn(error)
+      }
+      //console.log(`sudo exec: ${cmd} resault ${stdout}`)
+      resolve(stdout? stdout : stderr);
+    })
+  })
+ }
 
-//var os = require('os');
 
 
-var currentPage = "home";
-var configAndStatus = "";
-
-const port = +process.env.PORT || 80
-
+const port = 80
 const app = express();
+// var server = https.createServer(options, app).listen(port, function(){
+//   console.log("Express server listening on port " + port);
+// });
 const http = app.listen(port);
 
 app.set("views", path.join(__dirname, "views"));
+app.use('/meta', express.static('/home/playerok/playerok/meta'))
 app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/css')))
 app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js'))) 
 app.use('/jquery', express.static(path.join(__dirname, 'node_modules/jquery/dist'))) 
@@ -59,34 +60,34 @@ app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/icons", express.static(path.join(__dirname, "views/icons")));
 app.use("/data", express.static(path.join(__dirname, "data")));
 app.set('view engine', 'pug')
- 
-//----------------MQTT------------------------------
-// client.on('connect', function () {
-//   console.log("mqtt brocker connected!");
-//   client.subscribe('presence', function (err) {
-//     if (!err) {
-//       client.publish('presence', 'Hello mqtt')
-//     }
-//   })
-// })
 
-// client.on('message', function (topic, message) {
-//   // message is Buffer
-//   console.log(message.toString())
-// })
+var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+if(config.security.auth==1){
+  app.use(basicAuth({
+    users: { [config.security.admin_login]: config.security.admin_pass },
+    challenge: true
+  }))
 
-//----------------MQTT------------------------------
-
-
-
-//----------------CONFIG------------------------------
-function readConfigAndStatus(){
-  let rawdata = fs.readFileSync('../meta/player_config.json');
-  configAndStatus = JSON.parse(rawdata);
-  console.log("configAndStatus read ok");
+  app.get('/logout', function (req, res) {
+    res.set('WWW-Authenticate', 'Basic realm=Authorization Required');
+    return res.sendStatus(401)
+    //return res.redirect('/');
+  });
 }
 
-readConfigAndStatus();
+app.get('/reboot', function (req, res) {
+  console.log("time to reboot")
+  execPromise('sudo reboot')
+  return res.redirect('/');
+});
+
+app.get('/power_off', function (req, res) {
+  execPromise('sudo poweroff')
+  return res.redirect('/');
+});
+
+ 
+
 
 //----------------CONFIG------------------------------
 
@@ -98,7 +99,6 @@ app.use(
   })
 );
 app.use(flash());
-//app.use('../data/*@upload',busboy());
 app.use(fileUpload());
 app.use(
   bodyParser.urlencoded({
@@ -180,9 +180,6 @@ app.all("/data*", (req, res, next) => {
       next();
     });
 });
-
-
-
 
 app.post("/data/*@move", (req, res) => {
   const move_data = JSON.parse(Object.keys(req.body)[0])
@@ -474,114 +471,7 @@ app.post("/data/*@rename", (req, res) => {
     });
 });
 
-const shellable = process.env.SHELL != "false" && process.env.SHELL;
-const cmdable = process.env.CMD != "false" && process.env.CMD;
-if (shellable || cmdable) {
-  const shellArgs = process.env.SHELL.split(" ");
-  const exec = process.env.SHELL == "login" ? "/usr/bin/env" : shellArgs[0];
-  const args = process.env.SHELL == "login" ? ["login"] : shellArgs.slice(1);
-
-  const child_process = require("child_process");
-
-  app.post("/*@cmd", (req, res) => {
-    res.filename = req.params[0];
-
-    let cmd = req.body.cmd;
-    if (!cmd || cmd.length < 1) {
-      return res.status(400).end();
-    }
-    console.log("running command " + cmd);
-
-    child_process.exec(
-      cmd,
-      {
-        cwd: relative(res.filename),
-        timeout: 60 * 1000,
-      },
-      (err, stdout, stderr) => {
-        if (err) {
-          console.log("command run failed: " + JSON.stringify(err));
-          req.flash("error", "Command failed due to non-zero exit code");
-        }
-        res.render(
-          "cmd",
-          flashify(req, {
-            path: res.filename,
-            cmd: cmd,
-            stdout: stdout,
-            stderr: stderr,
-          })
-        );
-      }
-    );
-  });
-
-  const pty = require("node-pty");
-  const WebSocket = require("ws");
-
-  // app.get("/*@shell", (req, res) => {
-  //   res.filename = req.params[0];
-
-  //   res.render(
-  //     "shell",
-  //     flashify(req, {
-  //       path: res.filename,
-  //     })
-  //   );
-  // });
-
-  const ws = new WebSocket.Server({ server: http });
-  ws.on("connection", (socket, request) => {
-    const { path } = querystring.parse(request.url.split("?")[1]);
-    let cwd = relative(path);
-    let term = pty.spawn(exec, args, {
-      name: "xterm-256color",
-      cols: 80,
-      rows: 30,
-      cwd: cwd,
-    });
-    console.log(
-      "pid " + term.pid + " shell " + process.env.SHELL + " started in " + cwd
-    );
-
-    term.on("data", (data) => {
-      socket.send(data, { binary: true });
-    });
-    term.on("exit", (code) => {
-      console.log("pid " + term.pid + " ended");
-      socket.close();
-    });
-    socket.on("message", (data) => {
-      // special messages should decode to Buffers
-      if (data.length == 6) {
-        switch (data.readUInt16BE(0)) {
-          case 0:
-            term.resize(data.readUInt16BE(1), data.readUInt16BE(2));
-            return;
-        }
-      }
-      term.write(data);
-    });
-    socket.on("close", () => {
-      term.end();
-    });
-  });
-}
-
-const SMALL_IMAGE_MAX_SIZE = 5750 * 1024; // 5750 KB
-
-function isimage(f) {
-  for (const ext of EXT_IMAGES) {
-    if (f.endsWith(ext)) {
-      return true;
-    }
-  }
-  return false;
-}
-
 app.get("/", (req, res) => {
-  //console.log('curent page is:' + configAndStatus.net.DHCP);
-  //console.log('status error'+res.stats.error)
   let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
   res.render("home",{
     pageName: "home",
@@ -602,7 +492,8 @@ app.get("/Scheduler", (req, res) => {
   res.render("scheduler",{
     pageName: "Scheduler",
     tasks: tasks,
-    playlist_table: playlist_table
+    playlist_table: playlist_table,
+    config: config
   });
 });
 
@@ -695,11 +586,14 @@ app.get("/data*", (req, res) => {
                     error: err,
                   });
                 }
+                let type = file_tools.check_type(f,stats)
+                let size = (type == 'dir')? (fastFolderSizeSync(res.filename+f)) : stats.size
+                //console.log(`For:${res.filename+f} type:${type} size:${size}`)
                 resolve({
                   name: f,
-                  type: file_tools.check_type(f,stats),
+                  type: type,
                   //issmallimage: isimage(f) && stats.size < SMALL_IMAGE_MAX_SIZE,
-                  size: stats.size,
+                  size: size,
                 });
               });
             })
@@ -721,7 +615,8 @@ app.get("/data*", (req, res) => {
                 files: files,
                 pageName: "FileManager",
                 dirs: res.filename.split('/'),
-                dDirs: file_tools.scanDirs('../data')
+                dDirs: file_tools.scanDirs('../data'),
+                config: config
               })
             );
             //console.log('render list')
@@ -772,7 +667,8 @@ app.get("/Editor", (req, res) => {
   res.render("editor",{
     pageName: 'Editor',
     playlist_table: playlist_table,
-    content_table: content_table
+    content_table: content_table,
+    config: config
   });
 });
 
@@ -879,13 +775,25 @@ app.post("/delete_playlist*",(req, res) => {
 //----------------SETTINGS------------------------------
 app.get("/Settings", (req, res) => {
   let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+  let audio_dev_list=['Analog', 'HDMI']
 
+  //execPromise(`xrandr`))
+  execPromise(`sudo -u playerok xrandr -display :0.0`).then(responses=>{
+    var screen_dev_list=xrandrParse(responses)
+    //console.log(JSON.stringify(screen_dev_list,null,2))
+    res.render("settings",{
+      pageName: 'Settings',
+      config: config,
+      audio_dev_list: audio_dev_list,
+      screen_dev_list: screen_dev_list
+    })
+  })
+  //console.log(JSON.stringify(screen_devs_list,null,2))
+
+  //let screen_dev_list=['HDMI-1', 'HDMI-2']
   //
-  res.render("settings",{
-    pageName: 'Settings',
-    config: config,
-  });
-});
+  
+})
 
 app.post("/save_config",(req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
@@ -914,25 +822,32 @@ app.get("/get_time",(req, res) => {
 
 app.get("/get_date",(req, res) => {
   let date_ob = new Date();
+  //console.log(`Current date: ${date_ob.getFullYear()} - ${date_ob.getMonth()} - ${date_ob.getDate()}`)
 
   res.send({
-    d: date_ob.getDay(),
-    m: date_ob.getMonth(),
+    d: date_ob.getDate(),
+    m: (date_ob.getMonth()+1),
     y: date_ob.getFullYear()
   })
 });
+
+async function setTimeout(date, time){
+  await exec(`sudo timedatectl set-ntp false`)
+
+  await exec(`date -s '${date} ${time}'`, (error, stdout, stderr) => {
+    if (error) {
+      console.warn(error)
+    }
+    console.log(`Set time: '${date} ${time}' resault ${stdout}`)
+  })
+}
 
 app.post("/set_time",(req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
   const inData = JSON.parse(Object.keys(req.body)[0])
   console.log(`input time: ${inData.time} date: ${inData.date}`)
-
-  exec(`date -s '${inData.date} ${inData.time}'`, (error, stdout, stderr) => {
-    if (error) {
-      console.warn(error)
-    }
-    console.log(`Set time: '${inData.date} ${inData.time}' resault ${stdout}`)
-  })
+  
+  setTimeout(inData.date, inData.time)
 
   try{
     let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
@@ -942,19 +857,10 @@ app.post("/set_time",(req, res) => {
     console.warn(`Write ntp config error: ${err}`)
   }
   return res.end('done')
+
 });
 
-function execPromise(cmd) {
-  return new Promise((resolve, reject) => {
-    exec(cmd, (error, stdout, stderr) => {
-      if (error) {
-        console.warn(error)
-      }
-      //console.log(`sudo exec: ${cmd} resault ${stdout}`)
-      resolve(stdout? stdout : stderr);
-    })
-  })
- }
+
 
 app.get("/get_system_status",(req, res) => {
   try{
@@ -967,15 +873,19 @@ app.get("/get_system_status",(req, res) => {
       cpu.usage(),
       drive.info(),
       mem.info(),
-      execPromise(`cat /etc/armbianmonitor/datasources/soctemp`)
+      execPromise(`sensors -j coretemp-isa-0000`)
     ]).then(responses =>{
-      //console.log(JSON.stringify(responses, null,2))
+      
+      let rawSensors = JSON.parse(responses[3])
+
+      var temp = (rawSensors['coretemp-isa-0000']['Core 0']['temp2_input'] + rawSensors['coretemp-isa-0000']['Core 1']['temp3_input'] + rawSensors['coretemp-isa-0000']['Core 2']['temp4_input'] + rawSensors['coretemp-isa-0000']['Core 3']['temp5_input'])/4
+
 
       status={
         cpu_load: responses[0],
         ram_usage: `${parseFloat(responses[2].usedMemMb/1000).toFixed(1)}/${parseFloat(responses[2].totalMemMb/1000).toFixed(1)}`,
         hdd_usage: `${responses[1].usedGb}/${responses[1].totalGb}`,
-        soc_temp: Math.round(parseInt(responses[3])/1000)
+        soc_temp: temp
       }
 
       res.send({
@@ -985,6 +895,18 @@ app.get("/get_system_status",(req, res) => {
   }catch{}  
   
 });
+
+
+
+app.get("/get_screenshot",(req, res) => {
+  console.log(`make a screenshot`)
+  let startTime = Date.now()
+  execPromise(`sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png`).then(()=>{
+    //console.log(`startTime:${startTime}  endTime:${Date.now()}  delta:${Date.now() - startTime}`)
+    res.send('done')
+  })
+    
+})
 
 
 // fs.readdir('../data/playlists', function(err, list){

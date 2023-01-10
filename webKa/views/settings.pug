@@ -6,18 +6,27 @@ block content
     link(type="text/css" href="bootstrap5-toggle/css/bootstrap5-toggle.css" rel="stylesheet")
     script(src="bootstrap5-toggle/js/bootstrap5-toggle.min.js")
 
-    div(style='padding-top: 56px;').container-xxl
-        main.container-xxl.my-4.d-flex.justify-content-center
-            .row
-                .col.m-4
+    div(style='margin-top: 76px;')
+        main.my-2.mx-auto(style='width: 950px;')
+            .row.mx-auto
+                .col
                     include cards/netSettings-card.pug
-                .col.m-4
+            .row.justify-content-md-center.my-3.mx-auto(style='width: 950px;')
+                .col-4
                     include cards/timeSettings-card.pug
-
+                .col-4
+                    include cards/soundSettings_card.pug
+                .col-4
+                    include cards/screenSettings_card.pug
+            .row.justify-content-md-center.my-3.ms-2(style='width: 620px;')
+                include cards/securitySettings-card.pug
     
     
     script.
         let config = !{JSON.stringify(config)}
+        let audio_dev_list = !{JSON.stringify(audio_dev_list)}
+        let screen_dev_list = !{JSON.stringify(screen_dev_list)}
+
 
         function fetch_save_config(){
             fetch('/save_config', {

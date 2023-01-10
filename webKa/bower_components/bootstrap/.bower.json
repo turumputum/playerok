@@ -1,12 +1,12 @@
 {
   "name": "bootstrap",
   "homepage": "https://github.com/twbs/bootstrap",
-  "version": "5.2.2",
-  "_release": "5.2.2",
+  "version": "5.2.3",
+  "_release": "5.2.3",
   "_resolution": {
     "type": "version",
-    "tag": "v5.2.2",
-    "commit": "961d5ff9844372a4e294980c667bbe7e0651cdeb"
+    "tag": "v5.2.3",
+    "commit": "cb021439c683d9805e2864c58095b92d405e9b11"
   },
   "_source": "https://github.com/twbs/bootstrap.git",
   "_target": ">= 3.0.0",

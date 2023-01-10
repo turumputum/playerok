@@ -50,7 +50,11 @@ card.card.card_shadow.h-100
     script.
         let config = !{JSON.stringify(config)}
         
-        let brokerAddress = `ws://${config.net.IP.replace(' ','')}:1890/mqtt`
+        //- let brokIp
+        //- if()
+        //console.log(location.host)
+        //let brokerAddress = `ws://${config.net.IP.replace(' ','')}:1890/mqtt`
+        let brokerAddress = `ws://${location.host}:1890/mqtt`
         //console.log(brokerAddress)
         client = mqtt.connect(brokerAddress)
 

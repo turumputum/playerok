@@ -7,9 +7,9 @@ Conflicts=getty@tty1.service
 Environment=DISPLAY=:0
 User=root
 Type=simple
-WorkingDirectory = /home/playerok/workSol_1/webKa/
-ExecStart=/usr/bin/node /home/playerok/workSol_1/webKa/index.js
-StandardError=append:/home/playerok/workSol_1/logs/webKa.log
+WorkingDirectory = /home/playerok/playerok/webKa/
+ExecStart=/usr/bin/node /home/playerok/playerok/webKa/index.js
+StandardError=append:/home/playerok/playerok/logs/webKa.log
 StandardInput=tty-force
 Restart=on-failure
 

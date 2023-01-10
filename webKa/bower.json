@@ -1,0 +1,8 @@
+{
+  "name": "playerok_sw",
+  "description": "",
+  "main": "index.js",
+  "license": "ISC",
+  "homepage": "https://github.com/turumputum/playerok_2",
+  "private": true
+}

@@ -11,20 +11,47 @@ block content
             .col.mt-4
                 include cards/time_and_statusCard.pug
 
-        //- .card.text-center.mt-4.card_shadow
-        //-     .card-header
-        //-         ul.nav.nav-tabs.card-header-tabs
-        //-             li.nav-item
-        //-                 a.nav-link.active(aria-current='true' href='#') Screenshot
-        //-             li.nav-item
-        //-                 a.nav-link(href='#') Log
-        //-             //li.nav-item
-        //-             button.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh
+        .card.text-center.mt-4.card_shadow
+            .card-header
+                ul.nav.nav-tabs.card-header-tabs
+                    li.nav-item
+                        a.nav-link.active(aria-current='true' href='#') Screenshot
+                    //- li.nav-item
+                    //-     a.nav-link(href='#') Log
+                    //li.nav-item
+                    button#refresh_btn.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh 
+                        span#refresh_spn.spinner-border.spinner-border-sm(role='status' aria-hidden='true') 
 
             .card-body
-                img.card-img-top(src='/data/screen.png' href=src style = "object-fit: contain;")
+                img#screenshot.card-img-top(src='meta/screen_shot.png' href=src style = "object-fit: contain;")
     //script(src="assets/home.js")
     script.
+        function image_update(){
+            $("#refresh_spn").show();
+            fetch('/get_screenshot', {
+                method: 'GET',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+            }).then((res) => {
+                console.log("Get screenShot OK, res: ", res)
+                $("#screenshot").attr('src','meta/screen_shot.png'+ '?' + Math.random());
+                $("#refresh_spn").hide();
+            })
+        }
+
+        $( document ).ready(function() {
+            console.log( "ready!" );
+            image_update()
+        });
+
+        $("#refresh_btn").click(function() {
+            console.log( "refresh!" );
+            image_update()
+        });
+        
+
         
             
         

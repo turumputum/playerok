@@ -54,45 +54,45 @@ function execSudoPromise(cmd) {
 
   var net_config="auto lo" +"\n" +"iface lo inet loopback"+"\n"
 
-  if(config.net.enp1s0.enable==1){
-    net_config+="\n" +"auto enp1s0"+"\n" + "allow-hotplug enp1s0"+"\n"
-    if(config.net.enp1s0.DHCP==1){
-      net_config+="iface enp1s0 inet dhcp"+"\n"
+  if(config.net.eth0.enable==1){
+    net_config+="\n" +"auto eth0"+"\n" + "allow-hotplug eth0"+"\n"
+    if(config.net.eth0.DHCP==1){
+      net_config+="iface eth0 inet dhcp"+"\n"
     }else{
-      net_config+="iface enp1s0 inet static"+"\n"
-      var cidr = netmask2CIDR(config.net.enp1s0.net_mask)
-      net_config+="\t"+`address ${config.net.enp1s0.IP}/${cidr}`+"\n"
-      net_config+="\t"+`gateway ${config.net.enp1s0.gateway}`+"\n"
-      net_config+="\t"+`dns-nameservers ${config.net.enp1s0.DNS}`+"\n"
+      net_config+="iface eth0 inet static"+"\n"
+      var cidr = netmask2CIDR(config.net.eth0.net_mask)
+      net_config+="\t"+`address ${config.net.eth0.IP}/${cidr}`+"\n"
+      net_config+="\t"+`gateway ${config.net.eth0.gateway}`+"\n"
+      net_config+="\t"+`dns-nameservers ${config.net.eth0.DNS}`+"\n"
     }
   }
 
-  if(config.net.enp2s0.enable==1){
-    net_config+="\n" +"auto enp2s0"+"\n" + "allow-hotplug enp2s0"+"\n"
-    if(config.net.enp2s0.DHCP==1){
-      net_config+="iface enp2s0 inet dhcp"+"\n"
+  if(config.net.eth1.enable==1){
+    net_config+="\n" +"auto eth1"+"\n" + "allow-hotplug eth1"+"\n"
+    if(config.net.eth1.DHCP==1){
+      net_config+="iface eth1 inet dhcp"+"\n"
     }else{
-      net_config+="iface enp2s0 inet static"+"\n"
-      var cidr = netmask2CIDR(config.net.enp2s0.net_mask)
-      net_config+="\t"+`address ${config.net.enp2s0.IP}/${cidr}`+"\n"
-      net_config+="\t"+`gateway ${config.net.enp2s0.gateway}`+"\n"
-      net_config+="\t"+`dns-nameservers ${config.net.enp2s0.DNS}`+"\n"
+      net_config+="iface eth1 inet static"+"\n"
+      var cidr = netmask2CIDR(config.net.eth1.net_mask)
+      net_config+="\t"+`address ${config.net.eth1.IP}/${cidr}`+"\n"
+      net_config+="\t"+`gateway ${config.net.eth1.gateway}`+"\n"
+      net_config+="\t"+`dns-nameservers ${config.net.eth1.DNS}`+"\n"
     }
   }
 
-  if(config.net.wlp3s0.enable==1){
-    net_config+="\n" + "allow-hotplug wlp3s0"+"\n"
-    if(config.net.wlp3s0.DHCP==1){
-      net_config+="iface wlp3s0 inet dhcp"+"\n"
+  if(config.net.wlan0.enable==1){
+    net_config+="\n" + "allow-hotplug wlan0"+"\n"
+    if(config.net.wlan0.DHCP==1){
+      net_config+="iface wlan0 inet dhcp"+"\n"
     }else{
-      net_config+="iface wlp3s0 inet static"+"\n"
-      var cidr = netmask2CIDR(config.net.wlp3s0.net_mask)
-      net_config+="\t"+`address ${config.net.wlp3s0.IP}/${cidr}`+"\n"
-      net_config+="\t"+`gateway ${config.net.wlp3s0.gateway}`+"\n"
-      net_config+="\t"+`dns-nameservers ${config.net.wlp3s0.DNS}`+"\n"
+      net_config+="iface wlan0 inet static"+"\n"
+      var cidr = netmask2CIDR(config.net.wlan0.net_mask)
+      net_config+="\t"+`address ${config.net.wlan0.IP}/${cidr}`+"\n"
+      net_config+="\t"+`gateway ${config.net.wlan0.gateway}`+"\n"
+      net_config+="\t"+`dns-nameservers ${config.net.wlan0.DNS}`+"\n"
     }
-    net_config+="\t"+`wpa-ssid ${config.net.wlp3s0.SSID}`+"\n"
-    net_config+="\t"+`wpa-psk ${config.net.wlp3s0.password}`+"\n"
+    net_config+="\t"+`wpa-ssid ${config.net.wlan0.SSID}`+"\n"
+    net_config+="\t"+`wpa-psk ${config.net.wlan0.password}`+"\n"
   }
 
   //console.log(net_config)

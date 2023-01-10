@@ -1,13 +1,26 @@
 require('log-timestamp');
+const { exec } = require('child_process');
 const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
 var watch = require('node-watch')
 const child_process = require('child_process');
 var kill = require('tree-kill');
+//const { config } = require('process');
 
 var scheduler_table
 
+function execPromise(cmd) {
+    return new Promise((resolve, reject) => {
+        exec(cmd, (error, stdout, stderr) => {
+            if (error) {
+                console.warn(error)
+            }
+            //console.log(`sudo exec: ${cmd} resault ${stdout}`)
+            resolve(stdout ? stdout : stderr);
+        })
+    })
+}
 
 var state = {
     player_state: 'stop',
@@ -17,6 +30,10 @@ var state = {
 }
 
 function start_player(playlist_path) {
+    if (config.screen.autoTurnOff == 1) {
+        execPromise(`xrandr --output ${config.screen.output_port} --auto`)
+    }
+
     //console.log("start play")
     try {
         state.current_playlist_path = playlist_path
@@ -33,7 +50,7 @@ function start_player(playlist_path) {
         state.player_state = 'play'
         console.log(`start player OK`)
         client.publish('scheduler/current_playlist', `${state.current_playlist_name}`, { retain: true })
-        
+
     } catch (err) {
         console.log(`start player FAILED: ${err}`)
     }
@@ -61,6 +78,11 @@ function stop_player() {
     // setTimeout(function() {
     //     start_player('data/playlists/playlist_1.json');
     // }, 5000)
+
+    if (config.screen.autoTurnOff == 1) {
+        execPromise(`xrandr --output ${config.screen.output_port} --off`)
+    }
+
 }
 
 function check_state() {
@@ -76,7 +98,7 @@ function check_state() {
     //console.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table, null, 2)}`)
     for (var index in scheduler_table) {
         let task = scheduler_table[index]
-        
+
         if (task.day_of_week.search(`${current_day}`) >= 0) {//---------day in list ---------------
             let playlist_start_time_in_minutes = parseInt(task.start_time.split(':')[0]) * 60 + parseInt(task.start_time.split(':')[1])
             if (playlist_start_time_in_minutes <= current_time_in_minutes) {
@@ -128,7 +150,7 @@ playlist_watcher.on('change', function (evt, name) {
     try {
         console.log('Reset playlist on playlist update')
         stop_player()
-        setTimeout(check_state,500)
+        setTimeout(check_state, 500)
     } catch (err) {
         console.error(`: ${err}`)
         process.exit(1);
@@ -138,18 +160,18 @@ playlist_watcher.on('change', function (evt, name) {
 
 function mqtt_sub(topic) {
     if (client.subscribe(topic, function (err) {
-      if (err) {
-        console.error(`subscribe to: ${topic} filed: ${err}`)
-        log_file(`subscribe to: ${topic} filed: ${err}`, '../logs/player_log.log')
-        return err
-      } else {
-        console.log(`subscribe OK to: ${topic}`)
-        return true
-      }
+        if (err) {
+            console.error(`subscribe to: ${topic} filed: ${err}`)
+            log_file(`subscribe to: ${topic} filed: ${err}`, '../logs/player_log.log')
+            return err
+        } else {
+            console.log(`subscribe OK to: ${topic}`)
+            return true
+        }
     })) {
-      return true
+        return true
     }
-  }
+}
 
 
 const client = mqtt.connect('mqtt://127.0.0.1:1883')
@@ -163,11 +185,11 @@ client.on('message', function (topic, message) {
 
     //--------MQTT------Action on playlist topics------------------
     console.log('Incoming message')
-    
-    if ((topic =='scheduler/restart')&&(message =='1')){
+
+    if ((topic == 'scheduler/restart') && (message == '1')) {
         console.log('Reset playlist on MQTT command')
         stop_player()
-        setTimeout(check_state,500)
+        setTimeout(check_state, 500)
     }
 })
 
@@ -178,8 +200,13 @@ try {
     console.error(`: ${err}`)
     process.exit(1);
 }
-
-
+try {
+    var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+} catch (err) {
+    console.error(`Error read file: ${err}`)
+    //log_file(`Error read file: ${err}`, '../logs/player_log.txt')
+    process.exit(1);
+}
 
 
 check_state()

@@ -1,4 +1,4 @@
-card.card(style='width: 20rem;')
+card.card(style='width: 300px;').card_shadow.h-100 
     .card-body
         h5.card-title Time settings
         p.card-text
@@ -54,6 +54,7 @@ card.card(style='width: 20rem;')
         button.btn.btn-outline-secondary(type='button' onclick='save_time_settings()') Save
 
 script.
+    
     function pad(
         a, // the number to convert 
         b // number of resulting characters
@@ -65,7 +66,7 @@ script.
     }
     
     $( document ).ready(function() {
-        console.log("document redy")
+        //console.log("document redy")
 
         if(config.time.NTP==1){
             $('#ntp_Enable_toggle').bootstrapToggle('on')
@@ -94,7 +95,8 @@ script.
             }
             }).then((res) => res.json()
             ).then((dat) => {
-            //console.log("GET time, res: "+ dat.h+":"+dat.m) 
+                
+                console.log("GET time, res: "+ dat.y+":"+dat.m+":"+dat.d) 
                 $('#e_date_new').val(`${pad(dat.y,4)}-${pad(dat.m,2)}-${pad(dat.d,2)}`)
             })
             

@@ -415,7 +415,7 @@ function shift_simple_track(dir) {
 
 mpvPlayer.on('stopped', function () {
   if((player_state!='Idle')&&(player_state!='stop')){
-    console.log(`stoppen from event`)
+    console.log(`stopped from event`)
     stop_track(current_track_index)
   }
 
@@ -434,7 +434,7 @@ mpvPlayer.on('stopped', function () {
   //   }
   // }
 
-  if (simple_track_num > 0 && player_state != "Idle") {
+  if (simple_track_num > 0 && player_state == "Idle") {
     if ((playlist.tracks[current_track_index].loop == 'on')&&(playlist.tracks[current_track_index].type!='simple')) {//----------Loop current track----------------------
       if (play_track(current_track_index)) {
         console.log(`Prev track End, loop current track OK, index: ${current_track_index}`)

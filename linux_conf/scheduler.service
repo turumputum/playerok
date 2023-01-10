@@ -8,9 +8,9 @@ Environment="DISPLAY=:0"
 Environment="XAUTHORITY=/home/playerok/.Xauthority"
 User=playerok
 Type=simple
-WorkingDirectory = /home/playerok/workSol_1/scheduler/
-ExecStart=node /home/playerok/workSol_1/scheduler/scheduler.js
-StandardError=append:/home/playerok/workSol_1/logs/scheduler.log
+WorkingDirectory = /home/playerok/playerok/scheduler/
+ExecStart=node /home/playerok/playerok/scheduler/scheduler.js
+StandardError=append:/home/playerok/playerok/logs/scheduler.log
 StandardInput=tty-force
 Restart=on-failure
 

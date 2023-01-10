@@ -1,0 +1,76 @@
+card.card(style='width: 935px;').card_shadow.h-100 
+    .card-body
+        h5.card-title Security settings
+        p.card-text
+    ul.list-group.list-group-flush
+        li.list-group-item 
+            .row.mt-2
+                .col
+                    .row.mb-2
+                        .col
+                            span.input-group-text(style='width:8em;' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Authentication to access the control panel") User control
+                        .col(style='transform: translate(-15px, 3px);')                    
+                            input#turnOff_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                    
+                    .row.mb-2
+                        .col
+                            span.input-group-text(style='width:8em;') Enable SSH
+                        .col(style='transform: translate(-15px, 3px);')                    
+                            input#enableSSH_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+
+                    
+                .col
+                    .row.mb-2
+                        .input-group
+                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Login
+                            input#inputLogin_auth.form-control(type='text' disabled)
+
+                    .row.mb-2
+                        .input-group
+                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Password
+                            input#inputPassword_auth.form-control(type='password' )
+
+                //- .col
+                //-     .row.mb-2
+                //-         .input-group
+                //-             label.input-group-text(for='inputGroupSelect01' style='width:9em;') MQTT login
+                //-             input#inputLogin_MQTT.form-control(type='text' disabled)
+
+                //-     .row.mb-2
+                //-         .input-group
+                //-             label.input-group-text(for='inputGroupSelect01' style='width:9em;') MQTT password
+                //-             input#inputPassword_MQTT.form-control(type='text' disabled)
+
+            
+
+    .card-body
+        button.btn.btn-outline-secondary(type='button' onclick='save_screen_settings()') Save
+
+
+script.
+    
+    $( document ).ready(function(){
+        //console.log('qu')
+        if(config.security.auth==1){
+            $('#turnOff_toggle').bootstrapToggle('on')
+        }else{
+            $('#turnOff_toggle').bootstrapToggle('off')
+        }
+
+        if(config.security.SSH==1){
+            $('#enableSSH_toggle').bootstrapToggle('on')
+        }else{
+            $('#enableSSH_toggle').bootstrapToggle('off')
+        }
+
+        $('#inputLogin_auth').val(config.security.admin_login)
+        $('#inputPassword_auth').val(config.security.admin_pass)
+    })
+
+
+    function save_screen_settings(){
+        config.security.auth = +$('#turnOff_toggle').prop('checked')
+        config.security.SSH = +$('#enableSSH_toggle').prop('checked')
+        config.security.admin_pass = $('#inputPassword_auth').val()
+        fetch_save_config()
+    }

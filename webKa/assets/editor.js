@@ -92,7 +92,9 @@ function update_playlist_modal(){
 
 function save_edit_playlist(){
     $('#editPlaylistModal').modal('hide')
-    fetch_post_playlist(current_playlist_path, current_playlist)
+    fetch_post_playlist(current_playlist_path, current_playlist).then(()=>{
+        window.location.reload();
+    })
 }
 
 function cancel_edit_playlist(){
@@ -160,7 +162,7 @@ async function fetch_post_playlist(path, playlist) {
         body: JSON.stringify(outData)
     }).then((res) => {
         console.log("Playlist POST OK, res: ", res)
-        window.location.reload();
+        
         }).catch((err) => {
         console.log(err)
     })
@@ -408,6 +410,7 @@ function delete_track(){
         //update_playlist_modal()
         //$('#editPlaylistModal').reload()
         $('#confirmDeleteTrackModal').modal('hide')
+    }).then(()=>{
         $('#editPlaylistModal').modal('show')
     })
 }

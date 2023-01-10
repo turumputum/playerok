@@ -1,0 +1,74 @@
+card.card(style='width: 300px;').card_shadow.h-100 
+    .card-body
+        h5.card-title Screen settings
+        p.card-text
+    ul.list-group.list-group-flush
+        li.list-group-item 
+            .row.mb-2
+                .input-group
+                    label.input-group-text(for='inputGroupSelect01' style='width:8em;') Output device
+                    input#inputGroup_screen_dev.form-control(type='text' disabled)
+            .row.mb-2
+                .input-group
+                    label.input-group-text( style='width:8em;') Resolution
+                    select#inputResolution.form-select 
+
+            .row.mb-2
+                .input-group
+                    label.input-group-text( style='width:8em;') Orientation
+                    select#orientationSelectForm.form-select
+                        option(value='normal') normal  
+                        option(value='left') left
+                        option(value='right') right
+                        option(value='inverted') inverted
+            .row.mb-2
+                .col
+                    span.input-group-text(style='width:8em;' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Turn off screen, if playlist is stoped") Auto turn off
+                .col(style='transform: translate(-15px, 3px);')                    
+                    input#autoTurnOff_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+
+    .card-body
+        button.btn.btn-outline-secondary(type='button' onclick='save_screen_set()') Save
+
+
+script.
+    
+    $( document ).ready(function() {
+        //console.log(screen_dev_list)
+
+        for(index in screen_dev_list){
+            if(screen_dev_list[index].connected==1){
+                //console.log(index)
+                $('#inputGroup_screen_dev').val(index)
+
+                screen_dev_list[index].modes.forEach(item=>{
+                   
+                   const tmpRes = `${item.width}x${item.height}`
+                   //console.log(tmpRes) 
+                   $('#inputResolution').append($('<option>',{
+                        value: tmpRes,
+                        text : tmpRes
+                    }))
+                })
+
+                $('#orientationSelectForm').val(config.screen.orientation)
+
+                if(config.screen.autoTurnOff==1){
+                    $('#autoTurnOff_toggle').bootstrapToggle('on')
+                }else{
+                    $('#autoTurnOff_toggle').bootstrapToggle('off') 
+                }
+            }
+        }
+
+    })
+
+    function save_screen_set(){
+
+        //console.log("save screen settings")
+        config.screen.orientation =$('#orientationSelectForm').val()
+        config.screen.resolution = $('#inputResolution').val()
+        config.screen.autoTurnOff = +$('#autoTurnOff_toggle').prop('checked')
+        fetch_save_config()
+    }
+

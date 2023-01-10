@@ -24,7 +24,7 @@ mixin table-row(file_name, file_type, file_size)
             a(href='./' + file_name + '/' )
                 | #{file_name}
         td(data-label="size")
-            - var tSize = (file_size/(1024*1024)).toFixed(1)
+            - var tSize = (Math.ceil((file_size/(1024*1024))*10))/10
             | #{tSize} MB
         td(data-label="controls")
             .dropdown
