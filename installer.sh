@@ -27,7 +27,7 @@ yes | sudo sensors-detect
 
 #---config MPV---
 sudo cp /home/playerok/playerok/linux_conf/mpv.conf  /home/playerok/.config/mpv/
-sudo cp /home/playerok/playerok/linux_conf/mpv..desktop /home/playerok/.config/autostart/
+sudo cp /home/playerok/playerok/linux_conf/mpv.desktop /home/playerok/.config/autostart/
 
 #---config mDNS---
 sudo cp /home/playerok/playerok/linux_conf/webKa_avahi.service /etc/avahi/services/
