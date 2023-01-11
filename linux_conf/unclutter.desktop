@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=unclutter
-Exec=unclutter -idle 0
+Exec=unclutter -idle 30
 StartupNotify=false
 Terminal=false
