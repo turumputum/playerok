@@ -1,5 +1,5 @@
 {
-  "playlist_name": "interactive_playlist",
+  "playlist_name": "1",
   "version": "1.0",
   "next_topic": "",
   "prev_topic": "",
@@ -13,7 +13,7 @@
     {
       "order_num": 1,
       "name": "new_track",
-      "path": "data/content/video_1.mp4",
+      "path": "data/content/S01E01.mkv",
       "content_group": "video",
       "type": "simple",
       "error": "",
@@ -25,8 +25,8 @@
     },
     {
       "order_num": 2,
-      "name": "new_track_2",
-      "path": "data/content/video_2.mp4",
+      "name": "2",
+      "path": "data/content/S01E02.mkv",
       "content_group": "video",
       "type": "simple",
       "error": "",

@@ -26,8 +26,3 @@ if [ -d "$HOME/.local/bin" ] ; then
     PATH="$HOME/.local/bin:$PATH"
 fi
 
-#export DISPLAY=:0
-
-xset s off
-xset dpms 0 0 0
-xset -dpms s off

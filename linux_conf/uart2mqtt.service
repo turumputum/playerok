@@ -10,6 +10,7 @@ Type=simple
 WorkingDirectory = /home/playerok/playerok/uart2mqtt/
 ExecStart=sudo node /home/playerok/playerok/uart2mqtt/uart2mqtt.js
 StandardError=append:/home/playerok/playerok/logs/uart2mqtt.log
+StandardOutput=append:/home/playerok/playerok/logs/playerok.log
 StandardInput=tty-force
 StandardError=syslog
 Restart=on-failure

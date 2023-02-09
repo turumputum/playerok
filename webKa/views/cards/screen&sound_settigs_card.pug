@@ -1,0 +1,97 @@
+card.card(style='width: 620px;').card_shadow.h-100 
+    .card-body
+        h5.card-title Screen and sound settings
+        p.card-text
+    ul.list-group.list-group-flush(style='transform: translate(0px, -18px);')
+        li.list-group-item 
+            .row.mt-2
+                .col
+                    .row.mb-2
+                        .input-group
+                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Screen output
+                            input#inputGroup_screen_dev.form-control(type='text' disabled)
+                    .row.mb-2
+                        .input-group
+                            label.input-group-text( style='width:8em;') Resolution
+                            select#inputResolution.form-select 
+
+                    .row.mb-10
+                        .input-group
+                            label.input-group-text( style='width:8em;') Orientation
+                            select#orientationSelectForm.form-select
+                                option(value='normal') normal  
+                                option(value='left') left
+                                option(value='right') right
+                                option(value='inverted') inverted
+                    .row.mb-2
+                .col
+                    .row.mb-2
+                        .input-group
+                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Sound output
+                            select#inputGroup_sound_dev.form-select 
+                                each audio_dev, index in config.sound.sound_dev_list
+                                    option(value=audio_dev)= audio_dev
+                        //h6 Output device
+                        //select.mx-2.form-select(style='width: 18rem;' aria-label='Default select example')
+                            
+                    .row.mb-2
+                        .col-5
+                            span.input-group-text(style='width:8em;') System volume
+                        .col-7 
+                            input#volumeRange.form-range(type='range' style='transform: translate(15px, 7px); width: 130px;')
+
+    
+    .card-body(style='transform: translate(0px, 20px);')
+        .row
+            .col-8
+                button#save_ss_config_btn.btn.btn-outline-secondary(type='button' onclick='save_ss_settings()') Save
+            //- .col
+            //-     button#save_ss_config_btn.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' onclick='save_ss_settings()') Set backgound
+
+
+
+script.
+    $( document ).ready(function() {
+        $('#volumeRange').val(parseInt(config.sound.volume))
+        
+        $('#inputGroup_sound_dev').val(config.sound.output_device)
+    
+        for(index in screen_dev_list){
+            if(screen_dev_list[index].connected==1){
+                //console.log(index)
+                $('#inputGroup_screen_dev').val(index)
+
+                screen_dev_list[index].modes.forEach(item=>{
+                   
+                   const tmpRes = `${item.width}x${item.height}`
+                   //console.log(tmpRes) 
+                   $('#inputResolution').append($('<option>',{
+                        value: tmpRes,
+                        text : tmpRes
+                    }))
+                })
+                $('#inputResolution').val(config.screen.resolution)
+
+                $('#orientationSelectForm').val(config.screen.orientation)
+
+                if(config.screen.autoTurnOff==1){
+                    $('#autoTurnOff_toggle').bootstrapToggle('on')
+                }else{
+                    $('#autoTurnOff_toggle').bootstrapToggle('off') 
+                }
+            }
+        }
+        
+
+    })
+
+    function save_ss_settings(){
+        config.sound.output_device =$('#inputGroup_sound_dev').val()
+        config.sound.volume = $('#volumeRange').val()
+
+        //console.log("save screen settings")
+        config.screen.orientation =$('#orientationSelectForm').val()
+        config.screen.resolution = $('#inputResolution').val()
+        config.screen.autoTurnOff = +$('#autoTurnOff_toggle').prop('checked')
+        fetch_save_config()
+    }

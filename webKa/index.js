@@ -5,64 +5,66 @@
 "use strict";
 
 const helperFuncs = require('./assets/helperFuncs');
-
+const scribbles = require('scribbles');
 
 const express = require("express");
 const session = require("express-session");
 const basicAuth = require('express-basic-auth')
 const fileUpload = require('express-fileupload');
 const flash = require("connect-flash");
+var xrandrParse = require('xrandr-parse');
 //const assets = require("./assets");
 const archiver = require("archiver");
-var xrandrParse = require('xrandr-parse');
 const fs = require("fs");
 const rimraf = require("rimraf");
 const path = require("path");
+var Netmask = require('netmask').Netmask
 
-const { exec } = require('child_process');
+const { exec, execSync } = require('child_process');
 const fastFolderSizeSync = require('fast-folder-size/sync')
 
 const file_tools = require("../meta/tools/file_tools");
 
 var bodyParser = require('body-parser');
 
-function execPromise(cmd) {
+async function execPromise(cmd) {
   return new Promise((resolve, reject) => {
     exec(cmd, (error, stdout, stderr) => {
       if (error) {
-        console.warn(error)
+        scribbles.warn(error)
       }
-      //console.log(`sudo exec: ${cmd} resault ${stdout}`)
-      resolve(stdout? stdout : stderr);
+      //scribbles.log(`sudo exec: ${cmd} resault ${stdout}`)
+      resolve(stdout ? stdout : stderr);
     })
   })
- }
+}
 
 
 
 const port = 80
 const app = express();
 // var server = https.createServer(options, app).listen(port, function(){
-//   console.log("Express server listening on port " + port);
+//   scribbles.log("Express server listening on port " + port);
 // });
 const http = app.listen(port);
 
 app.set("views", path.join(__dirname, "views"));
 app.use('/meta', express.static('/home/playerok/playerok/meta'))
+app.use('/logs', express.static('/home/playerok/playerok/logs'))
 app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/css')))
-app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js'))) 
-app.use('/jquery', express.static(path.join(__dirname, 'node_modules/jquery/dist'))) 
-app.use('/bootstrap5-toggle', express.static(path.join(__dirname, 'node_modules/bootstrap5-toggle'))) 
-app.use('/treeview', express.static(path.join(__dirname, 'bower_components/bootstrap-treeview/dist'))) 
-app.use('/node_modules', express.static(path.join(__dirname, 'node_modules'))) 
-app.use('/bootstrap-icons', express.static(path.join(__dirname, 'node_modules/bootstrap-icons'))) 
+app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js')))
+app.use('/jquery', express.static(path.join(__dirname, 'node_modules/jquery/dist')))
+app.use('/bootstrap5-toggle', express.static(path.join(__dirname, 'node_modules/bootstrap5-toggle')))
+app.use('/treeview', express.static(path.join(__dirname, 'bower_components/bootstrap-treeview/src/js')))
+app.use('/node_modules', express.static(path.join(__dirname, 'node_modules')))
+app.use('/bootstrap-icons', express.static(path.join(__dirname, 'node_modules/bootstrap-icons')))
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/icons", express.static(path.join(__dirname, "views/icons")));
 app.use("/data", express.static(path.join(__dirname, "data")));
 app.set('view engine', 'pug')
 
 var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
-if(config.security.auth==1){
+if (config.security.auth == 1) {
   app.use(basicAuth({
     users: { [config.security.admin_login]: config.security.admin_pass },
     challenge: true
@@ -75,8 +77,14 @@ if(config.security.auth==1){
   });
 }
 
+scribbles.config({
+  logLevel: config.log.level,
+  format: '{time} [{fileName}] <{logLevel}> {message}'
+})
+
+
 app.get('/reboot', function (req, res) {
-  console.log("time to reboot")
+  scribbles.log("time to reboot")
   execPromise('sudo reboot')
   return res.redirect('/');
 });
@@ -86,7 +94,7 @@ app.get('/power_off', function (req, res) {
   return res.redirect('/');
 });
 
- 
+
 
 
 //----------------CONFIG------------------------------
@@ -108,9 +116,9 @@ app.use(
 
 
 function relative(...paths) {
-  
+
   var finalPath = paths.reduce((a, b) => path.join(a, b), process.cwd());
-   
+
   // if (path.relative(process.cwd(), finalPath).startsWith("..")) {
   //   throw new Error("Failed to resolve path outside of the working directory");
   // }
@@ -155,9 +163,9 @@ app.use((req, res, next) => {
 
 
 app.all("/data*", (req, res, next) => {
-  
-  res.filename = '../data'+req.params[0];
-  //console.log("all filename: " + res.filename)
+
+  res.filename = '../data' + req.params[0];
+  //scribbles.log("all filename: " + res.filename)
 
   let fileExists = new Promise((resolve, reject) => {
     // check if file exists
@@ -183,9 +191,9 @@ app.all("/data*", (req, res, next) => {
 
 app.post("/data/*@move", (req, res) => {
   const move_data = JSON.parse(Object.keys(req.body)[0])
-  move_data.new_path_val = '../'+move_data.new_path_val
+  move_data.new_path_val = '../' + move_data.new_path_val
   res.filename = "../data/" + req.params[0]
-  console.log("lets move: " + move_data.file_name + " from "+ res.filename + "  to  " + move_data.new_path_val)
+  scribbles.log("lets move: " + move_data.file_name + " from " + res.filename + "  to  " + move_data.new_path_val)
 
   new Promise((resolve, reject) => {
     fs.access(relative(res.filename), fs.constants.W_OK, (err) => {
@@ -209,26 +217,26 @@ app.post("/data/*@move", (req, res) => {
         );
       })
         .then(() => {
-          console.log("move ok")
+          scribbles.log("move ok")
           req.flash("success", "Files renamed. ");
           res.redirect("back");
         })
         .catch((err) => {
-          console.warn(err);
+          scribbles.warn(err);
           req.flash("error", "Unable to rename some files: " + err);
           res.redirect("back");
         });
     })
     .catch((err) => {
-      console.warn(err);
+      scribbles.warn(err);
       req.flash("error", err.toString());
       res.redirect("back");
     });
 });
 
 
-app.post('/data/*@upload', function(req, res) {
-  let file_path = req.url.replace("@upload",'')
+app.post('/data/*@upload', function (req, res) {
+  let file_path = req.url.replace("@upload", '')
 
   let sampleFile;
   let uploadPath;
@@ -239,10 +247,10 @@ app.post('/data/*@upload', function(req, res) {
 
   // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
   sampleFile = req.files.file;
-  uploadPath = '../'+file_path + sampleFile.name;
+  uploadPath = '../' + file_path + sampleFile.name;
 
   // Use the mv() method to place the file somewhere on your server
-  sampleFile.mv(uploadPath, function(err) {
+  sampleFile.mv(uploadPath, function (err) {
     if (err)
       return res.status(500).send(err);
 
@@ -254,9 +262,9 @@ app.post("/data/*@mkdir", (req, res) => {
   res.filename = "../data/" + req.params[0];
 
   //let folder = req.body.folder;
-  let folder= JSON.parse(Object.keys(req.body)[0]).folder_name
+  let folder = JSON.parse(Object.keys(req.body)[0]).folder_name
 
-  console.log("lets make directory " + res.filename + folder)
+  scribbles.log("lets make directory " + res.filename + folder)
   if (!folder || folder.length < 1) {
     return res.status(400).end();
   }
@@ -273,14 +281,14 @@ app.post("/data/*@mkdir", (req, res) => {
 
   fileExists
     .then((stats) => {
-      console.log("Folder exists, cannot overwrite. ")
+      scribbles.log("Folder exists, cannot overwrite. ")
       req.flash("error", "Folder exists, cannot overwrite. ");
       res.redirect("back");
     })
     .catch((err) => {
       fs.mkdir(relative(res.filename, folder), (err) => {
         if (err) {
-          console.warn(err);
+          scribbles.warn(err);
           req.flash("error", err.toString());
           res.redirect("back");
           return;
@@ -294,12 +302,12 @@ app.post("/data/*@mkdir", (req, res) => {
 app.post("/data/*@delete", (req, res) => {
   const delete_data = JSON.parse(Object.keys(req.body)[0])
   res.filename = "../data/" + req.params[0];
-  console.log("filename to delet: " + res.filename + delete_data.del_name_val)
+  scribbles.log("filename to delet: " + res.filename + delete_data.del_name_val)
 
   //let files = JSON.parse(req.body.files);
   let files = [delete_data.del_name_val]
   if (!files || !files.map) {
-    console.log("error", "No files selected.");
+    scribbles.log("error", "No files selected.");
     req.flash("error", "No files selected.");
     res.redirect("back");
     return; // res.status(400).end();
@@ -339,7 +347,7 @@ app.post("/data/*@delete", (req, res) => {
           if (op) {
             op(relative(res.filename, f.name), (err) => {
               if (err) {
-                console.log("del failed");
+                scribbles.log("del failed");
                 return reject(err);
               }
               resolve();
@@ -349,18 +357,18 @@ app.post("/data/*@delete", (req, res) => {
       });
       Promise.all(promises)
         .then(() => {
-          console.log("success", "Files deleted. ");
+          scribbles.log("success", "Files deleted. ");
           req.flash("success", "Files deleted. ");
           res.redirect("back");
         })
         .catch((err) => {
-          console.warn(err);
+          scribbles.warn(err);
           req.flash("error", "Unable to delete some files: " + err);
           res.redirect("back");
         });
     })
     .catch((err) => {
-      console.warn(err);
+      scribbles.warn(err);
       req.flash("error", err.toString());
       res.redirect("back");
     });
@@ -372,7 +380,7 @@ app.get("/*@download", (req, res) => {
   let files = null;
   try {
     files = JSON.parse(req.query.files);
-  } catch (e) {}
+  } catch (e) { }
   if (!files || !files.map) {
     req.flash("error", "No files selected.");
     res.redirect("back");
@@ -397,7 +405,7 @@ app.get("/*@download", (req, res) => {
     .then((files) => {
       let zip = archiver("zip", {});
       zip.on("error", function (err) {
-        console.warn(err);
+        scribbles.warn(err);
         res.status(500).send({
           error: err.message,
         });
@@ -420,7 +428,7 @@ app.get("/*@download", (req, res) => {
       zip.finalize();
     })
     .catch((err) => {
-      console.warn(err);
+      scribbles.warn(err);
       req.flash("error", err.toString());
       res.redirect("back");
     });
@@ -429,8 +437,8 @@ app.get("/*@download", (req, res) => {
 app.post("/data/*@rename", (req, res) => {
   const rename_data = JSON.parse(Object.keys(req.body)[0])
   //res.filename = req.params[0];
-  console.log("lets rename: " + rename_data.old_name_val + "  to  " + rename_data.new_name_val)
-  console.log("filename: " + res.filename)
+  scribbles.log("lets rename: " + rename_data.old_name_val + "  to  " + rename_data.new_name_val)
+  scribbles.log("filename: " + res.filename)
   res.filename = "../data/" + req.params[0];
   new Promise((resolve, reject) => {
     fs.access(relative(res.filename), fs.constants.W_OK, (err) => {
@@ -454,18 +462,18 @@ app.post("/data/*@rename", (req, res) => {
         );
       })
         .then(() => {
-          console.log("rename ok")
+          scribbles.log("rename ok")
           req.flash("success", "Files renamed. ");
           res.redirect("back");
         })
         .catch((err) => {
-          console.warn(err);
+          scribbles.warn(err);
           req.flash("error", "Unable to rename some files: " + err);
           res.redirect("back");
         });
     })
     .catch((err) => {
-      console.warn(err);
+      scribbles.warn(err);
       req.flash("error", err.toString());
       res.redirect("back");
     });
@@ -473,7 +481,7 @@ app.post("/data/*@rename", (req, res) => {
 
 app.get("/", (req, res) => {
   let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
-  res.render("home",{
+  res.render("home", {
     pageName: "home",
     config: config
   });
@@ -483,13 +491,13 @@ app.get("/", (req, res) => {
 
 app.get("/Scheduler", (req, res) => {
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
-  let tasks = JSON.parse(rawdata); 
-  //console.log(JSON.stringify(tasks,null,2))
+  let tasks = JSON.parse(rawdata);
+  //scribbles.log(JSON.stringify(tasks,null,2))
   rawdata = fs.readFileSync('../meta/playlist-table.json');
-  let playlist_table = JSON.parse(rawdata); 
-  //console.log(JSON.stringify(playlist_table,null,2))
+  let playlist_table = JSON.parse(rawdata);
+  //scribbles.log(JSON.stringify(playlist_table,null,2))
   //
-  res.render("scheduler",{
+  res.render("scheduler", {
     pageName: "Scheduler",
     tasks: tasks,
     playlist_table: playlist_table,
@@ -499,13 +507,13 @@ app.get("/Scheduler", (req, res) => {
 
 app.post("/Scheduler/delete", (req, res) => {
   const task_to_delete = JSON.parse(Object.keys(req.body)[0])
-  console.log('task index to delete ' + task_to_delete.index_to_delete)
+  scribbles.log('task index to delete ' + task_to_delete.index_to_delete)
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
   let tasks = JSON.parse(rawdata);
 
-  tasks.splice(task_to_delete.index_to_delete-1,1)
-  console.log(tasks)
-  fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(tasks,null,2))
+  tasks.splice(task_to_delete.index_to_delete - 1, 1)
+  scribbles.log(tasks)
+  fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(tasks, null, 2))
 
   return res.end('done')
 });
@@ -515,16 +523,16 @@ app.post("/Scheduler/edit", (req, res) => {
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
   let tasks = JSON.parse(rawdata);
 
-  console.log("Change index " + (task_to_edit.index-1) + " edit from " + tasks[(task_to_edit.index-1)].name + " to " + task_to_edit.name)
+  scribbles.log("Change index " + (task_to_edit.index - 1) + " edit from " + tasks[(task_to_edit.index - 1)].name + " to " + task_to_edit.name)
 
-  tasks[(task_to_edit.index-1)].name = task_to_edit.name
-  tasks[(task_to_edit.index-1)].path = task_to_edit.path
-  tasks[(task_to_edit.index-1)].type = task_to_edit.type
-  tasks[(task_to_edit.index-1)].start_time = task_to_edit.start_time
-  tasks[(task_to_edit.index-1)].end_time = task_to_edit.end_time
-  tasks[(task_to_edit.index-1)].day_of_week = task_to_edit.day_of_week
+  tasks[(task_to_edit.index - 1)].name = task_to_edit.name
+  tasks[(task_to_edit.index - 1)].path = task_to_edit.path
+  tasks[(task_to_edit.index - 1)].type = task_to_edit.type
+  tasks[(task_to_edit.index - 1)].start_time = task_to_edit.start_time
+  tasks[(task_to_edit.index - 1)].end_time = task_to_edit.end_time
+  tasks[(task_to_edit.index - 1)].day_of_week = task_to_edit.day_of_week
 
-  let data = JSON.stringify(tasks,null,2)
+  let data = JSON.stringify(tasks, null, 2)
   fs.writeFileSync('../meta/scheduler-table.json', data)
 
   return res.end('done')
@@ -537,7 +545,7 @@ app.post("/Scheduler/new", (req, res) => {
 
   tasks.push(new_task)
 
-  let data = JSON.stringify(tasks,null,2)
+  let data = JSON.stringify(tasks, null, 2)
   fs.writeFileSync('../meta/scheduler-table.json', data)
 
   return res.end('done')
@@ -547,7 +555,7 @@ app.post("/Scheduler/new", (req, res) => {
 //----------------FILE MANAGER------------------------------
 app.get("/data*", (req, res) => {
   if (res.stats.error) {
-    console.log("Error : " + res.stats.error);
+    scribbles.log("Error : " + res.stats.error);
     res.render(
       "list",
       flashify(req, {
@@ -558,7 +566,7 @@ app.get("/data*", (req, res) => {
       })
     );
   } else if (res.stats.isDirectory()) {
-    
+
     if (!req.url.endsWith("/")) {
       return res.redirect(req.url + "/");
     }
@@ -568,7 +576,7 @@ app.get("/data*", (req, res) => {
         if (err) {
           return reject(err);
         }
-        //console.log(filenames);
+        //scribbles.log(filenames);
         return resolve(filenames);
       });
     });
@@ -580,15 +588,15 @@ app.get("/data*", (req, res) => {
             new Promise((resolve, reject) => {
               fs.stat(relative(res.filename, f), (err, stats) => {
                 if (err) {
-                  console.warn(err);
+                  scribbles.warn(err);
                   return resolve({
                     name: f,
                     error: err,
                   });
                 }
-                let type = file_tools.check_type(f,stats)
-                let size = (type == 'dir')? (fastFolderSizeSync(res.filename+f)) : stats.size
-                //console.log(`For:${res.filename+f} type:${type} size:${size}`)
+                let type = file_tools.check_type(f, stats)
+                let size = (type == 'dir') ? (fastFolderSizeSync(res.filename + f)) : stats.size
+                //scribbles.log(`For:${res.filename+f} type:${type} size:${size}`)
                 resolve({
                   name: f,
                   type: type,
@@ -601,10 +609,10 @@ app.get("/data*", (req, res) => {
 
         Promise.all(promises)
           .then((files) => {
-            files.sort(function(a, b) {
+            files.sort(function (a, b) {
               //if (a.isdirectory != b.isdirectory) {        // Is one a folder and
               if ((a.type == 'dir') != (b.type == 'dir')) {        // Is one a folder and
-                 return ((a.type == 'dir') ? -1 : 1);       //  the other a file?
+                return ((a.type == 'dir') ? -1 : 1);       //  the other a file?
               }                                      // If not, compare the
               return a.name.localeCompare(b.name);   //  the names.
             });
@@ -619,10 +627,10 @@ app.get("/data*", (req, res) => {
                 config: config
               })
             );
-            //console.log('render list')
+            //scribbles.log('render list')
           })
           .catch((err) => {
-            console.error(err);
+            scribbles.error(err);
             res.render(
               "list",
               flashify(req, {
@@ -635,7 +643,7 @@ app.get("/data*", (req, res) => {
           });
       })
       .catch((err) => {
-        console.warn(err);
+        scribbles.warn(err);
         res.render(
           "list",
           flashify(req, {
@@ -664,7 +672,7 @@ app.get("/Editor", (req, res) => {
   let playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
   let content_table = JSON.parse(fs.readFileSync('../meta/content-table.json'))
   //
-  res.render("editor",{
+  res.render("editor", {
     pageName: 'Editor',
     playlist_table: playlist_table,
     content_table: content_table,
@@ -672,98 +680,98 @@ app.get("/Editor", (req, res) => {
   });
 });
 
-app.get("/get_playlist*",(req, res) => {
+app.get("/get_playlist*", (req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const path = '../'+req.url.split('?').slice(-1)[0]
-  //console.log("GET PATH PLAYLIST: "+ path)
+  const path = '../' + req.url.split('?').slice(-1)[0]
+  //scribbles.log("GET PATH PLAYLIST: "+ path)
   let playlist = JSON.parse(fs.readFileSync(path))
   let content_table = JSON.parse(fs.readFileSync('../meta/content-table.json'))
-  //console.log ("get playlist name: " + JSON.stringify(playlist.playlist_name))
+  //scribbles.log ("get playlist name: " + JSON.stringify(playlist.playlist_name))
   res.send({
     playlist: playlist,
-    content_table: content_table 
+    content_table: content_table
   })
 });
 
-app.post("/save_playlist*",(req, res) => {
+app.post("/save_playlist*", (req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
   const inData = JSON.parse(Object.keys(req.body)[0])
-  var path ='../'+ inData.path 
+  var path = '../' + inData.path
   const playlist = inData.playlist
   // const path = req.url.split('?').slice(-1)[0]
   let scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
   let playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
-  let playlistIndex = playlist_table.findIndex(s=>s.path==inData.path)
-  if (playlistIndex<0){
-    console.log("Add new playlist name: "+ playlist.playlist_name)
+  let playlistIndex = playlist_table.findIndex(s => s.path == inData.path)
+  if (playlistIndex < 0) {
+    scribbles.log("Add new playlist name: " + playlist.playlist_name)
     playlist_table.push({
       name: playlist.playlist_name,
       path: inData.path,
       type: 'multimedia'
     })
-    playlistIndex = playlist_table.length-1
-  }else{
+    playlistIndex = playlist_table.length - 1
+  } else {
 
-    if(inData.path.split('/').slice(-1)!=playlist.playlist_name){
+    if (inData.path.split('/').slice(-1) != playlist.playlist_name) {
       if (fs.existsSync(path)) {
-        fs.unlink(path,(err => {
-          if (err) console.log(err);
+        fs.unlink(path, (err => {
+          if (err) scribbles.log(err);
         }))
       }
 
-      const new_path =  'data/playlists/'+playlist.playlist_name+".json"
-      scheduler_table.forEach(item =>{
-        if(item.path==playlist_table[playlistIndex].path){
+      const new_path = 'data/playlists/' + playlist.playlist_name + ".json"
+      scheduler_table.forEach(item => {
+        if (item.path == playlist_table[playlistIndex].path) {
           item.path = new_path
-          }
+        }
       })
 
       playlist_table[playlistIndex].path = new_path
       playlist_table[playlistIndex].name = playlist.playlist_name
-      path = '../'+playlist_table[playlistIndex].path
-      console.log(`rename playlist name OK`)
+      path = '../' + playlist_table[playlistIndex].path
+      scribbles.log(`rename playlist name OK`)
     }
   }
 
-  fs.writeFileSync(('../meta/scheduler-table.json'), JSON.stringify(scheduler_table,null,2))
-  fs.writeFileSync(('../meta/playlist-table.json'), JSON.stringify(playlist_table,null,2))
-  
-  //console.log("Save PLAYLIST:"+ JSON.stringify(inData,null,2)+" path: "+path)
-  fs.writeFileSync((path), JSON.stringify(playlist,null,2))
+  fs.writeFileSync(('../meta/scheduler-table.json'), JSON.stringify(scheduler_table, null, 2))
+  fs.writeFileSync(('../meta/playlist-table.json'), JSON.stringify(playlist_table, null, 2))
+
+  //scribbles.log("Save PLAYLIST:"+ JSON.stringify(inData,null,2)+" path: "+path)
+  fs.writeFileSync((path), JSON.stringify(playlist, null, 2))
 
   return res.end('done')
 });
 
-app.post("/delete_playlist*",(req, res) => {
+app.post("/delete_playlist*", (req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
   const inData = JSON.parse(Object.keys(req.body)[0])
 
-  console.log(`Delete name: ${inData.name_to_delete} on index: ${inData.index_to_delete}`)
+  scribbles.log(`Delete name: ${inData.name_to_delete} on index: ${inData.index_to_delete}`)
   // const path = req.url.split('?').slice(-1)[0]
-  
+
 
   let playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
 
-  const path ='../'+playlist_table[inData.index_to_delete-1].path
+  const path = '../' + playlist_table[inData.index_to_delete - 1].path
 
   let scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
-  //console.log(`before------------------- \n${JSON.stringify(scheduler_table,null,2)}`);
-  scheduler_table = scheduler_table.filter(task => task.path!=playlist_table[inData.index_to_delete-1].path)
-  //console.log(`after------------------- \n${JSON.stringify(scheduler_table,null,2)}`);
-  fs.writeFileSync(('../meta/scheduler-table.json'), JSON.stringify(scheduler_table,null,2))
+  //scribbles.log(`before------------------- \n${JSON.stringify(scheduler_table,null,2)}`);
+  scheduler_table = scheduler_table.filter(task => task.path != playlist_table[inData.index_to_delete - 1].path)
+  //scribbles.log(`after------------------- \n${JSON.stringify(scheduler_table,null,2)}`);
+  fs.writeFileSync(('../meta/scheduler-table.json'), JSON.stringify(scheduler_table, null, 2))
 
-  playlist_table.splice(inData.index_to_delete-1,1) 
-  fs.writeFileSync(('../meta/playlist-table.json'), JSON.stringify(playlist_table,null,2))
+  playlist_table.splice(inData.index_to_delete - 1, 1)
+  fs.writeFileSync(('../meta/playlist-table.json'), JSON.stringify(playlist_table, null, 2))
 
-  
-  
-  console.log("Delete PLAYLIST: "+ JSON.stringify(inData,null,2)+" path: "+path)
+
+
+  scribbles.log("Delete PLAYLIST: " + JSON.stringify(inData, null, 2) + " path: " + path)
   //fs.writeFileSync((path), JSON.stringify(playlist,null,2))
   if (fs.existsSync(path)) {
     fs.unlink(path, (err => {
-      if (err) console.log(err);
+      if (err) scribbles.log(err);
       else {
-        console.log("Deleted OK");
+        scribbles.log("Deleted OK");
       }
     }))
   }
@@ -775,35 +783,99 @@ app.post("/delete_playlist*",(req, res) => {
 //----------------SETTINGS------------------------------
 app.get("/Settings", (req, res) => {
   let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
-  let audio_dev_list=['Analog', 'HDMI']
 
-  //execPromise(`xrandr`))
-  execPromise(`sudo -u playerok xrandr -display :0.0`).then(responses=>{
-    var screen_dev_list=xrandrParse(responses)
-    //console.log(JSON.stringify(screen_dev_list,null,2))
-    res.render("settings",{
+
+  Promise.all([
+    execPromise(`ip -j a`),
+    execPromise(`ip -j r`),
+    // execPromise(`nmcli device show eth0 | grep IP4.DNS`),
+    // execPromise(`nmcli device show eth1 | grep IP4.DNS`),
+    // execPromise(`nmcli device show wlan0 | grep IP4.DNS`),
+    execPromise(`sudo -u playerok xrandr -display :0.0`)
+
+  ]).then(responses => {
+    let net_info = {};
+    //console.log(config.net['eth0'].DHCP)
+
+    let netAddrs = JSON.parse(responses[0])
+    //console.log(`netAddr:${responses[0]}`)
+    let netRoutes = JSON.parse(responses[1])
+    let screen_dev_list = xrandrParse(responses[2])
+    const ifMass = ['eth0', 'eth1', 'wlan0'];
+
+    for (let dev of netAddrs) {
+      for (let iface of ifMass) {
+        try {
+          if (dev.ifname == iface) {
+            net_info[iface] = {}
+            if (iface == 'eth0' || iface == 'eth1') {
+              net_info[iface]["carrier"] = execSync(`head /sys/class/net/${iface}/carrier`).toString().replace("\n", '')
+            } else {
+              if (dev.operstate == 'UP') {
+                net_info[iface]["carrier"] = parseInt(execSync(`nmcli -f ACTIVE,SIGNAL dev wifi list | grep yes`).toString().replace("yes", ''))
+              } else {
+                net_info[iface]["carrier"] = 0
+              }
+            }
+
+            //(config.net[iface].DHCP == 1) &&
+            if ((dev.operstate == 'UP')) {
+              net_info[iface]["IP"] = dev.addr_info[0].local
+              //net_info[iface]['IP'] = dev.addr_info[0].local
+              let block = new Netmask(`${dev.addr_info[0].local}/${dev.addr_info[0].prefixlen}`)
+              net_info[iface]['net_mask'] = block.mask
+              for (let route of netRoutes) {
+                if (route.dev == iface) {
+                  net_info[iface]['gateway'] = route.gateway
+                  break
+                }
+              }
+              if(config.net[iface].DHCP == 1){
+                net_info[iface]['DNS'] = execSync(`nmcli device show ${iface} | grep IP4.DNS`).toString().split(":")[1].replace(/ /g, '').replace("\n", '')
+              }else{
+                net_info[iface]['DNS'] = config.net[iface].DNS
+              }
+            } else if (config.net[iface].DHCP == 0) {
+              net_info[iface]["IP"] = config.net[iface].IP
+              net_info[iface]['net_mask'] = config.net[iface].net_mask
+              net_info[iface]['gateway'] = config.net[iface].gateway
+              net_info[iface]['DNS'] = config.net[iface].DNS
+            } else {
+              net_info[iface]["IP"] = ''
+              net_info[iface]['net_mask'] = ''
+              net_info[iface]['gateway'] = ''
+              net_info[iface]['DNS'] = ''
+            }
+          }
+        } catch (err) {
+          scribbles.warn(`Net info ${iface} error:${err}`)
+        }
+      }
+    }
+    //console.log(net_info)
+
+    res.render("settings", {
       pageName: 'Settings',
       config: config,
-      audio_dev_list: audio_dev_list,
-      screen_dev_list: screen_dev_list
+      net_info: net_info,
+      screen_dev_list: screen_dev_list,
+
     })
   })
-  //console.log(JSON.stringify(screen_devs_list,null,2))
 
-  //let screen_dev_list=['HDMI-1', 'HDMI-2']
-  //
-  
+
+
 })
 
-app.post("/save_config",(req, res) => {
+app.post("/save_config", (req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
   const inData = JSON.parse(Object.keys(req.body)[0])
 
-  try{
-    fs.writeFileSync('../meta/player_config.json', JSON.stringify(inData,null,2))
-    console.log(`Config save OK`)
-  }catch(err){
-    console.warn(`Write config error: ${err}`)
+  try {
+    fs.writeFileSync('../meta/player_config.json', JSON.stringify(inData, null, 2))
+    scribbles.log(`Config save OK`)
+  } catch (err) {
+    scribbles.warn(`Write config error: ${err}`)
   }
 
   return res.end('done')
@@ -811,50 +883,50 @@ app.post("/save_config",(req, res) => {
 
 
 //----------------System------------------------------
-app.get("/get_time",(req, res) => {
+app.get("/get_time", (req, res) => {
   let date_ob = new Date();
 
   res.send({
     h: date_ob.getHours(),
-    m: date_ob.getMinutes() 
+    m: date_ob.getMinutes()
   })
 });
 
-app.get("/get_date",(req, res) => {
+app.get("/get_date", (req, res) => {
   let date_ob = new Date();
-  //console.log(`Current date: ${date_ob.getFullYear()} - ${date_ob.getMonth()} - ${date_ob.getDate()}`)
+  //scribbles.log(`Current date: ${date_ob.getFullYear()} - ${date_ob.getMonth()} - ${date_ob.getDate()}`)
 
   res.send({
     d: date_ob.getDate(),
-    m: (date_ob.getMonth()+1),
+    m: (date_ob.getMonth() + 1),
     y: date_ob.getFullYear()
   })
 });
 
-async function setTimeout(date, time){
+async function setTimeout(date, time) {
   await exec(`sudo timedatectl set-ntp false`)
 
   await exec(`date -s '${date} ${time}'`, (error, stdout, stderr) => {
     if (error) {
-      console.warn(error)
+      scribbles.warn(error)
     }
-    console.log(`Set time: '${date} ${time}' resault ${stdout}`)
+    scribbles.log(`Set time: '${date} ${time}' resault ${stdout}`)
   })
 }
 
-app.post("/set_time",(req, res) => {
+app.post("/set_time", (req, res) => {
   //const playlist = JSON.parse(Object.keys(req.body)[0])
   const inData = JSON.parse(Object.keys(req.body)[0])
-  console.log(`input time: ${inData.time} date: ${inData.date}`)
-  
+  scribbles.log(`input time: ${inData.time} date: ${inData.date}`)
+
   setTimeout(inData.date, inData.time)
 
-  try{
+  try {
     let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
     config.time.NTP = '0'
-    fs.writeFileSync('../meta/player_config.json', JSON.stringify(config,null,2))
-  }catch(err){
-    console.warn(`Write ntp config error: ${err}`)
+    fs.writeFileSync('../meta/player_config.json', JSON.stringify(config, null, 2))
+  } catch (err) {
+    scribbles.warn(`Write ntp config error: ${err}`)
   }
   return res.end('done')
 
@@ -862,8 +934,8 @@ app.post("/set_time",(req, res) => {
 
 
 
-app.get("/get_system_status",(req, res) => {
-  try{
+app.get("/get_system_status", (req, res) => {
+  try {
     var osu = require('node-os-utils')
     var cpu = osu.cpu
     var drive = osu.drive
@@ -874,38 +946,50 @@ app.get("/get_system_status",(req, res) => {
       drive.info(),
       mem.info(),
       execPromise(`sensors -j coretemp-isa-0000`)
-    ]).then(responses =>{
-      
+    ]).then(responses => {
+
       let rawSensors = JSON.parse(responses[3])
 
-      var temp = (rawSensors['coretemp-isa-0000']['Core 0']['temp2_input'] + rawSensors['coretemp-isa-0000']['Core 1']['temp3_input'] + rawSensors['coretemp-isa-0000']['Core 2']['temp4_input'] + rawSensors['coretemp-isa-0000']['Core 3']['temp5_input'])/4
+      var temp = (rawSensors['coretemp-isa-0000']['Core 0']['temp2_input'] + rawSensors['coretemp-isa-0000']['Core 1']['temp3_input'] + rawSensors['coretemp-isa-0000']['Core 2']['temp4_input'] + rawSensors['coretemp-isa-0000']['Core 3']['temp5_input']) / 4
 
 
-      status={
+      status = {
         cpu_load: responses[0],
-        ram_usage: `${parseFloat(responses[2].usedMemMb/1000).toFixed(1)}/${parseFloat(responses[2].totalMemMb/1000).toFixed(1)}`,
+        ram_usage: `${parseFloat(responses[2].usedMemMb / 1000).toFixed(1)}/${parseFloat(responses[2].totalMemMb / 1000).toFixed(1)}`,
         hdd_usage: `${responses[1].usedGb}/${responses[1].totalGb}`,
         soc_temp: temp
       }
 
       res.send({
-        status:status
+        status: status
       })
     })
-  }catch{}  
-  
+  } catch { }
+
 });
 
 
 
-app.get("/get_screenshot",(req, res) => {
-  console.log(`make a screenshot`)
+app.get("/get_screenshot", (req, res) => {
+  scribbles.log(`make a screenshot`)
   let startTime = Date.now()
-  execPromise(`sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png`).then(()=>{
-    //console.log(`startTime:${startTime}  endTime:${Date.now()}  delta:${Date.now() - startTime}`)
+  execPromise(`sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png`).then(() => {
+    //scribbles.log(`startTime:${startTime}  endTime:${Date.now()}  delta:${Date.now() - startTime}`)
     res.send('done')
   })
-    
+
+})
+
+app.get("/get_logs", (req, res) => {
+
+  try {
+    let logs = fs.readFileSync('/home/playerok/playerok/logs/playerok.log')
+    res.send(logs)
+    scribbles.log(`send logs ok`)
+  } catch {
+    scribbles.error(`send logs fail`)
+  }
+
 })
 
 
@@ -914,8 +998,8 @@ app.get("/get_screenshot",(req, res) => {
 //     //------to-do-------chek playlist table---------------------
 // })
 
-console.log(`Listening on port ${port}`);
+scribbles.log(`Listening on port ${port}`);
 
-//console.log(os.cpus());
-//console.log(os.totalmem());
-//console.log(os.freemem())
+//scribbles.log(os.cpus());
+//scribbles.log(os.totalmem());
+//scribbles.log(os.freemem())

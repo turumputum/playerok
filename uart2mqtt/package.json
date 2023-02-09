@@ -12,6 +12,7 @@
   "dependencies": {
     "mqtt": "^4.3.7",
     "node-watch": "^0.7.3",
+    "scribbles": "^1.5.0",
     "serialport": "^10.5.0"
   }
 }

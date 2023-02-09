@@ -9,14 +9,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "log-timestamp": "^0.3.0",
+    "chokidar": "^3.5.3",
+    "cidr-to-netmask": "^1.0.9",
     "log-to-file": "^3.0.3",
-    "netmask": "^2.0.2",
     "node-watch": "^0.7.3",
     "nodemon": "^2.0.20",
+    "paclient": "^0.0.2",
+    "scribbles": "^1.5.0",
     "sudo-js": "^1.0.2",
     "usb": "^2.5.2",
-    "usb-detection": "^4.14.1"
+    "xrandr-parse": "^1.0.0"
   },
   "devDependencies": {
     "electron-rebuild": "^3.2.9"

@@ -8,25 +8,37 @@ block content
 
     div(style='margin-top: 76px;')
         main.my-2.mx-auto(style='width: 950px;')
+            #alert_config_save_ok.mx-auto.alert.alert-success(role='alert')
+                | Save config OK
             .row.mx-auto
                 .col
                     include cards/netSettings-card.pug
             .row.justify-content-md-center.my-3.mx-auto(style='width: 950px;')
                 .col-4
                     include cards/timeSettings-card.pug
+                .col-8
+                    include cards/screen&sound_settigs_card.pug
+                    //include cards/soundSettings_card.pug
+                //- .col-4
+                //-     include cards/screenSettings_card.pug
+            //.row.justify-content-md-center.my-3.ms-2(style='width: 620px;')
+            .row.justify-content-md-center.my-3.mx-auto(style='width: 950px;')
+                .col-8
+                    include cards/securitySettings-card.pug
                 .col-4
-                    include cards/soundSettings_card.pug
-                .col-4
-                    include cards/screenSettings_card.pug
-            .row.justify-content-md-center.my-3.ms-2(style='width: 620px;')
-                include cards/securitySettings-card.pug
+                    include cards/logSettings-card.pug
+    
+
     
     
     script.
         let config = !{JSON.stringify(config)}
-        let audio_dev_list = !{JSON.stringify(audio_dev_list)}
+        //let audio_dev_list = !{JSON.stringify(audio_dev_list)}
         let screen_dev_list = !{JSON.stringify(screen_dev_list)}
+        let net_info = !{JSON.stringify(net_info)}
+        console.log(net_info)
 
+        $("#alert_config_save_ok").hide();
 
         function fetch_save_config(){
             fetch('/save_config', {
@@ -38,7 +50,9 @@ block content
                 body: JSON.stringify(config)
             }).then((res) => {
                 console.log("POST config OK, res: ", res)
+                //alert("Hello\nHow are you?");
                 //window.location.reload();
+                //console.log(this)
                 }).catch((err) => {
                 console.log(err)
             })

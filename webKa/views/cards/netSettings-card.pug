@@ -18,10 +18,12 @@
                 //.m-3(style='width: 25rem;')
                 li.list-group-item 
                     .row.mb-2
-                        .col
+                        .col-6
                             span.input-group-text(style='width:7em;') Ethernet 0
                         .col(style='transform: translate(-15px, 2px);')                    
                             input#eth0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                        .col 
+                            i#eth0_carrier.bi.bi-ethernet(style="font-size: 25px;")
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
@@ -29,25 +31,27 @@
                             input#eth0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') IP adress
-                        input#eth0_ip_adress.form-control(type='text' placeholder= config.net.eth0.IP)
+                        input#eth0_ip_adress.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') Net mask
-                        input#eth0_net_mask.form-control(type='text' placeholder= config.net.eth0.net_mask)
+                        input#eth0_net_mask.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') Gateway
-                        input#eth0_gateway.form-control(type='text' placeholder= config.net.eth0.gateway)
+                        input#eth0_gateway.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') DNS
-                        input#eth0_dns.form-control(type='text' placeholder= config.net.eth0.DNS) 
+                        input#eth0_dns.form-control(type='text') 
             
             .col(style='width: 300px;')
                 //.m-3(style='width: 20rem;')
                 li.list-group-item 
                     .row.mb-2
-                        .col
+                        .col-6
                             span.input-group-text(style='width:7em;') Ethernet 1
                         .col(style='transform: translate(-15px, 2px);')                      
                             input#eth1_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                        .col 
+                            i#eth1_carrier.bi.bi-ethernet(style="font-size: 25px;" disabled=true)
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
@@ -58,22 +62,27 @@
                         input#eth1_ip_adress.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') Net mask
-                        input#eth1_net_mask.form-control(type='text' placeholder= config.net.eth1.net_mask)
+                        input#eth1_net_mask.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') Gateway
-                        input#eth1_gateway.form-control(type='text' placeholder= config.net.eth1.gateway)
+                        input#eth1_gateway.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') DNS
-                        input#eth1_dns.form-control(type='text' placeholder= config.net.eth1.DNS ) 
+                        input#eth1_dns.form-control(type='text') 
             
             .col(style='width: 300px;')
                 //.m-3(style='width: 20rem;')
                 li.list-group-item 
                     .row.mb-2
-                        .col
+                        .col-6
                             span.input-group-text(style='width:7em;') Wi-Fi
                         .col(style='transform: translate(-15px, 2px);')                     
                             input#wlan0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                        .col
+                            i#wifi_sig_high.bi.bi-wifi(style="font-size: 25px;" disabled=true)
+                            i#wifi_sig_mid.bi.bi-wifi-2(style="font-size: 25px;" disabled=true)
+                            i#wifi_sig_low.bi.bi-wifi-1(style="font-size: 25px;" disabled=true)
+                            i#wifi_sig_none.bi.bi-wifi-off(style="font-size: 25px;" disabled=true)
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') SSID
                         input#wlan0_SSID.form-control(type='text' placeholder=config.net.wlan0.SSID)
@@ -88,33 +97,35 @@
                             input#wlan0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') IP adress
-                        input#wlan0_ip_adress.form-control(type='text' placeholder= config.net.wlan0.IP aria-label='IP_adress' aria-describedby='basic-addon1')
+                        input#wlan0_ip_adress.form-control(type='text' aria-label='IP_adress' aria-describedby='basic-addon1')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') Net mask
-                        input#wlan0_net_mask.form-control(type='text' placeholder= config.net.wlan0.net_mask aria-label='Net_mask' aria-describedby='basic-addon1')
+                        input#wlan0_net_mask.form-control(type='text' aria-label='Net_mask' aria-describedby='basic-addon1')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') Gateway
-                        input#wlan0_gateway.form-control(type='text' placeholder= config.net.wlan0.gateway aria-label='Gateway' aria-describedby='basic-addon1')
+                        input#wlan0_gateway.form-control(type='text' aria-label='Gateway' aria-describedby='basic-addon1')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') DNS
-                        input#wlan0_dns.form-control(type='text' placeholder= config.net.wlan0.DNS aria-label='Gateway' aria-describedby='basic-addon1') 
+                        input#wlan0_dns.form-control(type='text' aria-label='Gateway' aria-describedby='basic-addon1') 
     
     .card-body
-        button.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' data-bs-target='#confirm_save_net_config_modal') Save
+        button#saveNet.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' onclick = 'save_net_settings()') Save
 
-    #confirm_save_net_config_modal.modal.modal-xl.modal-fullscreen-xl-down.fade(tabindex='-1' aria-labelledby='confirm_save_net_config_modal' aria-hidden='true' data-bs-backdrop="static")
+    #confirm_save_net_config_modal.modal.modal-m.fade(tabindex='-1' aria-labelledby='confirm_save_net_config_modal' aria-hidden='true' data-bs-backdrop="static")
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header(style='background-color: rgb(177, 220, 226);')
                     h4.confirm_save_net_config_modal_title Save network config
                 .modal-body
-                    h4 The system will reboot!
+                    h4 Device will be rebooted! 
  
                 .modal-footer
-                    button.btn.btn-secondary(onclick = 'save_net_config()') Confirm
+                    button.btn.btn-secondary(onclick = 'save_net_config()') Ok
                     button.btn.btn-secondary(onclick = 'cancel_net_config()') Cancel
 
 script.
+    
+
     function save_net_config(){
         $('#confirm_save_net_config_modal').modal('hide')
         save_net_settings()
@@ -135,15 +146,22 @@ script.
             $('#eth0_enable_toggle').bootstrapToggle('off')
         }
 
+        if(net_info.eth0.carrier==1){
+            $('#eth0_carrier').css({"color":"green"})
+        }else{
+            $('#eth0_carrier').css({"color":"grey"})
+        }
+
         if(config.net.eth0.DHCP==1){
             $('#eth0_DHCP_enable_toggle').bootstrapToggle('on')
         }else{
             $('#eth0_DHCP_enable_toggle').bootstrapToggle('off')
         }
-        $('#eth0_ip_adress').val(config.net.eth0.IP)
-        $('#eth0_net_mask').val(config.net.eth0.net_mask)
-        $('#eth0_gateway').val(config.net.eth0.gateway)
-        $('#eth0_dns').val(config.net.eth0.DNS)  
+        $('#eth0_ip_adress').val(net_info.eth0.IP)
+        $('#eth0_net_mask').val(net_info.eth0.net_mask)
+        $('#eth0_gateway').val(net_info.eth0.gateway)
+        $('#eth0_dns').val(net_info.eth0.DNS)  
+
 
         if(config.net.eth1.enable ==1){
             $('#eth1_enable_toggle').bootstrapToggle('on')
@@ -151,15 +169,21 @@ script.
             $('#eth1_enable_toggle').bootstrapToggle('off')
         }
 
+        if(net_info.eth1.carrier==1){
+            $('#eth1_carrier').css({"color":"green"})
+        }else{
+            $('#eth1_carrier').css({"color":"grey"})
+        }
+
         if(config.net.eth1.DHCP==1){
             $('#eth1_DHCP_enable_toggle').bootstrapToggle('on')
         }else{
             $('#eth1_DHCP_enable_toggle').bootstrapToggle('off')
         }
-        $('#eth1_ip_adress').val(config.net.eth1.IP)
-        $('#eth1_net_mask').val(config.net.eth1.net_mask)
-        $('#eth1_gateway').val(config.net.eth1.gateway)
-        $('#eth1_dns').val(config.net.eth1.DNS) 
+        $('#eth1_ip_adress').val(net_info.eth1.IP)
+        $('#eth1_net_mask').val(net_info.eth1.net_mask)
+        $('#eth1_gateway').val(net_info.eth1.gateway)
+        $('#eth1_dns').val(net_info.eth1.DNS) 
 
 
         if(config.net.wlan0.enable ==1){
@@ -175,10 +199,28 @@ script.
         }
         $('#wlan0_SSID').val(config.net.wlan0.SSID)
         $('#wlan0_password').val(config.net.wlan0.password)
-        $('#wlan0_ip_adress').val(config.net.wlan0.IP)
-        $('#wlan0_net_mask').val(config.net.wlan0.net_mask)
-        $('#wlan0_gateway').val(config.net.wlan0.gateway)
-        $('#wlan0_dns').val(config.net.wlan0.DNS)  
+        $('#wlan0_ip_adress').val(net_info.wlan0.IP)
+        $('#wlan0_net_mask').val(net_info.wlan0.net_mask)
+        $('#wlan0_gateway').val(net_info.wlan0.gateway)
+        $('#wlan0_dns').val(net_info.wlan0.DNS)  
+
+        $('#wifi_sig_high').hide()
+        $('#wifi_sig_mid').hide()
+        $('#wifi_sig_low').hide()
+        $('#wifi_sig_none').hide()
+        if(net_info.wlan0.carrier>35){
+           $('#wifi_sig_high').show()
+           $('#wifi_sig_high').css({"color":"green"})
+        }else if((net_info.wlan0.carrier<35)&&(net_info.wlan0.carrier>15)){
+            $('#wifi_sig_mid').show()
+            $('#wifi_sig_mid').css({"color":"orange"})
+        }else if((net_info.wlan0.carrier<15)&&(net_info.wlan0.carrier!=0)){
+            $('#wifi_sig_low').show()
+            $('#wifi_sig_low').css({"color":"red"})
+        }else if((net_info.wlan0.carrier<35)&&(net_info.wlan0.carrier>15)){
+            $('#wifi_sig_none').show()
+            $('#wifi_sig_none').css({"color":"grey"})
+        }
 
 
 
@@ -199,7 +241,8 @@ script.
     })
 
     $('#eth1_DHCP_enable_toggle').on("change",function() {
-        if($('#eth1_DHCP_Enable_toggle').prop('checked') == true){
+        
+        if($('#eth1_DHCP_enable_toggle').prop('checked') == true){
             $('#eth1_ip_adress').prop('disabled', true)
             $('#eth1_net_mask').prop('disabled', true)
             $('#eth1_gateway').prop('disabled', true)

@@ -1,6 +1,6 @@
 [Desktop Entry]
 Type=Application
 Name=mpv
-Exec=mpv --idle
+Exec=mpv --vo=gpu --hwdec=vaapi --ao=alsa --idle
 StartupNotify=false
 Terminal=false

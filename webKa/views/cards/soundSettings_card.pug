@@ -8,8 +8,8 @@ card.card(style='width: 300px;').card_shadow.h-100.d-flex.align-items-start
                 .input-group
                     label.input-group-text(for='inputGroupSelect01' style='width:8em;') Output device
                     select#inputGroup_sound_dev.form-select 
-                        each audio_dev, index in audio_dev_list
-                            option(value=index)= audio_dev
+                        each audio_dev, index in config.sound.sound_dev_list
+                            option(value=audio_dev)= audio_dev
                 //h6 Output device
                 //select.mx-2.form-select(style='width: 18rem;' aria-label='Default select example')
                     
@@ -27,7 +27,7 @@ script.
     $( document ).ready(function() {
         $('#volumeRange').val(parseInt(config.sound.volume))
         
-        $('#inputGroup_sound_dev').val(config.sound.output_device);;
+        $('#inputGroup_sound_dev').val(config.sound.output_device)
     })
 
     function save_sound_settings(){

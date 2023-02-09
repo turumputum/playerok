@@ -51,7 +51,19 @@ card.card(style='width: 300px;').card_shadow.h-100
                     input#e_date_new.form-control(type='date' placeholder='' aria-label='')
 
     .card-body
-        button.btn.btn-outline-secondary(type='button' onclick='save_time_settings()') Save
+        button.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' data-bs-target='#confirm_save_time_config_modal') Save
+
+    #confirm_save_time_config_modal.modal.modal-m.fade(tabindex='-1' aria-labelledby='confirm_save_time_config_modal' aria-hidden='true' data-bs-backdrop="static")
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header(style='background-color: rgb(177, 220, 226);')
+                    h4.confirm_save_net_config_modal_title Save time settings
+                .modal-body
+                    h4 Device will be rebooted! 
+
+                .modal-footer
+                    button.btn.btn-secondary(onclick = 'save_time_settings()') Ok
+                    button.btn.btn-secondary(onclick = 'cancel_time_config()') Cancel
 
 script.
     
@@ -115,7 +127,13 @@ script.
         }
     })
 
+    function cancel_time_config(){
+        $('#confirm_save_time_config_modal').modal('hide')
+    }
+
     function save_time_settings(){
+        $('#confirm_save_time_config_modal').modal('hide')
+
         if($('#ntp_Enable_toggle').prop('checked') == true){
             config.time.NTP = +$('#ntp_Enable_toggle').prop('checked')
             config.time.time_zone = $('#inputGroup_timezone').val()

@@ -1,4 +1,4 @@
-card.card(style='width: 935px;').card_shadow.h-100 
+card.card(style='width: 620px;').card_shadow.h-100 
     .card-body
         h5.card-title Security settings
         p.card-text
@@ -44,8 +44,19 @@ card.card(style='width: 935px;').card_shadow.h-100
             
 
     .card-body
-        button.btn.btn-outline-secondary(type='button' onclick='save_screen_settings()') Save
+        button.btn.btn-outline-secondary(type='button' onclick='save_security_settings()') Save
 
+    #confirm_save_security_config_modal.modal.modal-m.fade(tabindex='-1' aria-labelledby='confirm_save_security_config_modal' aria-hidden='true' data-bs-backdrop="static")
+        .modal-dialog.modal-dialog-centered
+            .modal-content
+                .modal-header(style='background-color: rgb(177, 220, 226);')
+                    h4.confirm_save_net_config_modal_title Save security settings
+                .modal-body
+                    h4 Device will be rebooted! 
+
+                .modal-footer
+                    button.btn.btn-secondary(onclick = 'save_security_settings()') Ok
+                    button.btn.btn-secondary(onclick = 'cancel_security_config()') Cancel
 
 script.
     
@@ -67,8 +78,13 @@ script.
         $('#inputPassword_auth').val(config.security.admin_pass)
     })
 
+    function cancel_security_config(){
+        $('#confirm_save_security_config_modal').modal('hide')
+    }
 
-    function save_screen_settings(){
+    function save_security_settings(){
+        //$('#confirm_save_security_config_modal').modal('hide')
+
         config.security.auth = +$('#turnOff_toggle').prop('checked')
         config.security.SSH = +$('#enableSSH_toggle').prop('checked')
         config.security.admin_pass = $('#inputPassword_auth').val()

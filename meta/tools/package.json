@@ -10,6 +10,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "directory-tree": "^3.4.0"
+    "directory-tree": "^3.4.0",
+    "scribbles": "^1.5.0"
   }
 }

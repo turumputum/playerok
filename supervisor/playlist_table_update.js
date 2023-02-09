@@ -1,4 +1,4 @@
-require('log-timestamp');
+const scribbles = require('scribbles');
 const file_tools = require("../meta/tools/file_tools");
 const fs = require("fs");
 const path = require('path');
@@ -16,7 +16,21 @@ function* walkSync(dir) {
     }
 }
 
-console.log("Playlist table updated started")
+try {
+    
+    var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+    //scribbles.log(`Set log level ${config.log.level}`)
+    scribbles.config({
+      logLevel: config.log.level,
+      format: '{time} [{fileName}] <{logLevel}> {message}'
+    })
+    
+  } catch (err) {
+    //scribbles.log("suka")
+    scribbles.error(`Error read file: ${err}`)
+    //log_file(`Error read file: ${err}`, '../logs/player_log.txt')
+    process.exit(1);
+  }
 
 try {
     var fileList = walkSync('../data')

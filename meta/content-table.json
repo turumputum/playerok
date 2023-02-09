@@ -2,12 +2,20 @@
   "image": [],
   "video": [
     {
-      "path": "data/content/video_1.mp4",
-      "name": "video_1"
+      "path": "data/content/S01E01.mkv",
+      "name": "S01E01"
     },
     {
-      "path": "data/content/video_2.mp4",
-      "name": "video_2"
+      "path": "data/content/S01E02.mkv",
+      "name": "S01E02"
+    },
+    {
+      "path": "data/content/videopaybck.avi",
+      "name": "videopaybck"
+    },
+    {
+      "path": "data/content/videopl.avi",
+      "name": "videopl"
     }
   ],
   "sound": []

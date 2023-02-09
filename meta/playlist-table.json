@@ -1,7 +1,7 @@
 [
   {
-    "path": "data/playlists/interactive_playlist.json",
-    "name": "interactive_playlist",
+    "name": "1",
+    "path": "data/playlists/1.json",
     "type": "multimedia"
   }
 ]

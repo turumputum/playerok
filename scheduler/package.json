@@ -10,9 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "log-timestamp": "^0.3.0",
     "mqtt": "^4.3.7",
     "node-watch": "^0.7.3",
+    "scribbles": "^1.5.0",
     "tree-kill": "^1.2.2"
   }
 }

@@ -4,5 +4,15 @@
   "main": "index.js",
   "license": "ISC",
   "homepage": "https://github.com/turumputum/playerok_2",
-  "private": true
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "bootstrap-treeview": "^1.2.0"
+  }
 }

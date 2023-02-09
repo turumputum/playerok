@@ -4,12 +4,16 @@ After=multi-user.target
 Conflicts=getty@tty1.service
 
 [Service]
-Environment=DISPLAY=:0
+Environment="DISPLAY=:0"
+Environment="XAUTHORITY=/home/playerok/.Xauthority"
+Environment="XDG_RUNTIME_DIR=/run/user/1000"
+Environment="PULSE_RUNTIME_PATH=/run/user/1000/pulse/"
 User=root
 Type=simple
 WorkingDirectory = /home/playerok/playerok/supervisor/
 ExecStart=/usr/bin/node /home/playerok/playerok/supervisor/supervisor.js
-StandardError=append:/home/playerok/playerok/logs/supervisor.log
+#StandardError=append:/home/playerok/playerok/logs/supervisor.log
+StandardOutput=append:/home/playerok/playerok/logs/playerok.log
 StandardInput=tty-force
 Restart=on-failure
 

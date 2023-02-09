@@ -10,6 +10,7 @@ Type=simple
 WorkingDirectory = /home/playerok/playerok/webKa/
 ExecStart=/usr/bin/node /home/playerok/playerok/webKa/index.js
 StandardError=append:/home/playerok/playerok/logs/webKa.log
+StandardOutput=append:/home/playerok/playerok/logs/playerok.log
 StandardInput=tty-force
 Restart=on-failure
 

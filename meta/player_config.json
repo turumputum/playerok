@@ -1,20 +1,20 @@
 {
   "net": {
     "eth0": {
-      "DHCP": 1,
-      "IP": "192.168.88.135",
+      "DHCP": 0,
+      "IP": "192.168.88.140",
       "net_mask": "255.255.255.0",
       "gateway": "192.168.88.1",
-      "DNS": "192.168.88.1",
-      "enable": 1
+      "enable": 1,
+      "DNS": "192.168.88.1"
     },
     "eth1": {
-      "DHCP": 0,
+      "DHCP": 1,
       "IP": "",
       "net_mask": "",
       "gateway": "",
       "DNS": "",
-      "enable": 0
+      "enable": 1
     },
     "wlan0": {
       "SSID": "Ap",
@@ -22,9 +22,9 @@
       "DHCP": 1,
       "IP": "",
       "net_mask": "",
-      "gateway": "",
       "DNS": "",
-      "enable": 1
+      "enable": 1,
+      "gateway": ""
     },
     "mDNS_name": "playerok"
   },
@@ -35,8 +35,8 @@
   "security": {
     "admin_login": "playerok",
     "admin_pass": "playerok",
-    "auth": 1,
-    "SSH": 0,
+    "auth": 0,
+    "SSH": 1,
     "MQTT_login": "",
     "MQTT_pass": ""
   },
@@ -44,13 +44,21 @@
     "UART_to_MQTT": "1"
   },
   "sound": {
-    "output_device": "0",
-    "volume": 84
+    "sound_dev_list": [
+      "Audio Jack",
+      "HDMI"
+    ],
+    "output_sink": "",
+    "output_device": "Audio Jack",
+    "volume": "24"
   },
   "screen": {
-    "autoTurnOff": 0,
-    "resolution": "1280x960",
-    "orientation": "left",
+    "screen_dev_list": [
+      "HDMI-1"
+    ],
+    "autoTurnOff": null,
+    "resolution": "1920x1080",
+    "orientation": "right",
     "output_port": "HDMI-1"
   },
   "boot": {
@@ -58,6 +66,11 @@
     "logo_path": "data/logo.jpeg"
   },
   "log": {
-    "log_enable": "0"
+    "_comment": [
+      "error",
+      "warning",
+      "debug"
+    ],
+    "level": "debug"
   }
 }

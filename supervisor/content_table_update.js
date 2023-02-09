@@ -1,8 +1,20 @@
-require('log-timestamp');
+const scribbles = require('scribbles');
 const file_tools = require("../meta/tools/file_tools");
 
 const fs = require("fs");
 const path = require('path');
+
+try {
+    var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+    scribbles.config({
+        logLevel:config.log.level,
+        format:'{time} [{fileName}] <{logLevel}> {message}'
+      })
+} catch (err) {
+    scribbles.error(`Error read file: ${err}`)
+    //log_file(`Error read file: ${err}`, '../logs/player_log.txt')
+    process.exit(1);
+}
 
 var content_list = {
     "image": [],
@@ -57,7 +69,7 @@ try {
 
 
     fs.writeFileSync('../meta/content-table.json', JSON.stringify(content_list, null, 2))
-    console.log("Content table updated OK")
+    scribbles.log("Content table updated OK")
 } catch (err) {
-    console.log("Content table updated FAIL: " + err)
+    scribbles.log("Content table updated FAIL: " + err)
 }

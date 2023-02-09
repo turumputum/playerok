@@ -1,4 +1,4 @@
-require('log-timestamp');
+const scribbles = require('scribbles');
 const { exec } = require('child_process');
 const fs = require("fs");
 const path = require("path");
@@ -14,9 +14,9 @@ function execPromise(cmd) {
     return new Promise((resolve, reject) => {
         exec(cmd, (error, stdout, stderr) => {
             if (error) {
-                console.warn(error)
+                scribbles.warn(error)
             }
-            //console.log(`sudo exec: ${cmd} resault ${stdout}`)
+            //scribbles.log(`sudo exec: ${cmd} resault ${stdout}`)
             resolve(stdout ? stdout : stderr);
         })
     })
@@ -34,25 +34,25 @@ function start_player(playlist_path) {
         execPromise(`xrandr --output ${config.screen.output_port} --auto`)
     }
 
-    //console.log("start play")
+    //scribbles.log("start play")
     try {
         state.current_playlist_path = playlist_path
         var playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
         let index = playlist_table.findIndex((element) => element.path == playlist_path)
-        //console.log(`index of playlist is ${index}`)
+        //scribbles.log(`index of playlist is ${index}`)
         state.current_playlist_name = playlist_table[index].name
     } catch (err) {
-        console.log(`Set playlist name fail: ${err}`)
+        scribbles.log(`Set playlist name fail: ${err}`)
     }
 
     try {
         state.player_pid = child_process.fork(`../player/player.js`, [`${playlist_path}`])
         state.player_state = 'play'
-        console.log(`start player OK`)
+        scribbles.log(`start player OK`)
         client.publish('scheduler/current_playlist', `${state.current_playlist_name}`, { retain: true })
 
     } catch (err) {
-        console.log(`start player FAILED: ${err}`)
+        scribbles.log(`start player FAILED: ${err}`)
     }
 
 
@@ -61,18 +61,18 @@ function start_player(playlist_path) {
 }
 
 function stop_player() {
-    //console.log("stop play")
+    //scribbles.log("stop play")
     state.current_playlist_name = ''
     state.current_playlist_path = ''
     try {
 
-        console.log(`stop player:` + state.player_pid.kill('SIGTERM'))
+        scribbles.log(`stop player:` + state.player_pid.kill('SIGTERM'))
         client.publish('scheduler/current_playlist', `none`, { retain: true })
         client.publish('player/state', `stop`, { retain: true })
         client.publish('scheduler/on_off_time', `--:--/--:--`, { retain: true })
         state.player_state = 'stop'
     } catch (err) {
-        console.log(`stop player FAILED: ${err}`)
+        scribbles.log(`stop player FAILED: ${err}`)
     }
 
     // setTimeout(function() {
@@ -92,10 +92,10 @@ function check_state() {
     if (current_day == 0) {//-------------
         current_day = 7
     }
-    //console.log(`Current day: '${current_day}' `)
+    //scribbles.log(`Current day: '${current_day}' `)
 
     let flag_valid_playlist = 0
-    //console.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table, null, 2)}`)
+    //scribbles.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table, null, 2)}`)
     for (var index in scheduler_table) {
         let task = scheduler_table[index]
 
@@ -103,22 +103,22 @@ function check_state() {
             let playlist_start_time_in_minutes = parseInt(task.start_time.split(':')[0]) * 60 + parseInt(task.start_time.split(':')[1])
             if (playlist_start_time_in_minutes <= current_time_in_minutes) {
                 let playlist_end_time_in_minutes = parseInt(task.end_time.split(':')[0]) * 60 + parseInt(task.end_time.split(':')[1])
-                //console.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
+                //scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
                 if (playlist_end_time_in_minutes > current_time_in_minutes) {
                     if ((state.current_playlist_path != task.path) && (task.type == 'multimedia')) {
                         //----- it's playlist ok ----
                         if (state.player_state == 'stop') {
                             start_player(task.path)
                             client.publish('scheduler/on_off_time', `${task.start_time}/${task.end_time}`, { retain: true })
-                            //console.log(`lets play playlist ${state.current_playlist_name} from idle state`)
+                            //scribbles.log(`lets play playlist ${state.current_playlist_name} from idle state`)
                         } else if (state.player_state == "play") {
                             stop_player()
                             start_player(playlist.path)
-                            //console.log(`lets play playlist ${state.current_playlist_name} overlay previus playlist`)
+                            //scribbles.log(`lets play playlist ${state.current_playlist_name} overlay previus playlist`)
                         }
                     }
                     flag_valid_playlist = 1
-                    //console.log(`valid playlist is ${state.current_playlist_name} playing....`)
+                    //scribbles.log(`valid playlist is ${state.current_playlist_name} playing....`)
                     break //playlist is valid, no time to turn off
                 }
             }
@@ -127,7 +127,7 @@ function check_state() {
     //-----nothin to play-------------
     if ((state.player_state == "play") && (flag_valid_playlist == 0)) {
         stop_player()
-        console.log(`no valid playlists, stop`)
+        scribbles.log(`no valid playlists, stop`)
     }
 
     setTimeout(check_state, 10000)
@@ -138,9 +138,9 @@ let table_watcher = watch('../meta/scheduler-table.json', { recursive: false });
 table_watcher.on('change', function (evt, name) {
     try {
         scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
-        //console.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table,null,2)}`)
+        //scribbles.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table,null,2)}`)
     } catch (err) {
-        console.error(`: ${err}`)
+        scribbles.error(`: ${err}`)
         process.exit(1);
     }
 })
@@ -148,11 +148,11 @@ table_watcher.on('change', function (evt, name) {
 let playlist_watcher = watch('../data/playlists', { recursive: false });
 playlist_watcher.on('change', function (evt, name) {
     try {
-        console.log('Reset playlist on playlist update')
+        scribbles.log('Reset playlist on playlist update')
         stop_player()
         setTimeout(check_state, 500)
     } catch (err) {
-        console.error(`: ${err}`)
+        scribbles.error(`: ${err}`)
         process.exit(1);
     }
 })
@@ -161,11 +161,11 @@ playlist_watcher.on('change', function (evt, name) {
 function mqtt_sub(topic) {
     if (client.subscribe(topic, function (err) {
         if (err) {
-            console.error(`subscribe to: ${topic} filed: ${err}`)
+            scribbles.error(`subscribe to: ${topic} filed: ${err}`)
             log_file(`subscribe to: ${topic} filed: ${err}`, '../logs/player_log.log')
             return err
         } else {
-            console.log(`subscribe OK to: ${topic}`)
+            scribbles.log(`subscribe OK to: ${topic}`)
             return true
         }
     })) {
@@ -176,7 +176,7 @@ function mqtt_sub(topic) {
 
 const client = mqtt.connect('mqtt://127.0.0.1:1883')
 client.on('connect', function () {
-    console.log("mqtt brocker connected!");
+    scribbles.log("mqtt brocker connected!");
 
     mqtt_sub('scheduler/restart')
 })
@@ -184,10 +184,10 @@ client.on('connect', function () {
 client.on('message', function (topic, message) {
 
     //--------MQTT------Action on playlist topics------------------
-    console.log('Incoming message')
+    scribbles.log('Incoming message')
 
     if ((topic == 'scheduler/restart') && (message == '1')) {
-        console.log('Reset playlist on MQTT command')
+        scribbles.log('Reset playlist on MQTT command')
         stop_player()
         setTimeout(check_state, 500)
     }
@@ -195,15 +195,19 @@ client.on('message', function (topic, message) {
 
 try {
     scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
-    //console.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table,null,2)}`)
+    //scribbles.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table,null,2)}`)
 } catch (err) {
-    console.error(`: ${err}`)
+    scribbles.error(`: ${err}`)
     process.exit(1);
 }
 try {
     var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+    scribbles.config({
+        logLevel:config.log.level,
+        format:'{time} [{fileName}] <{logLevel}> {message}'
+      })
 } catch (err) {
-    console.error(`Error read file: ${err}`)
+    scribbles.error(`Error read file: ${err}`)
     //log_file(`Error read file: ${err}`, '../logs/player_log.txt')
     process.exit(1);
 }
