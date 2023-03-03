@@ -1,1 +1,6 @@
-after clone need:npm i in folderscd webKa/cd supervisor/cd player/cd uart2mqtt/cd mqta/tools/
+before install
+
+setup git
+setup sudo
+add user sudo group:
+  /usr/sbin/usermod -aG sudo playerok
