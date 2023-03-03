@@ -75,6 +75,7 @@ async function set_net_config() {
       //await execPromise(`nmcli con mod ${iface} ipv4.mdns 2`)
       if (config.net[iface].DHCP == 1) {
         await execPromise(`nmcli con mod ${iface} ipv4.method auto`)
+        await execPromise(`dhclient`)
       } else if (config.net[iface].DHCP == 0) {
         await execPromise(`nmcli con mod ${iface} ipv4.addresses ${config.net[iface].IP}/${netmask2CIDR(config.net[iface].net_mask)}`)
         await execPromise(`nmcli con mod ${iface} ipv4.gateway ${config.net[iface].gateway}`)
