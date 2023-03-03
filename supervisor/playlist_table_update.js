@@ -56,7 +56,7 @@ try {
         }
     }
     fs.writeFileSync('../meta/playlist-table.json', JSON.stringify(playlist_table, null, 2))
-    console.log("Playlist table updated OK")
+    scribbles.log("Playlist table updated OK")
 }catch(err){
-    console.log("Playlist table updated FAIL: " + err)
+    scribbles.log("Playlist table updated FAIL: " + err)
 }

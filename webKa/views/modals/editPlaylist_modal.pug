@@ -1,0 +1,118 @@
+#editPlaylistModal.modal.fade(tabindex='-1' aria-labelledby='editTrackModalLabel' aria-hidden='true' data-bs-backdrop="static")
+    .modal-dialog.modal-xl.modal-fullscreen-xl-down
+        .modal-content
+            .modal-header(style='background-color: rgb(177, 220, 226);')
+                h4 Edit playlist
+            .modal-body
+                .input-group
+                    span.input-group-text.fs-5.fw-bold Playlist name:
+                    input#playlist_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
+                card.card.card_shadow.h-100.mt-4
+                    .bg-secondary.card-img-top
+                        .h4.mx-2.mt-2 Simple content
+                    .card_body.p-2
+                        table#simpleContTable.table.table-hover
+                            thead
+                                tr
+                                    th(scope='col' style='width:3%') #
+                                    th(scope='col' style='width:20%') Name
+                                    th(scope='col' style='width:62%') Path
+                                    th(scope='col' style='width:15%') Control
+                            tbody
+                
+                card.card.card_shadow.h-100.mt-4
+                    .bg-secondary.card-img-top
+                        .h4.mx-2.mt-2 Interactive content
+                    .card_body.p-2
+                        table#interactiveContTable.table.table-hover
+                            thead
+                                tr
+                                    th(scope='col' style='width:3%') #
+                                    th(scope='col' style='width:20%') Name
+                                    th(scope='col' style='width:62%') Path
+                                    th(scope='col' style='width:15%') Control
+                            tbody
+                
+            .modal-footer
+                button.btn.btn-secondary(onclick = 'save_edit_playlist()') Save
+                button.btn.btn-secondary(onclick = 'cancel_edit_playlist()') Cancel
+
+script.
+    function insertAddTrackButtons(){
+        var newRow = tableSC.insertRow(-1)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        var addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
+
+        newRow = tableIC.insertRow(tableIC.rows.length)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
+    }
+
+    function update_playlist_modal(){   
+        tableSC.innerHTML = ""
+        tableIC.innerHTML = ""
+
+        $('#playlist_name_input').val(current_playlist.playlist_name)
+        for (let index in current_playlist.tracks) {
+            let track = current_playlist.tracks[index]
+            //console.log("Find track: ", track)
+            if (track.type == 'simple') {
+                var newRow = tableSC.insertRow(tableSC.rows.length)
+                var order_cell = newRow.insertCell().innerHTML = track.order_num
+                var name_cell = newRow.insertCell().innerHTML = track.name
+                var path_cell = newRow.insertCell().innerHTML = track.path
+                const controls = newRow.insertCell().innerHTML = `
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('${index}', 'edit')">edit</button>
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "show_delete_track_modal(${index})">delete</button>
+                        `
+            } else if (track.type == 'interactive') {
+                var newRow = tableIC.insertRow(tableIC.rows.length)
+                var id_cell = newRow.insertCell().innerHTML = track.order_num
+                var name_cell = newRow.insertCell().innerHTML = track.name
+                var path_cell = newRow.insertCell().innerHTML = track.path
+                const controls = newRow.insertCell().innerHTML = `
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('${index}', 'edit')">edit</button>
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "show_delete_track_modal(${index})">delete</button>
+                        `
+            }
+        }
+        insertAddTrackButtons()
+            
+    }
+
+    function save_edit_playlist(){
+        $('#editPlaylistModal').modal('hide')
+        fetch_post_playlist(current_playlist_path, current_playlist).then(()=>{
+            window.location.reload();
+        })
+    }
+
+    function cancel_edit_playlist(){
+        tableSC.innerHTML = ""
+        tableIC.innerHTML = ""
+        $('#editPlaylistModal').modal('hide')
+    }
+
+    function open_edit_track_modal(index) {
+        if(index != ''){
+            current_track_index = index
+            console.log("Edit track index: " + current_track_index)
+        }else{
+            current_track_index=current_playlist.tracks.length
+        }
+        $('#editPlaylistModal').modal('hide')
+        $('#editTrackModal').modal('show')
+    }
+
+    $('#playlist_name_input').on("change", function(){
+        console.log("playlist name is changed")
+        current_playlist.playlist_name = $('#playlist_name_input').val()
+    })
+
+    $('#editPlaylistModal').on('shown.bs.modal', function(){
+        update_playlist_modal()
+    })

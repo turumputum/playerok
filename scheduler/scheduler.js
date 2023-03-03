@@ -10,6 +10,7 @@ var kill = require('tree-kill');
 
 var scheduler_table
 
+
 function execPromise(cmd) {
     return new Promise((resolve, reject) => {
         exec(cmd, (error, stdout, stderr) => {
@@ -26,7 +27,9 @@ var state = {
     player_state: 'stop',
     player_pid: '',
     current_playlist_path: '',
-    current_playlist_name: ''
+    current_playlist_name: '',
+    current_task_trigger: '',
+    current_actions:[]
 }
 
 function start_player(playlist_path) {
@@ -55,7 +58,17 @@ function start_player(playlist_path) {
         scribbles.log(`start player FAILED: ${err}`)
     }
 
+    let index = scheduler_table.findIndex((element) => element.playlist_path == playlist_path)
+    
+    state.current_task_trigger = scheduler_table[index].trigger_type
+    state.current_actions=scheduler_table[index].actions
 
+    state.current_actions.forEach(action=>{
+        if(action.event == 'start'){
+            scribbles.log(`publish action ${action.topic}:${action.payload}`)
+            client.publish(action.topic, action.payload, { retain: true })
+        }
+    })
 
     //setTimeout(stop_player,10000)
 }
@@ -70,16 +83,23 @@ function stop_player() {
         client.publish('scheduler/current_playlist', `none`, { retain: true })
         client.publish('player/state', `stop`, { retain: true })
         client.publish('scheduler/on_off_time', `--:--/--:--`, { retain: true })
+
         state.player_state = 'stop'
     } catch (err) {
         scribbles.log(`stop player FAILED: ${err}`)
     }
 
-    // setTimeout(function() {
-    //     start_player('data/playlists/playlist_1.json');
-    // }, 5000)
+    state.current_task_trigger =''
+
+    state.current_actions.forEach(action=>{
+        if(action.event == 'start'){
+            scribbles.log(`publish action ${action.topic}:${action.payload}`)
+            client.publish(action.topic, action.payload, { retain: true })
+        }
+    })
 
     if (config.screen.autoTurnOff == 1) {
+        scribbles.log(`auto turn off screen`)
         execPromise(`xrandr --output ${config.screen.output_port} --off`)
     }
 
@@ -92,42 +112,54 @@ function check_state() {
     if (current_day == 0) {//-------------
         current_day = 7
     }
-    //scribbles.log(`Current day: '${current_day}' `)
 
-    let flag_valid_playlist = 0
+    
     //scribbles.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table, null, 2)}`)
-    for (var index in scheduler_table) {
-        let task = scheduler_table[index]
+    
+    if(state.current_task_trigger == 'topic'){
+        //
+    }else{
 
-        if (task.day_of_week.search(`${current_day}`) >= 0) {//---------day in list ---------------
-            let playlist_start_time_in_minutes = parseInt(task.start_time.split(':')[0]) * 60 + parseInt(task.start_time.split(':')[1])
-            if (playlist_start_time_in_minutes <= current_time_in_minutes) {
-                let playlist_end_time_in_minutes = parseInt(task.end_time.split(':')[0]) * 60 + parseInt(task.end_time.split(':')[1])
-                //scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
-                if (playlist_end_time_in_minutes > current_time_in_minutes) {
-                    if ((state.current_playlist_path != task.path) && (task.type == 'multimedia')) {
-                        //----- it's playlist ok ----
-                        if (state.player_state == 'stop') {
-                            start_player(task.path)
-                            client.publish('scheduler/on_off_time', `${task.start_time}/${task.end_time}`, { retain: true })
-                            //scribbles.log(`lets play playlist ${state.current_playlist_name} from idle state`)
-                        } else if (state.player_state == "play") {
-                            stop_player()
-                            start_player(playlist.path)
-                            //scribbles.log(`lets play playlist ${state.current_playlist_name} overlay previus playlist`)
+        for (var index in scheduler_table) {
+            let task = scheduler_table[index]
+
+            if((task.day_of_week =='')||(task.day_of_week ==undefined)){
+                
+            }else{
+                if (task.day_of_week.search(`${current_day}`) >= 0) {//---------day in list ---------------
+                    let playlist_start_time_in_minutes = parseInt(task.start_time.split(':')[0]) * 60 + parseInt(task.start_time.split(':')[1])
+                    if (playlist_start_time_in_minutes <= current_time_in_minutes) {
+                        let playlist_end_time_in_minutes = parseInt(task.end_time.split(':')[0]) * 60 + parseInt(task.end_time.split(':')[1])
+                        //scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
+                        if (playlist_end_time_in_minutes > current_time_in_minutes) {
+                            if ((state.current_playlist_path != task.path) && (task.type == 'multimedia')) {
+                                //----- it's playlist ok ----
+                                if (state.player_state == 'stop') {
+                                    start_player(task.path)
+                                    client.publish('scheduler/on_off_time', `${task.start_time}/${task.end_time}`, { retain: true })
+                                    //scribbles.log(`lets play playlist ${state.current_playlist_name} from idle state`)
+                                } else if (state.player_state == "play") {
+                                    stop_player()
+                                    start_player(playlist.path)
+                                    //scribbles.log(`lets play playlist ${state.current_playlist_name} overlay previus playlist`)
+                                }
+                            }
+                            flag_valid_playlist = 1
+                            //scribbles.log(`valid playlist is ${state.current_playlist_name} playing....`)
+                            break //playlist is valid, no time to turn off
+                        }else{
+                            flag_valid_playlist = 0
                         }
                     }
-                    flag_valid_playlist = 1
-                    //scribbles.log(`valid playlist is ${state.current_playlist_name} playing....`)
-                    break //playlist is valid, no time to turn off
                 }
             }
         }
     }
     //-----nothin to play-------------
     if ((state.player_state == "play") && (flag_valid_playlist == 0)) {
-        stop_player()
         scribbles.log(`no valid playlists, stop`)
+        stop_player()
+        
     }
 
     setTimeout(check_state, 10000)
@@ -138,6 +170,7 @@ let table_watcher = watch('../meta/scheduler-table.json', { recursive: false });
 table_watcher.on('change', function (evt, name) {
     try {
         scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
+        topic_list_refresh()
         //scribbles.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table,null,2)}`)
     } catch (err) {
         scribbles.error(`: ${err}`)
@@ -179,6 +212,7 @@ client.on('connect', function () {
     scribbles.log("mqtt brocker connected!");
 
     mqtt_sub('scheduler/restart')
+    topic_list_refresh()
 })
 
 client.on('message', function (topic, message) {
@@ -190,8 +224,45 @@ client.on('message', function (topic, message) {
         scribbles.log('Reset playlist on MQTT command')
         stop_player()
         setTimeout(check_state, 500)
+    }else{
+        scheduler_table.forEach(task => {
+            if(task.trigger_type=='topic'){
+                task.trigger_topics.forEach(task_topic => {
+                    if((topic == task_topic.topic)&&(message == task_topic.payload)){
+                        scribbles.log(`topic comparation true for ${task_topic.topic}`)
+                        if(task_topic.event=='start'){
+                            stop_player()
+                            start_player(task.playlist_path)
+                            flag_valid_playlist = 1
+                        }else if(task_topic.event=='stop'){
+                            stop_player()
+                            flag_valid_playlist = 0
+                        }
+                    }
+                })
+            }
+        })
     }
 })
+
+function topic_list_refresh(){
+    trigger_topic_list = []
+
+    scheduler_table.forEach(task => {
+        if(task.trigger_type=='topic'){
+            task.trigger_topics.forEach(topic => {
+                mqtt_sub(topic.topic)
+            })
+        }
+
+        task.actions.forEach(topic => {
+            mqtt_sub(topic.topic)
+        })
+        
+    });
+
+    scribbles.log(`topic_list_refresh OK`)
+}
 
 try {
     scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))

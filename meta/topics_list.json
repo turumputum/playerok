@@ -1,0 +1,17 @@
+{
+    "triggers": [
+        "monofon_1/phoneUp",
+        "monofon_1/trackNum",
+        "button_module/button_1",
+        "button_module/button_2",
+        "button_module/button_3",
+        "button_module/button_4",
+        "button_module/button_5",
+        "button_module/button_6",
+        "button_module/button_7",
+        "button_module/button_8"
+    ],
+    "actions":[
+        "monofon_1/setRGB"
+    ]
+}

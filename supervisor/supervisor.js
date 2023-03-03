@@ -4,13 +4,11 @@ const file_tools = require("../meta/tools/file_tools");
 const scribbles = require('scribbles');
 const child_process = require('child_process');
 
-//var xrandrParse = require('xrandr-parse');
 var watch = require('node-watch')
-//var Netmask = require('netmask').Netmask
+
 const fs = require("fs");
 const chokidar = require('chokidar');
 
-//const log_file = require('log-to-file');
 
 //let data_watcher = watch('../data', { recursive: true });
 // let data_watcher = chokidar.watch('/home/playerok/playerok/logs', {
@@ -21,10 +19,6 @@ let playlist_watcher = watch('../data/playlists');
 //let net_watcher = watch('/sys/class/net', { recursive: true });
 
 const microsecond = () => Number(Date.now() + String(process.hrtime()[1]).slice(3, 6))
-
-// chokidar.watch('/home/playerok/playerok/data').on('all', (event, path) => {
-//   console.log(event, path);
-// });
 
 function set_config() {
   scribbles.log("Let's set config")
@@ -50,12 +44,7 @@ function set_config() {
       asyncSpawn(`node`, `set_log_config.js`)
     }
 
-    // if (config.log.log_enable == 1) {
-    //   execPromise(`node set_config.js >> ../logs/supervisor.log &`)
-    //   //exec(`node playlist_table_update.js >> ../logs/update_playlist.log`)
-    // } else if (config.log.log_enable == 0) {
-    //   execPromise(`node set_config.js &`)
-    // }
+    
     scribbles.log("Set config OK")
   } catch (err) {
     scribbles.log("Set config fail:" + err)
@@ -122,29 +111,22 @@ if (fs.existsSync(`/home/playerok/playerok/meta/flag_firstRunAfterInstall`)) {
   asyncSpawn(`node`, `set_net_config.js`)
 }
 
-//let startTime = microsecond();
-// execPromise(`dhclient`).then(response=>{
-//   scribbles.log(`dhclient stdout:${response}`)
-// })
 
 //---start usb whatcher---
 var usb_watcher = fork(`usb_storage.js`)
 usb_watcher.on('close', function (code) {
-  console.log('usb_watcher exited with code ' + code + "restart");
+  scribbles.log('usb_watcher exited with code ' + code + "restart");
   usb_watcher = fork(`usb_storage.js`)
 });
 
-//---start usb whatcher---
+//---start UART2MQTT whatcher---
 var uart2mqtt = fork(`/home/playerok/playerok/uart2mqtt/uart2mqtt.js`)
 uart2mqtt.on('close', function (code) {
-  console.log('uart2mqtt exited with code ' + code + "restart");
+  scribbles.log('uart2mqtt exited with code ' + code + "restart");
   uart2mqtt = fork(`/home/playerok/playerok/uart2mqtt/uart2mqtt.js`)
 });
 
 setTimeout(() => {
-  // usb_watcher.on('change', function (evt, name) {
-
-  // })
 
   chokidar.watch('/home/playerok/playerok/data', { ignoreInitial: true }).on('all', function (evt, path) {
     //scribbles.log(`data_watcher activity evt:${evt} path:${path}`)
@@ -176,12 +158,9 @@ setTimeout(() => {
     try {
       scribbles.log("Let's update playlists table")
       const config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
-      if (config.log.log_enable == 1) {
-        execPromise(`node playlist_table_update.js >> ../logs/supervisor.log &`)
-        //exec(`node playlist_table_update.js >> ../logs/update_playlist.log`)
-      } else if (config.log.log_enable == 0) {
-        execPromise(`node playlist_table_update.js &`)
-      }
+      asyncSpawn(`node`, `playlist_table_update.js`)
+      //exec(`node playlist_table_update.js >> ../logs/update_playlist.log`)
+      
     } catch (err) {
       scribbles.log("Playlist table update fail:" + err)
     }
@@ -200,25 +179,6 @@ setTimeout(() => {
 
   })
 
-  // chokidar.watch('/sys/class/net/eth0/carrier', {ignoreInitial: true}).on('all', function (evt, path) {
-  //   scribbles.log(`net_watcher change detected evt:${evt} path:${path}`)
-  //   if(path==='/sys/class/net/eth0/carrier'){
-  //     if(fs.readFileSync('/sys/class/net/eth0/carrier')===1){
-  //       scribbles.log("eth0 cable connected")
-  //       execPromise(`systemctl restart networking`)
-  //     }else{
-  //       scribbles.log("eth0 cable disconnected")
-  //     }
-  //   }
-  //   if(path==='/sys/class/net/eth1/carrier'){
-  //     if(fs.readFileSync('/sys/class/net/eth1/carrier')===1){
-  //       scribbles.log("eth1 cable connected")
-  //       execPromise(`systemctl restart networking`)
-  //     }else{
-  //       scribbles.log("eth1 cable disconnected")
-  //     }
-  //   }
-  // })
   scribbles.log(`watchers started`)
 }, 4000)
 

@@ -1,0 +1,381 @@
+#editTaskModal_2.modal.fade(tabindex='-1' aria-labelledby='editTaskModalLabel' aria-hidden='true' data-bs-backdrop="static")
+    .modal-dialog.modal-xl
+        .modal-content
+            .modal-header
+                h5#editTaskModalLabel.modal-title Edit task
+                button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+            .modal-body
+                .input-group
+                    span.input-group-text.fs-5.fw-bold Task name:
+                    input#task_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
+
+                card.card.card_shadow.h-100.mt-4
+                    .bg-secondary.card-img-top
+                        .h4.mx-2.mt-2 Playlist
+                    table.table
+                        thead
+                            tr
+                                th(scope='col') Name
+                                th(scope='col') Path
+                                th(scope='col') Type
+
+                        tbody
+                            tr  
+                                td(data-label="Name")
+                                    select#name_input.form-select
+                                td(data-label="Path")
+                                    input#path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                td(data-label="Type" style="width: 200px;" )
+                                    input#type_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+
+                .card.mt-4.card_shadow
+                    .bg-secondary.card-img-top
+                        .h4.mx-2.mt-2 Triggers
+                    .card-header.text-center
+                        ul#triggerTabs.nav.nav-tabs.card-header-tabs
+                            li
+                                button#schedule_tab.nav-link.active(aria-current='true' data-toggle="tab") Schedule
+                            li
+                                button#topic_trigger_tab.nav-link(data-toggle="tab") Topic 
+                    .card-body
+                        table.table#table_playlist_schedule
+                            thead
+                                tr
+                                    th(scope='col') Start time
+                                    th(scope='col') End time
+                                    th(scope='col') Week days
+                            tbody
+                                tr
+                                    td(data-label="Start time" style="width: 25%;")
+                                        input#s_time_input.form-control(type='time' placeholder='' aria-label='')
+                                    td(data-label="End time" style="width: 25%;")
+                                        input#e_time_input.form-control(type='time' placeholder='' aria-label='')
+                                    td#weekdays(data-label="Week days")
+                                        input#mon_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='mon_day' style="--bs-btn-font-size: 15px; width: 60px;") Mon
+                                        input#tue_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='tue_day' style="--bs-btn-font-size: 15px; width: 60px;") Tue
+                                        input#wen_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='wen_day' style="--bs-btn-font-size: 15px; width: 60px;") Wen
+                                        input#thu_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='thu_day' style="--bs-btn-font-size: 15px; width: 60px;") Thu
+                                        input#fri_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='fri_day' style="--bs-btn-font-size: 15px; width: 60px;") Fri
+                                        input#sat_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='sat_day' style="--bs-btn-font-size: 15px; width: 60px;") Sat 
+                                        input#sun_day.btn-check(type='checkbox' checked='' autocomplete='off')
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='sun_day' style="--bs-btn-font-size: 15px; width: 60px;") Sun
+
+                        table.table#table_trigger_topics.table-hover( aria-hidden='true')
+                            datalist#trigger_topics_list
+                            thead
+                                tr
+                                    th(scope='col') Event
+                                    th(scope='col') Topic
+                                    th(scope='col' style="width: 15%;") Payload
+                                    th(scope='col' style="width: 15%;") Controls
+                            tbody
+                                tr
+
+                card.card.card_shadow.h-100.mt-4
+                    .bg-secondary.card-img-top
+                        .h4.mx-2.mt-2 Actions
+                    table.table#table_actions_topics.table-hover
+                        datalist#action_topics_list
+                        thead
+                            tr
+                                th(scope='col') Event
+                                th(scope='col') Topic
+                                th(scope='col' style="width: 15%;") Payload
+                                th(scope='col' style="width: 15%;") Controls
+
+                        tbody
+
+            .modal-footer
+                button.btn.btn-secondary(onclick = 'save_task()') Save
+                button.btn.btn-secondary(onclick = 'cancel_edit_task()') Cancel
+
+
+script.
+    
+
+    var trigger_topic_table={
+        DOM_table : document.getElementById('table_trigger_topics').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
+    var action_topic_table={
+        DOM_table : document.getElementById('table_actions_topics').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
+
+
+    //____________OPEN MODAL_____________
+    $("#editTaskModal_2").on('show.bs.modal', function (event) {
+        //let button = event.relatedTarget
+        //edit_task_index = button.getAttribute('d-index')
+        trigger_topic_table.data_array = scheduler_table[edit_task_index-1].trigger_topics
+        action_topic_table.data_array = scheduler_table[edit_task_index-1].actions
+
+        fetch_getTopicList()
+
+        $("#task_name_input").val(scheduler_table[edit_task_index-1].task_name)
+
+        playlist_table.forEach(item=>{
+            $("#name_input").append($('<option>',{
+                value: item.name,
+                text : item.name
+            }))
+        })
+
+        const current_playlist = playlist_table.find(x => x.path === scheduler_table[edit_task_index-1].playlist_path)
+        console.log(current_playlist)
+        if(current_playlist!== undefined){
+            $("#name_input").val(current_playlist.name)
+        }
+        $("#path_input").val(scheduler_table[edit_task_index-1].playlist_path) 
+        $("#type_input").val(scheduler_table[edit_task_index-1].type)
+
+        if(scheduler_table[edit_task_index-1].trigger_type == 'schedule'){
+            show_schedule(edit_task_index)
+        }else if (scheduler_table[edit_task_index-1].trigger_type == 'topic'){
+            show_topics(edit_task_index)
+        }
+
+        topic_table_show(action_topic_table, ['start', 'stop'], 'action_topics_list', 'A')
+    })
+
+    function topic_table_show(table, event_array, available_topic_list, identify){
+
+        table.DOM_table.innerHTML = ""
+        for (let topic_index in table.data_array) {
+
+            let topic = table.data_array[topic_index]
+
+            let newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
+
+            newRow.insertCell().innerHTML = `<select id='${identify}_event_${topic_index}' class="form-select"></select>`
+            event_array.forEach(event =>{
+                $(`#${identify}_event_${topic_index}`).append($('<option>', {value: `${event}`, text : `${event}`}));
+            })
+            $(`#${identify}_event_${topic_index}`).val(topic.event)
+
+            newRow.insertCell().innerHTML = `<input id='${identify}_topic_${topic_index}' class="form-control" list='${available_topic_list}'></input>`
+            $(`#${identify}_topic_${topic_index}`).val(topic.topic)
+
+            newRow.insertCell().innerHTML = `<input id='${identify}_payload_${topic_index}' class="form-control"></input>`
+            $(`#${identify}_payload_${topic_index}`).val(topic.payload)
+
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic('${identify}','${topic_index}')">delete</button>`
+        }
+        newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic('${identify}')">add</button>`
+    }
+
+    function show_schedule(task_index){
+        $("#table_trigger_topics").hide()
+        $("#table_playlist_schedule").show()
+        $("#schedule_tab").tab('show');
+
+        $("#s_time_input").val(scheduler_table[task_index-1].schedule.start_time)
+        $("#e_time_input").val(scheduler_table[task_index-1].schedule.end_time)
+
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('1')){
+            $("#mon_day").prop('checked', true);
+        }else{
+            $("#mon_day").prop('checked', false);
+        }
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('2')){
+            $("#tue_day").prop('checked', true);
+        }else{
+            $("#tue_day").prop('checked', false);
+        }
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('3')){
+            $("#wen_day").prop('checked', true);
+        }else{
+            $("#wen_day").prop('checked', false);
+        }
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('4')){
+            $("#thu_day").prop('checked', true);
+        }else{
+            $("#thu_day").prop('checked', false);
+        }
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('5')){
+            $("#fri_day").prop('checked', true);
+        }else{
+            $("#fri_day").prop('checked', false);
+        }
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('6')){
+            $("#sat_day").prop('checked', true);
+        }else{
+            $("#sat_day").prop('checked', false);
+        }
+        if(scheduler_table[task_index-1].schedule.day_of_week.includes('7')){
+            $("#sun_day").prop('checked', true);
+        }else{
+            $("#sun_day").prop('checked', false);
+        }
+    }
+
+    function show_topics(task_index){
+        let task = scheduler_table[task_index-1]
+        $("#table_trigger_topics").show()
+        $("#table_playlist_schedule").hide()
+        $("#topic_trigger_tab").tab('show')
+
+        topic_table_show(trigger_topic_table, ['start', 'stop'], 'trigger_topics_list','T')
+    }
+
+    function cancel_edit_task(){
+        //console.log("cancel edit task")
+        $("#editTaskModal_2").modal('hide')
+        location.reload()
+    }
+
+    function save_task(){
+        scheduler_table[edit_task_index-1].task_name = $("#task_name_input").val() 
+        scheduler_table[edit_task_index-1].playlist_path = $("#path_input").val()
+        scheduler_table[edit_task_index-1].type = $("#type_input").val()
+
+        if($("#table_trigger_topics").is(':hidden')){
+            console.log("schedule type")
+            scheduler_table[edit_task_index-1].trigger_type = 'schedule'
+
+            scheduler_table[edit_task_index-1].schedule.start_time = $("#s_time_input").val()
+            scheduler_table[edit_task_index-1].schedule.end_time = $("#e_time_input").val()
+
+            scheduler_table[edit_task_index-1].schedule.day_of_week =''
+            if($("#mon_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='1 '
+            }
+            if($("#tue_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='2 '
+            }
+            if($("#wen_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='3 '
+            }
+            if($("#thu_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='4 '
+            }
+            if($("#fri_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='5 '
+            }
+            if($("#sat_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='6 '
+            }
+            if($("#sun_day").is(':checked')){
+                scheduler_table[edit_task_index-1].schedule.day_of_week +='7 '
+            }
+
+        }else{
+            console.log("trigger topic")
+            scheduler_table[edit_task_index-1].trigger_type = 'topic'
+            update_array_data(trigger_topic_table,'T')
+            scheduler_table[edit_task_index-1].trigger_topics = trigger_topic_table.data_array
+        }
+
+        update_array_data(action_topic_table,'A')
+        scheduler_table[edit_task_index-1].actions = action_topic_table.data_array
+
+        scheduler_table[edit_task_index-1].state = 'stop'
+
+        fetch('/save_scheduler_table', {
+            method: 'POST',
+            headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: JSON.stringify(scheduler_table)
+        }).then((res) => {
+            console.log("POST config OK, res: ", res)
+            }).catch((err) => {
+            console.log(err)
+        })
+
+        //console.log(scheduler_table[task_index-1])
+        $("#editTaskModal_2").modal('hide')
+        location.reload()
+
+    }
+
+    function add_topic(identify){
+        let topic = {
+            "event":"",
+            "topic": "",
+            "payload": "",
+        }
+        if(identify=='A'){
+            update_array_data(action_topic_table,'A')
+            action_topic_table.data_array.push(topic)
+            topic_table_show(action_topic_table, ['start', 'stop'], 'action_topics_list', 'A')
+        }else if(identify=='T'){
+            update_array_data(trigger_topic_table,'T')
+            trigger_topic_table.data_array.push(topic)
+            topic_table_show(trigger_topic_table, ['start', 'stop'], 'trigger_topics_list', 'T')
+        }
+    }
+
+    function update_array_data(table, identify){
+        for (let row=0; row < (table.DOM_table.rows.length-1); row++) {
+            table.data_array[row].event = $(`#${identify}_event_${row}`).val()
+            table.data_array[row].topic = $(`#${identify}_topic_${row}`).val()
+            table.data_array[row].payload = $(`#${identify}_payload_${row}`).val()
+            if(table.data_array[row].event=='' || table.data_array[row].topic=='' || table.data_array[row].payload==''){
+
+            }
+        }
+    }
+
+    function delete_topic(identify, index){
+        if(identify=='A'){
+            action_topic_table.data_array.splice(parseInt(index),1)
+            topic_table_show(action_topic_table, ['start', 'stop'], 'action_topics_list', 'A')
+        }else if(identify=='T'){
+            trigger_topic_table.data_array.splice(parseInt(index),1)
+            topic_table_show(trigger_topic_table, ['start', 'stop'], 'trigger_topics_list', 'T')
+        }
+    }
+
+
+
+    $("#name_input").change(function() {
+        //console.log("name_input changed")
+        let current_playlist = playlist_table.find(x => x.name == $("#name_input").val())
+        //console.log(current_playlist)
+        $("#path_input").val(current_playlist.path) 
+        $("#type_input").val(current_playlist.type)
+    })
+
+    $("#schedule_tab").click(function (evt) {
+        evt.preventDefault();
+        show_schedule(edit_task_index)
+    })
+
+    $("#topic_trigger_tab").click(function (evt) {
+        evt.preventDefault();
+        show_topics(edit_task_index)
+    })
+
+    function fetch_getTopicList(){
+        fetch(`/get_topic_list`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+            }
+            }).then((res) => res.json()
+            ).then((dat) => {
+                //console.log(dat)
+                for(let i in dat.triggers){
+                    $(`#trigger_topics_list`).append($('<option>', {value: `${dat.triggers[i]}`}))
+                }
+                for(let i in dat.actions){
+                    $(`#action_topics_list`).append($('<option>', {value: `${dat.actions[i]}`}))
+                }
+            })
+    }
+
+
+

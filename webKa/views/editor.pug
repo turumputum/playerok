@@ -41,136 +41,13 @@ block content
                                 button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' data-bs-toggle='modal' data-bs-target='#newPlaylistModal') add
 
     //----------------------Edit playlist MODAL----------------------------
-    #editPlaylistModal.modal.fade(tabindex='-1' aria-labelledby='editTrackModalLabel' aria-hidden='true' data-bs-backdrop="static")
-        .modal-dialog.modal-xl.modal-fullscreen-xl-down
-            .modal-content
-                .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4 Edit playlist
-                .modal-body
-                    .input-group
-                        span.input-group-text.fs-5.fw-bold Playlist name:
-                        input#playlist_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
-                    card.card.card_shadow.h-100.mt-4
-                        .bg-secondary.card-img-top
-                            .h4.mx-2.mt-2 Simple content
-                        .card_body.p-2
-                            table#simpleContTable.table.table-hover
-                                thead
-                                    tr
-                                        th(scope='col' style='width:3%') #
-                                        th(scope='col' style='width:20%') Name
-                                        th(scope='col' style='width:62%') Path
-                                        th(scope='col' style='width:15%') Control
-                                tbody
-                    card.card.card_shadow.h-100.mt-4
-                        .bg-secondary.card-img-top
-                            .h4.mx-2.mt-2 Interactive content
-                        .card_body.p-2
-                            table#interactiveContTable.table.table-hover
-                                thead
-                                    tr
-                                        th(scope='col' style='width:3%') #
-                                        th(scope='col' style='width:20%') Name
-                                        th(scope='col' style='width:62%') Path
-                                        th(scope='col' style='width:15%') Control
-                                tbody
-                .modal-footer
-                    button.btn.btn-secondary(onclick = 'save_edit_playlist()') Save
-                    button.btn.btn-secondary(onclick = 'cancel_edit_playlist()') Cancel
+    include modals/editPlaylist_modal.pug
 
     //-------------------EDIT TRACK-----------------------------
-    #editTrackModal.modal.modal-xl.modal-fullscreen-xl-down.fade(tabindex='-1' aria-labelledby='editTrackModalLabel' aria-hidden='true' data-bs-backdrop="static")
-        .modal-dialog.modal-xl.modal-fullscreen-xl-down
-            .modal-content
-                .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4.editTrackModalTitle Edit track in playlist:
-                .modal-body
-                    .input-group
-                        span.input-group-text.fs-5.fw-bold Track name:
-                        input#track_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
-                    //-------------------CARD Main settings-----------------------------
-                    card.card.card_shadow.h-100.mt-4
-                        .bg-secondary.card-img-top
-                            .h4.mx-2.mt-2 Main settings
-                        .card_body.p-2
-                            table#editSipmpleTrack.table.table-hover
-                                thead
-                                    tr  
-                                        th(scope='col' style='width:8%') Order
-                                        th(scope='col' style='width:10%') Type
-                                        th(scope='col' style='width:25%') File name
-                                        th(scope='col' ) Path
-                                tbody
-                                    tr
-                                        th 
-                                            input#order_input.form-control(type='number' placeholder='' aria-label='')
-                                        th
-                                            select#type_select.form-select
-                                        th
-                                            select#name_select.form-select
-
-                                        th
-                                            input#path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
-                    //-------------------CARD Triggers and actions-----------------------------
-                    card.card.card_shadow.h-100.mt-4
-                        .bg-secondary.card-img-top
-                            .h4.mx-2.mt-2 Interactive settings
-                        .card_body.p-2
-                            table#interactiveContTable.table.table-hover
-                                thead
-                                    tr
-                                        //th(scope='col' style='width:8%') 
-                                        th(scope='col' style='width:20%') Name
-                                        th(scope='col') Topic
-                                        th(scope='col' style='width:15%') Payload
-                                tbody
-                                    tr
-
-                                    tr#turnOn_row.css_inactive
-                                        th 
-                                            h6.mt-2 Turn on triger
-                                        th 
-                                            input#turnOn_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#turnOn_Payload.form-control(type='text' aria-label='') 
-                                    tr#turnOff_row.css_inactive
-                                        th 
-                                            h6.mt-2 Turn off triger
-                                        th 
-                                            input#turnOff_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#turnOff_Payload.form-control(type='text' aria-label='') 
-                                    tr#startAction_row.css_inactive
-                                        th 
-                                            h6.mt-2 Start action
-                                        th 
-                                            input#startAction_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#startAction_Payload.form-control(type='text'  aria-label='') 
-                                    tr#endAction_row.css_inactive
-                                        th 
-                                            h6.mt-2 End action
-                                        th 
-                                            input#endAction_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#endAction_Payload.form-control(type='text'  aria-label='') 
-                                    tr#loop_row.css_inactive
-                                        th 
-                                            h6.mt-2 Loop track
-                                        th
-                                            input#loop_Enable(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
-                                        th
-                                    
-                                    
-                                    //each playlist, index in playlist_table
-                                        //- var pt_ind = playlist_table.findIndex(o => o.id_md5 == task.id_md5)
-                                        //- console.log(playlist_table[0].name)
-                                        if playlist.type == 'json'
-                                            +table-row(index+1, playlist.name, playlist.path)
-                .modal-footer
-                    button.btn.btn-secondary(onclick = 'saveTrack()') Save
-                    button.btn.btn-secondary(onclick = 'cancelEditTrack()') Cancel
+    include modals/editTrack_modal.pug
     
+
+
     #newPlaylistModal.modal.modal-xl.modal-fullscreen-xl-down.fade(tabindex='-1' aria-labelledby='newPlaylistModal' aria-hidden='true' data-bs-backdrop="static")
         .modal-dialog.modal-dialog-centered
             .modal-content
@@ -211,9 +88,138 @@ block content
                     button.btn.btn-primary(data-bs-dismiss="modal") Cancel
 
 
-    script(src="assets/editor.js")
+    //script(src="assets/editor.js")
     script.
         let config = !{JSON.stringify(config)}
+
+        var editPlaylistModal = document.getElementById('editPlaylistModal')
+        //var simpleContTable = editModal.querySelector('.simpleContTable')
+        var tableSC = document.getElementById('simpleContTable').getElementsByTagName('tbody')[0];
+        var tableIC = document.getElementById('interactiveContTable').getElementsByTagName('tbody')[0];
+
+        var current_playlist_path = ''
+        var current_track_index = ''
+
+        var edit_track_mode
+        var current_playlist
+        var content_table
+
+        function newPlaylist(){
+            let playlist = {
+                playlist_name: $('#newPlaylist_name_input').val(),
+                version: "1.0",
+                next_topic:"",
+                prev_topic:"",
+                play_pause_topic:"",
+                stop_topic:"",
+                state_topic:"",
+                volume_val_topic:"",
+                volume_up_topic:"",
+                volume_down_topic:"",
+                tracks:[]
+            }
+            current_playlist_path='data/playlists/'+playlist.playlist_name+'.json'
+            fetch_post_playlist(current_playlist_path, playlist).then(()=>{
+                window.location.reload();
+            })
+        }
+
+        function edit_playlist_modal(path) {
+            current_playlist_path = path
+            fetch_get_playlist().then(()=>{
+                $('#editPlaylistModal').modal('show')
+            })
+        }
+
+
+        var confirm_delete = document.getElementById('verify_delete')
+        var delete_index = 0
+        confirm_delete.addEventListener('show.bs.modal', function (event) {
+            var delete_button = event.relatedTarget
+
+            var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
+
+            modal_header_task_name.innerHTML = delete_button.getAttribute('d-name')
+            delete_index = delete_button.getAttribute('d-index')
+        })
+
+        async function delete_playlist(index){
+            var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
+            //var delete_button = event.relatedTarget
+            var data = {
+                index_to_delete : delete_index,
+                name_to_delete: modal_header_task_name.innerHTML
+            }
+            console.log('Playlist name to delete: ' + data.index_to_delete)
+            fetch('/delete_playlist', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(data)
+            }).then((res) => {
+                console.log("delete POST OK:", res)
+                window.location.reload();
+                }).catch((err) => {
+                console.log(err)
+                })
+        }
+
+        async function fetch_post_playlist(path, playlist) {
+            outData = {
+                path: path,
+                playlist: playlist
+            }
+            return fetch('/save_playlist', {
+                method: 'POST',
+                headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/x-www-form-urlencoded'
+                },
+                body: JSON.stringify(outData)
+            }).then((res) => {
+                console.log("Playlist POST OK, res: ", res)
+                
+                }).catch((err) => {
+                console.log(err)
+            })
+        }
+
+        function delete_track(){
+            console.log("lets delete track name: " + current_playlist.tracks[current_track_index].name)
+            current_playlist.tracks.splice(current_track_index,1)
+            fetch_post_playlist(current_playlist_path, current_playlist).then(()=>{
+                //window.location.reload();
+                //update_playlist_modal()
+                //$('#editPlaylistModal').reload()
+                $('#confirmDeleteTrackModal').modal('hide')
+            }).then(()=>{
+                $('#editPlaylistModal').modal('show')
+            })
+        }
+
+        function cancel_delete_track(){
+            $('#confirmDeleteTrackModal').modal('hide')
+            $('#editPlaylistModal').modal('show')
+        }
+
+        async function fetch_get_playlist(){
+            return fetch(`/get_playlist?${current_playlist_path}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            }).then((res) => res.json()
+            ).then((dat) => {
+                console.log("GET play list, res: ", dat.playlist.tracks) 
+                current_playlist = dat.playlist
+                content_table = dat.content_table
+            }).catch((err) => {
+                console.log(err)
+            })
+        }
     
 
 

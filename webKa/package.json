@@ -20,6 +20,7 @@
     "bootstrap5-toggle": "^4.3.4",
     "browserify": "^17.0.0",
     "busboy": "^1.6.0",
+    "chosen-js": "^1.8.7",
     "connect-busboy": "^1.0.0",
     "connect-flash": "^0.1.1",
     "directory-tree": "^3.3.1",

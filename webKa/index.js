@@ -97,6 +97,7 @@ app.get('/power_off', function (req, res) {
 
 
 
+
 //----------------CONFIG------------------------------
 
 app.use(
@@ -497,6 +498,15 @@ app.get("/Scheduler", (req, res) => {
   let playlist_table = JSON.parse(rawdata);
   //scribbles.log(JSON.stringify(playlist_table,null,2))
   //
+  tasks.forEach(task => {
+    
+    if(!fs.existsSync('/home/playerok/playerok/'+task.playlist_path)){
+      task.playlist_path = 'File not foud'
+      task.state ='warning'
+    }
+  });
+
+
   res.render("scheduler", {
     pageName: "Scheduler",
     tasks: tasks,
@@ -512,7 +522,7 @@ app.post("/Scheduler/delete", (req, res) => {
   let tasks = JSON.parse(rawdata);
 
   tasks.splice(task_to_delete.index_to_delete - 1, 1)
-  scribbles.log(tasks)
+  //scribbles.log(tasks)
   fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(tasks, null, 2))
 
   return res.end('done')
@@ -547,6 +557,20 @@ app.post("/Scheduler/new", (req, res) => {
 
   let data = JSON.stringify(tasks, null, 2)
   fs.writeFileSync('../meta/scheduler-table.json', data)
+
+  return res.end('done')
+});
+
+app.post("/save_scheduler_table", (req, res) => {
+  //const playlist = JSON.parse(Object.keys(req.body)[0])
+  const inData = JSON.parse(Object.keys(req.body)[0])
+
+  try {
+    fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(inData, null, 2))
+    scribbles.log(`scheduler-table save OK`)
+  } catch (err) {
+    scribbles.warn(`Write scheduler-table error: ${err}`)
+  }
 
   return res.end('done')
 });
@@ -992,7 +1016,17 @@ app.get("/get_logs", (req, res) => {
 
 })
 
+app.get("/get_topic_list", (req, res) => {
 
+  try {
+    let topics_list = fs.readFileSync('/home/playerok/playerok/meta/topics_list.json')
+    res.send(topics_list)
+    scribbles.log(`send topics_list ok`)
+  } catch {
+    scribbles.error(`send topics_list fail`)
+  }
+
+})
 // fs.readdir('../data/playlists', function(err, list){
 //   if (err) return done(err);
 //     //------to-do-------chek playlist table---------------------

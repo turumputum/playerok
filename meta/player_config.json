@@ -2,17 +2,17 @@
   "net": {
     "eth0": {
       "DHCP": 0,
-      "IP": "192.168.88.140",
+      "IP": "192.168.0.1",
       "net_mask": "255.255.255.0",
-      "gateway": "192.168.88.1",
+      "gateway": "192.168.0.1",
       "enable": 1,
-      "DNS": "192.168.88.1"
+      "DNS": ""
     },
     "eth1": {
       "DHCP": 1,
-      "IP": "",
-      "net_mask": "",
-      "gateway": "",
+      "IP": "192.168.0.1",
+      "net_mask": "255.255.255.0",
+      "gateway": "192.168.0.1",
       "DNS": "",
       "enable": 1
     },
@@ -50,15 +50,15 @@
     ],
     "output_sink": "",
     "output_device": "Audio Jack",
-    "volume": "24"
+    "volume": 24
   },
   "screen": {
     "screen_dev_list": [
       "HDMI-1"
     ],
     "autoTurnOff": null,
-    "resolution": "1920x1080",
-    "orientation": "right",
+    "resolution": "1280x960",
+    "orientation": "normal",
     "output_port": "HDMI-1"
   },
   "boot": {
