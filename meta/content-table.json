@@ -2,20 +2,16 @@
   "image": [],
   "video": [
     {
-      "path": "data/content/S01E01.mkv",
-      "name": "S01E01"
+      "path": "data/content/Groot_1.mkv",
+      "name": "Groot_1"
     },
     {
-      "path": "data/content/S01E02.mkv",
-      "name": "S01E02"
+      "path": "data/content/Groot_2.mkv",
+      "name": "Groot_2"
     },
     {
-      "path": "data/content/videopaybck.avi",
-      "name": "videopaybck"
-    },
-    {
-      "path": "data/content/videopl.avi",
-      "name": "videopl"
+      "path": "data/content/videoplayback.avi",
+      "name": "videoplayback"
     }
   ],
   "sound": []

@@ -57,5 +57,5 @@ su playerok -c " xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/bla
 su playerok -c " xfconf-query -c xfce4-power-manager -p /xfce4-power-manager/inactivity-on-ac -s 0"
 
 echo "install is OK"
-# sudo rm -fr /home/playerok/playerok/meta/flag_firstRunAfterInstall
+sudo rm -fr /home/playerok/playerok/meta/flag_firstRunAfterInstall
 #sudo reboot

@@ -247,16 +247,21 @@ app.post('/data/*@upload', function (req, res) {
   }
 
   // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
+  //scribbles.log(JSON.stringify(req.files, null, 2))
   sampleFile = req.files.file;
-  uploadPath = '../' + file_path + sampleFile.name;
+  uploadPath = '../' + file_path;
 
-  // Use the mv() method to place the file somewhere on your server
+  //Use the mv() method to place the file somewhere on your server
   sampleFile.mv(uploadPath, function (err) {
-    if (err)
+    if (err){
+      scribbles.err(`Upload error: ${err} path: ${uploadPath}`)
       return res.status(500).send(err);
+    }
 
-    res.redirect("back");
+    res.send('complete').end();
   });
+
+  
 });
 
 app.post("/data/*@mkdir", (req, res) => {

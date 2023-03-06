@@ -1,17 +1,7 @@
 [
   {
-    "path": "data/playlists/1.json",
-    "name": "1",
-    "type": "multimedia"
-  },
-  {
-    "path": "data/playlists/213.json",
-    "name": "213",
-    "type": "multimedia"
-  },
-  {
-    "path": "data/playlists/3233.json",
-    "name": "3233",
+    "path": "data/playlists/test_playlist.json",
+    "name": "test_playlist",
     "type": "multimedia"
   }
 ]

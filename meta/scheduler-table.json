@@ -1,52 +1,16 @@
 [
   {
-    "task_name": "13",
-    "playlist_path": "data/playlists/1.json",
+    "task_name": "new_task",
+    "playlist_path": "data/playlists/test_playlist.json",
     "type": "multimedia",
     "trigger_type": "schedule",
     "state": "stop",
     "schedule": {
-      "start_time": "10:24",
-      "end_time": "10:24",
-      "day_of_week": "1 2 3 5 6 7 "
+      "start_time": "08:00",
+      "end_time": "22:55",
+      "day_of_week": "1 2 3 4 5 6 7 "
     },
     "trigger_topics": [],
     "actions": []
-  },
-  {
-    "task_name": "3145",
-    "playlist_path": "data/playlists/1.json",
-    "type": "multimedia",
-    "trigger_type": "topic",
-    "state": "stop",
-    "schedule": {
-      "start_time": "10:24",
-      "end_time": "14:28",
-      "day_of_week": "4 5 6 7 "
-    },
-    "trigger_topics": [
-      {
-        "event": "start",
-        "topic": "button_module_1/button_5",
-        "payload": "1"
-      },
-      {
-        "event": "stop",
-        "topic": "button_module_1/button_4",
-        "payload": "1"
-      }
-    ],
-    "actions": [
-      {
-        "event": "start",
-        "topic": "button_module_1/led_5",
-        "payload": "1"
-      },
-      {
-        "event": "stop",
-        "topic": "button_module_1/led_5",
-        "payload": "0"
-      }
-    ]
   }
 ]

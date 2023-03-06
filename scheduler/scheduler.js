@@ -42,7 +42,7 @@ function start_player(playlist_path) {
         state.current_playlist_path = playlist_path
         var playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
         let index = playlist_table.findIndex((element) => element.path == playlist_path)
-        //scribbles.log(`index of playlist is ${index}`)
+        scribbles.log(`index of playlist is ${index} for path: ${playlist_path}`)
         state.current_playlist_name = playlist_table[index].name
     } catch (err) {
         scribbles.log(`Set playlist name fail: ${err}`)
@@ -106,6 +106,7 @@ function stop_player() {
 }
 
 function check_state() {
+    scribbles.log(`check state`)
     let date_ob = new Date();
     let current_time_in_minutes = date_ob.getMinutes() + date_ob.getHours() * 60
     let current_day = date_ob.getDay()
@@ -119,28 +120,29 @@ function check_state() {
     if(state.current_task_trigger == 'topic'){
         //
     }else{
-
+        //scribbles.log(`check schedule`)
         for (var index in scheduler_table) {
             let task = scheduler_table[index]
 
-            if((task.day_of_week =='')||(task.day_of_week ==undefined)){
+            if((task.schedule.day_of_week =='')||(task.schedule.day_of_week ==undefined)){
                 
             }else{
-                if (task.day_of_week.search(`${current_day}`) >= 0) {//---------day in list ---------------
-                    let playlist_start_time_in_minutes = parseInt(task.start_time.split(':')[0]) * 60 + parseInt(task.start_time.split(':')[1])
+                //scribbles.log(`active day fot task:${task.name}`)
+                if (task.schedule.day_of_week.search(`${current_day}`) >= 0) {//---------day in list ---------------
+                    let playlist_start_time_in_minutes = parseInt(task.schedule.start_time.split(':')[0]) * 60 + parseInt(task.schedule.start_time.split(':')[1])
                     if (playlist_start_time_in_minutes <= current_time_in_minutes) {
-                        let playlist_end_time_in_minutes = parseInt(task.end_time.split(':')[0]) * 60 + parseInt(task.end_time.split(':')[1])
-                        //scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
+                        let playlist_end_time_in_minutes = parseInt(task.schedule.end_time.split(':')[0]) * 60 + parseInt(task.schedule.end_time.split(':')[1])
+                        scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
                         if (playlist_end_time_in_minutes > current_time_in_minutes) {
-                            if ((state.current_playlist_path != task.path) && (task.type == 'multimedia')) {
+                            if ((state.current_playlist_path != task.playlist_path) && (task.type == 'multimedia')) {
                                 //----- it's playlist ok ----
                                 if (state.player_state == 'stop') {
-                                    start_player(task.path)
-                                    client.publish('scheduler/on_off_time', `${task.start_time}/${task.end_time}`, { retain: true })
+                                    start_player(task.playlist_path)
+                                    client.publish('scheduler/on_off_time', `${task.schedule.start_time}/${task.schedule.end_time}`, { retain: true })
                                     //scribbles.log(`lets play playlist ${state.current_playlist_name} from idle state`)
                                 } else if (state.player_state == "play") {
                                     stop_player()
-                                    start_player(playlist.path)
+                                    start_player(playlist.playlist_path)
                                     //scribbles.log(`lets play playlist ${state.current_playlist_name} overlay previus playlist`)
                                 }
                             }

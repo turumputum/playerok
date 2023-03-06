@@ -64,7 +64,7 @@ async function set_net_config() {
       if((iface=='eth0')||(iface=='eth1')){
         tryExecSync(`nmcli con add type ethernet con-name ${iface} ifname ${iface}`)
       }else{
-        tryExecSync(`nmcli con add type wifi con-name ${iface} ifname ${iface}`)
+        tryExecSync(`nmcli con add type wifi con-name ${iface} ifname ${iface} ssid ${config.net.wlan0.SSID}`)
       }
     }
 

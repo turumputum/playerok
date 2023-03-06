@@ -14,6 +14,7 @@ var simple_track_num = 0
 var player_state = 'Idle'
 var current_volume 
 var flag_mqtt_ok = 0
+var flag_first_run = 1;
 
 
 process.stdin.resume();
@@ -324,7 +325,7 @@ function play_track(index) {
   //stop_track(current_track_index)
   try {
     mpvPlayer.load('../' + playlist.tracks[index].path);
-    scribbles.log(`lets play: ${playlist.tracks[index].name}`)
+    scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}`)
     //return true
   } catch (err) {
     scribbles.error(`Play track failed: ${playlist.tracks[index].name} Error: ${err}`)
@@ -421,6 +422,12 @@ function shift_simple_track(dir) {
 // })
 
 mpvPlayer.on('stopped', function () {
+  if(flag_first_run==1){
+    flag_first_run = 0
+    play_track(current_track_index);
+    return
+  }
+  
   if((player_state!='Idle')&&(player_state!='stop')){
     scribbles.log(`stopped from event`)
     stop_track(current_track_index)

@@ -102,10 +102,17 @@ block content
                     .modal-body
                         input(type='hidden' name='hidenName' value='0')
                         input#upload_file.form-control(type='file' name='file')
+
+                        .progress.mt-2
+                            .progress-bar#upload_progress.progress-bar-striped.progress-bar-animated(role='progressbar' aria-valuenow='75' aria-valuemin='0' aria-valuemax='100' style='width: 0%')
+
                     .modal-footer.bg-light
-                        button#conf_btn.btn.btn-secondary( onclick = 'fetch_upload()') Confirm
+                        //button#conf_btn.btn.btn-secondary( onclick = 'fetch_upload()') Confirm
+                        button#conf_btn.btn.btn-secondary( onclick = 'xhr_upload()') Confirm
                         button.btn.btn-secondary(type='reset' data-bs-dismiss='modal') Cancel
                         //button.btn.btn-primary(type='submit') Upload
+
+    
 
     #moveModal.modal.fade(aria-hidden='true' aria-labelledby='moveModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered
@@ -193,35 +200,48 @@ block content
         //const formElement = $("form[action='@upload']");
         const $file = $("#upload-file");
 
+        function xhr_upload(){
+            var formData = new FormData();
+            var file = document.getElementById('upload_file').files[0];
+            formData.append('file', file)
+            
+            var xhr = new XMLHttpRequest();
+
+            xhr.open('post', `./${file.name}@upload`, true);
+
+            xhr.upload.onprogress = function(e) {
+                if (e.lengthComputable) {
+                    var percentage = (e.loaded / e.total) * 100;
+                    $("#upload_progress").css('width', percentage + '%');
+                }
+            }
+
+            xhr.onload = function() {
+                console.log(this.statusText);
+                window.location.reload();
+            }
+            xhr.send(formData);
+
+            $('#upload_file').attr('disabled',  true)
+            $('#conf_btn').attr('disabled',  true)
+
+        }
 
         function fetch_upload(){
             var upload_mw = document.getElementById('uploadModal')
-            //var file_input_g = upload_mw.querySelector('#upload_file')
             var file_input_g = document.getElementById('upload_file')
-            //var form_up = document.getElementById("form[action='@upload']")
             var formData = new FormData()
             
             console.log("ttt: " + file_input_g.files[0].name)
 
-            //$('#hidenName').val('1')
-
-            //formData.append('file', file_input_g.files[0], file_input_g.files[0].name)
             formData.append('file',file_input_g.files[0])
-            //formData.append('fileName', 'govnishe')
-            //console.log("Upload file : " + file_input_g.files[0].name)
-            //console.log("Upload file : " + formData.fileName)
+
             for (var p of formData) {
                 console.log(p);
             }
 
             fetch('@upload', {
                 method: 'POST',
-                //- headers: {
-                //- //- 'Accept': 'application/json',
-                //-     'Content-Type': 'multipart/form-data',
-                //-     //- 'Accept-Charset': 'utf-8',
-                //-     //- 'boundary': '—-WebKitFormBoundaryfgtsKTYLsT7PNUVD'
-                //- },
                 body: formData
             }).then((res) => {
                 console.log("upload POST OK:", res)
