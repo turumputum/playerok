@@ -1,0 +1,29 @@
+{
+  "playlist_name": "123",
+  "version": "1.0",
+  "actions": [
+    {
+      "event": "start",
+      "topic": "button_module_1/led_1",
+      "payload": "1"
+    },
+    {
+      "event": "stop",
+      "topic": "button_module_1/led_1",
+      "payload": "0"
+    }
+  ],
+  "controls": [],
+  "tracks": [
+    {
+      "order_num": 1,
+      "name": "new_track",
+      "path": "data/content/videoplayback.avi",
+      "content_group": "video",
+      "type": "simple",
+      "error": "",
+      "triggers": [],
+      "actions": []
+    }
+  ]
+}

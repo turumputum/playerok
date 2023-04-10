@@ -1,17 +1,22 @@
 {
-    "triggers": [
-        "monofon_1/phoneUp",
-        "monofon_1/trackNum",
-        "button_module/button_1",
-        "button_module/button_2",
-        "button_module/button_3",
-        "button_module/button_4",
-        "button_module/button_5",
-        "button_module/button_6",
-        "button_module/button_7",
-        "button_module/button_8"
-    ],
-    "actions":[
-        "monofon_1/setRGB"
-    ]
+  "triggers": [
+    "button_module_1/button_1",
+    "button_module_1/button_2",
+    "button_module_1/button_3",
+    "button_module_1/button_4",
+    "button_module_1/button_5",
+    "button_module_1/button_6",
+    "button_module_1/button_7",
+    "button_module_1/button_8"
+  ],
+  "actions": [
+    "button_module_1/led_1",
+    "button_module_1/led_2",
+    "button_module_1/led_3",
+    "button_module_1/led_4",
+    "button_module_1/led_5",
+    "button_module_1/led_6",
+    "button_module_1/led_7",
+    "button_module_1/led_8"
+  ]
 }

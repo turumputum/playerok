@@ -104,18 +104,14 @@ block content
         var current_playlist
         var content_table
 
+        fetch_getTopicList()
+
         function newPlaylist(){
             let playlist = {
                 playlist_name: $('#newPlaylist_name_input').val(),
                 version: "1.0",
-                next_topic:"",
-                prev_topic:"",
-                play_pause_topic:"",
-                stop_topic:"",
-                state_topic:"",
-                volume_val_topic:"",
-                volume_up_topic:"",
-                volume_down_topic:"",
+                actions:[],
+                controls:[],
                 tracks:[]
             }
             current_playlist_path='data/playlists/'+playlist.playlist_name+'.json'
@@ -219,6 +215,26 @@ block content
             }).catch((err) => {
                 console.log(err)
             })
+        }
+
+
+        function fetch_getTopicList(){
+            fetch(`/get_topic_list`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+                }).then((res) => res.json()
+                ).then((dat) => {
+                    //console.log(dat)
+                    for(let i in dat.triggers){
+                        $(`#trigger_topics_list`).append($('<option>', {value: `${dat.triggers[i]}`}))
+                    }
+                    for(let i in dat.actions){
+                        $(`#action_topics_list`).append($('<option>', {value: `${dat.actions[i]}`}))
+                    }
+                })
         }
     
 

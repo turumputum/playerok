@@ -1,71 +1,83 @@
 const scribbles = require('scribbles');
-let mpv = require('node-mpv');
+let mpvAPI = require('node-mpv');
 const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
-const log_file = require('log-to-file');
-const process = require ('process');
-
+const process = require('process');
+const workerpool = require('workerpool');
 
 var playlist
 var current_track_index = 0
 var interrupted_track_index = 0
 var simple_track_num = 0
 var player_state = 'Idle'
-var current_volume 
+var current_volume
 var flag_mqtt_ok = 0
 var flag_first_run = 1;
+var flag_player_started = 0;
 
+let client
 
 process.stdin.resume();
-process.on('SIGTERM', () => {
+
+function lastWill(){
+  player_state="stop"
   stop_track(current_track_index)
+  mpvPlayer.quit()
+
+  playlist.actions.forEach(function (action) {
+    if (action.event == "stop") {
+      try {
+        client.publish(action.topic, action.payload, { retain: true })
+        scribbles.debug(`publish stop action OK > ${action.topic}:${action.payload}`)
+      } catch (err) {
+        scribbles.error('publish error' + err)
+      }
+    }
+  })
 
   scribbles.log('Received SIGTERM. Exit.');
-  setTimeout(process.exit(),100)
+  setTimeout(() => {process.exit()}, 500)
+}
+
+process.on('SIGTERM', () => {
+  lastWill()
+});
+process.on('SIGINT', () => {
+  lastWill()
+});
+process.on('SIGQUIT', () => {
+  lastWill()
 });
 
 try {
   var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
   scribbles.config({
-    logLevel:config.log.level,
-    format:'{time} [{fileName}] <{logLevel}> {message}'
+    logLevel: config.log.level,
+    format: '{time} [{fileName}] <{logLevel}> {message}'
   })
 } catch (err) {
   scribbles.error(`Error read file: ${err}`)
   process.exit(1);
 }
 
-let mpvPlayer = new mpv({
+
+const mpvPlayer = new mpvAPI({
   "verbose": false,
-  //"binary":'C:/Users/Yac/mpv_dist/mpv.exe'
 }, [
   "--fullscreen",
   '--vo=gpu',
   '--hwdec=vaapi',
-  //`--audio-device=${config.sound.output_device}`
-  //`--audio-device=alsa/jack`
+
 ]);
 
-setTimeout(()=>{
-  //set_volume(config.sound.volume)
-  client.publish('player/volume_val', `${config.sound.volume}`, { retain: true })
-  scribbles.log("config OK, lets play")
-  if (simple_track_num > 0) {
-    play_track(current_track_index);
-  }
-},1000)
 
-// const readline = require('readline');
-// readline.emitKeypressEvents(process.stdin);
-// process.stdin.setRawMode(true);
 
 function read_playlist(path) {
   try {
     playlist = JSON.parse(fs.readFileSync('../' + path))
   } catch (err) {
     scribbles.error(`Error read playlist: ${err}`)
-    log_file(`Error read playlist: ${err}`, '../logs/player_log.log')
     process.exit(1);
   }
   simple_track_num = 0
@@ -84,190 +96,179 @@ read_playlist(playlist_path)
 
 
 //----------------MQTT------------------------------
-const client = mqtt.connect('mqtt://127.0.0.1:1883')
-client.on('connect', function () {
-  scribbles.log("mqtt brocker connected!");
+function mqtt_init() {
+  client = mqtt.connect('mqtt://127.0.0.1:1883')
+  client.publish('player/volume_val', `${config.sound.volume}`, { retain: true })
 
 
-  //-------MQTT-------Subscribe playlist topics------------------
-  if ((playlist.next_topic != '')&&(playlist.hasOwnProperty('next_topic'))) {
-    if (mqtt_sub(playlist.next_topic.split(' ').slice(0, 1)) === true) {
-      scribbles.log(`Subscribed next topic: ${playlist.next_topic}`)
+  client.on('connect', function () {
+    scribbles.log("mqtt brocker connected!");
+
+
+    //-------MQTT-------Subscribe playlist topics------------------
+    playlist.controls.forEach(control => {
+      if (mqtt_sub(control.topic) == true) {
+        scribbles.log(`Subscribed control topic: ${control.topic} event: ${control.event}`)
+      }
+    })
+
+    //--------MQTT------Subscribe tracks topics------------------
+    playlist.tracks.forEach(t_track => {
+      t_track.triggers.forEach(t_trigger => {
+        if (mqtt_sub(t_trigger.topic) == true) {
+          scribbles.log(`Subscribed track trigger topic: ${t_trigger.topic} for: ${t_track.name} event: ${t_trigger.event}`)
+        }
+      })
+    })
+
+    //-------MQTT-------Subscribe system topics------------------
+    if (mqtt_sub('player/next') === true) {
+      scribbles.log(`Subscribed system next topic: player/next`)
     }
-  }
-  if ((playlist.prev_topic != '')&&(playlist.hasOwnProperty('prev_topic'))) {
-    if (mqtt_sub(playlist.prev_topic.split(' ').slice(0, 1)) === true) {
-      scribbles.log(`Subscribed prev topic: ${playlist.prev_topic}`)
+    if (mqtt_sub('player/prev') === true) {
+      scribbles.log(`Subscribed system prev topic: player/prev`)
     }
-  }
-  if ((playlist.play_pause_topic != '')&&(playlist.hasOwnProperty('play_pause_topic'))) {
-    if (mqtt_sub(playlist.play_pause_topic.split(' ').slice(0, 1)) === true) {
-      scribbles.log(`Subscribed play_pause topic: ${playlist.play_pause_topic}`)
+    if (mqtt_sub('player/play_pause') === true) {
+      scribbles.log(`Subscribed system play_pause topic: player/play_pause`)
     }
-  }
-  if ((playlist.stop_topic != '')&&(playlist.hasOwnProperty('stop_topic'))) {
-    if (mqtt_sub(playlist.stop_topic.split(' ').slice(0, 1)) === true) {
-      scribbles.log(`Subscribed stop topic: ${playlist.stop_topic}`)
+    if (mqtt_sub('player/stop') === true) {
+      scribbles.log(`Subscribed system stop topic: player/stop`)
     }
-  }
-  // if ((playlist.volume_up_topic != '')&&(playlist.hasOwnProperty('volume_up_topic'))) {
-  //   if (mqtt_sub(playlist.volume_up_topic.split(' ').slice(0, 1)) === true) {
-  //     scribbles.log(`Subscribed volume_up topic: ${playlist.volume_up_topic}`)
-  //   }
-  // }
-  // if ((playlist.volume_down_topic != '')&&(playlist.hasOwnProperty('volume_down_topic'))) {
-  //   if (mqtt_sub(playlist.volume_down_topic.split(' ').slice(0, 1)) === true) {
-  //     scribbles.log(`Subscribed volume_down topic: ${playlist.volume_down_topic}`)
-  //   }
-  // }
-  // if ((playlist.volume_val_topic != '')&&(playlist.hasOwnProperty('volume_val_topic'))) {
-  //   if (mqtt_sub(playlist.volume_val_topic.split(' ').slice(0, 1)) === true) {
-  //     scribbles.log(`Subscribed volume_val topic: ${playlist.volume_val_topic}`)
-  //   }
-  // }
-
-  //-------MQTT-------Subscribe system topics------------------
-  if (mqtt_sub('player/next') === true) {
-    scribbles.log(`Subscribed system next topic: player/next`)
-  }
-  if (mqtt_sub('player/prev') === true) {
-    scribbles.log(`Subscribed system prev topic: player/prev`)
-  }
-  if (mqtt_sub('player/play_pause') === true) {
-    scribbles.log(`Subscribed system play_pause topic: player/play_pause`)
-  }
-  if (mqtt_sub('player/stop') === true) {
-    scribbles.log(`Subscribed system stop topic: player/stop`)
-  }
-  if (mqtt_sub('player/volume_val') === true) {
-    scribbles.log(`Subscribed system volume_val topic: volume_val`)
-  }
+    if (mqtt_sub('player/volume_val') === true) {
+      scribbles.log(`Subscribed system volume_val topic: volume_val`)
+    }
 
 
-
-  //--------MQTT------Subscribe tracks topics------------------
-  playlist.tracks.forEach(item => {
-    if (item.type == 'interactive') {
-      if (item.triger_on != '') {
-        let topic = item.triger_on.split(' ').slice(0, 1)
-        if (mqtt_sub(topic) === true) {
-          scribbles.log(`Subscribed triger_on topic: ${topic}`)
+    //-------MQTT-------report playlist start actions------------------
+    playlist.actions.forEach(function (action) {
+      if (action.event == "start") {
+        try {
+          client.publish(action.topic, action.payload, { retain: true })
+          scribbles.debug(`publish start action OK > ${action.topic}:${action.payload}`)
+        } catch (err) {
+          scribbles.error('publish error' + err)
         }
       }
-      if (item.triger_off != '') {
-        let topic = item.triger_off.split(':').slice(0, 1)
-        if (mqtt_sub(topic) === true) {
-          scribbles.log(`Subscribed triger_off topic: ${topic}`)
-        }
-      }
+    })
 
+
+
+    flag_mqtt_ok = 1
+    if (simple_track_num > 0) {
+      play_track(current_track_index);
     }
   })
 
-
-  flag_mqtt_ok = 1
-
-  
-
-})
-
-client.on('message', function (topic, message) {
-
-  //--------MQTT------Action on playlist topics------------------
-  if ((topic == playlist.next_topic.split(/[: ]/).slice(0, 1)) && (message.toString() == playlist.next_topic.split(/[: ]/).slice(-1))) {
-    if (shift_simple_track(+1)) {
-      if (play_track(current_track_index)) {
-        scribbles.log(`Next track OK command, index: ${current_track_index}`)
-      }
-    }
-  }
-  if ((topic == playlist.prev_topic.split(/[: ]/).slice(0, 1)) && (message.toString() == playlist.prev_topic.split(/[: ]/).slice(-1))) {
-    if (shift_simple_track(-1)) {
-      if (play_track(current_track_index)) {
-        scribbles.log(`Prev track OK command, index: ${current_track_index}`)
-      }
-    }
-  }
-  if (topic == playlist.play_pause_topic.split(/[: ]/).slice(0, 1)) {
-    play_pause(message.toString() == playlist.prev_topic.split(/[: ]/).slice(-1))
-  }
-  if (topic == playlist.stop_topic.split(/[: ]/).slice(0, 1) && (message.toString() == playlist.stop_topic.split(/[: ]/).slice(-1))) {
-    stop_track(current_track_index)
-  }
-  // if (topic == playlist.volume_val_topic.split(/[: ]/).slice(0, 1)) {
-  //   current_volume = parseInt(message)
-  //   set_volume(current_volume)
-  //   scribbles.log(`Mqtt command, set volume: ${current_volume}`)
-  // }
-  // if (topic == playlist.volume_up_topic.split(/[: ]/).slice(0, 1)) {
-  //   current_volume += parseInt(message)
-  //   if (current_volume > 100) { current_volume = 100 }
-  //   client.publish(playlist.volume_val_topic, `${current_volume}`, { retain: true })
-  // }
-  // if (topic == playlist.volume_down_topic.split(/[: ]/).slice(0, 1)) {
-  //   current_volume -= parseInt(message)
-  //   if (current_volume < 0) { current_volume = 0 }
-  //   client.publish(playlist.volume_val_topic, `${current_volume}`, { retain: true })
-  // }
-
-  //--------MQTT------Action on system topics------------------
-  if ((topic == 'player/next') && (message.toString() == 1)) {
-    if (shift_simple_track(+1)) {
-      if (play_track(current_track_index)) {
-        scribbles.log(`Next track OK command, index: ${current_track_index}`)
-      }
-    }
-  }
-  if ((topic == 'player/prev') && (message.toString() == 1)) {
-    if (shift_simple_track(-1)) {
-      if (play_track(current_track_index)) {
-        scribbles.log(`Prev track OK command, index: ${current_track_index}`)
-      }
-    }
-  }
-  if (topic == 'player/play_pause') {
-    play_pause(parseInt(message))
-  }
-  if (topic == 'player/stop' && (message.toString() == 1)) {
-    stop_track(current_track_index)
-  }
-  if (topic == 'player/volume_val') {
-    current_volume = parseInt(message)
-    set_volume(current_volume)
-    scribbles.log(`Mqtt command, set volume: ${current_volume}`)
-  }
-
-
-  playlist.tracks.forEach((item, index) => {
-    if (item.type == 'interactive') {
-      if ((topic == item.triger_on.split(/[: ]/).slice(0, 1)) && (message.toString() == item.triger_on.split(/[: ]/).slice(-1))) {
-        //stop_track(current_track_index)
-        if (play_track(index)) {
-          interrupted_track_index = current_track_index
-          //current_track_index = index
-          scribbles.log(`mqtt trigger_on Track OK, index: ${index}`)
+  client.on('message', function (topic, message) {
+    //--------MQTT------Action on playlist topics------------------
+    playlist.controls.forEach(control => {
+      if (control.topic == topic) {
+        if (control.event == 'next') {
+          if (control.payload == message) {
+            if (shift_simple_track(+1)) {
+              if (play_track(current_track_index)) {
+                scribbles.log(`Next track OK command, index: ${current_track_index}`)
+              }
+            }
+          }
+        } else if (control.event == 'previous') {
+          if (control.payload == message) {
+            if (shift_simple_track(-1)) {
+              if (play_track(current_track_index)) {
+                scribbles.log(`Prev track OK command, index: ${current_track_index}`)
+              }
+            }
+          }
+        } else if (control.event == 'play/pause') {
+          if (control.payload == message) {
+            play_pause()
+          }
+        } else if (control.event == 'set_volume') {
+          current_volume = parseInt(message)
+          set_volume(current_volume)
+        } else if (control.event == 'volume_up') {
+          current_volume = current_volume + parseInt(message)
+          if (current_volume > 100) { current_volume = 100 }
+          set_volume(current_volume)
+        } else if (control.event == 'volume_down') {
+          current_volume = current_volume - parseInt(message)
+          if (current_volume < 0) { current_volume = 0 }
+          set_volume(current_volume)
         }
       }
+    })
 
-      if ((topic == item.triger_off.split(/[: ]/).slice(0, 1)) && (message.toString() == item.triger_off.split(/[: ]/).slice(-1))) {
-        //stop_track(current_track_index)
-        if (simple_track_num > 0) {
-          if (play_track(interrupted_track_index)) {
-            //current_track_index = interrupted_track_index
-            scribbles.log(`mqtt trigger_off return to interrupted Track OK, index: ${current_track_index}`)
+
+    //--------MQTT------Action on tracks topics------------------
+    playlist.tracks.forEach(function (track, t_index) {
+      track.triggers.forEach(trigger => {
+        if (trigger.topic == topic) {
+          if ((trigger.event == 'start') && (trigger.payload == message)) {
+            if(current_track_index!=t_index){
+              // if(player_state!="Idle"){
+              //   stop_track(current_track_index)
+              // }
+
+              interrupted_track_index = current_track_index
+              if (play_track(t_index)) {
+                scribbles.log(`mqtt trigger_on Track OK, current_index: ${current_track_index} -- interupted_index:${interrupted_track_index}`)
+              }
+            }
+          } else if ((trigger.event == 'stop') && (trigger.payload == message)) {
+            if(current_track_index==t_index){
+              if (simple_track_num > 0) {
+                  if (play_track(interrupted_track_index)) {
+                    scribbles.log(`mqtt trigger_off return to interrupted Track OK, index: ${current_track_index}`)
+                  }
+                } 
+                // else {
+                //   stop_track()
+                // }
+              }
           }
         }
+      })
+    })
+
+    //--------MQTT------Action on system topics------------------
+    if ((topic == 'player/next') && (message.toString() == 1)) {
+      if (shift_simple_track(+1)) {
+        if (play_track(current_track_index)) {
+          scribbles.log(`Next track OK command, index: ${current_track_index}`)
+        }
       }
     }
+    if ((topic == 'player/prev') && (message.toString() == 1)) {
+      if (shift_simple_track(-1)) {
+        if (play_track(current_track_index)) {
+          scribbles.log(`Prev track OK command, index: ${current_track_index}`)
+        }
+      }
+    }
+    if (topic == 'player/play_pause') {
+      if (message == "1") {
+        play_pause()
+      }
+    }
+    if (topic == 'player/stop' && (message.toString() == 1)) {
+      stop_track(current_track_index)
+    }
+    if (topic == 'player/volume_val') {
+      current_volume = parseInt(message)
+      set_volume(current_volume)
+      scribbles.log(`Mqtt command, set volume: ${current_volume}`)
+    }
+
   })
 
-})
+}
+mqtt_init()
+
 
 function mqtt_sub(topic) {
   if (client.subscribe(topic, function (err) {
     if (err) {
       scribbles.error(`subscribe to: ${topic} filed: ${err}`)
-      log_file(`subscribe to: ${topic} filed: ${err}`, '../logs/player_log.log')
       return err
     } else {
       //scribbles.log(`subscribe OK to: ${topic}`)
@@ -281,110 +282,104 @@ function mqtt_sub(topic) {
 function report_state(state) {
   if (flag_mqtt_ok == 1) {
     if (state == 'Playing') {
-      if (playlist.state_topic != '') {
-        client.publish(playlist.state_topic, `Playing : ${playlist.tracks[current_track_index].name}`, { retain: true })
-      }
       client.publish('player/state', `Playing : ${playlist.tracks[current_track_index].name}`, { retain: true })
     } else if (state == 'Pause') {
-      if (playlist.state_topic != '') {
-        client.publish(playlist.state_topic, `Pause : ${playlist.tracks[current_track_index].name}`, { retain: true })
-      }
       client.publish('player/state', `Pause : ${playlist.tracks[current_track_index].name}`, { retain: true })
     } else if (state == 'Idle') {
-      if (playlist.state_topic != '') {
-        client.publish(playlist.state_topic, `Idle`, { retain: true })
-      }
       client.publish('player/state', `Idle`, { retain: true })
     }
   }
 }
 
+function report_actions(index, event){
+  //---report actions---
+  playlist.tracks[index].actions.forEach(function (action) {
+    if (action.event == event) {
+      try {
+        client.publish(action.topic, action.payload, { retain: true })
+        scribbles.debug(`publish ${event} action OK > ${action.topic}:${action.payload}`)
+      } catch (err) {
+        scribbles.error('publish error' + err)
+      }
+    }
+  })
+}
+
 
 //-----------------Player--------------------
 
-function set_volume(volume){
+function set_volume(volume) {
   current_volume = volume
   mpvPlayer.volume(volume)
-  
-  try{
+
+  try {
     var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
     config.sound.volume = volume
-    fs.writeFileSync('../meta/player_config.json', JSON.stringify(config,null,2))
-  }catch(err){
+    fs.writeFileSync('../meta/player_config.json', JSON.stringify(config, null, 2))
+  } catch (err) {
     scribbles.log(`set config fail: ${err}`)
   }
 }
 
 function play_track(index) {
 
-  if((player_state!='Idle')&&(player_state!='stop')){
-      scribbles.log(`stopped before start< state: ${player_state} `)
-      stop_track(current_track_index)
+  // if ((player_state != 'Idle') && (player_state != 'stop')) {
+  //   scribbles.log(`stopped before start< state: ${player_state} `)
+  //   stop_track(current_track_index)
+  // }
+
+  if ((player_state != 'Idle') && (player_state != 'stop')) {
+    report_actions(current_track_index, "stop")
   }
 
   //stop_track(current_track_index)
   try {
     mpvPlayer.load('../' + playlist.tracks[index].path);
-    scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}`)
+    scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}  -- index:${index}`)
     //return true
   } catch (err) {
     scribbles.error(`Play track failed: ${playlist.tracks[index].name} Error: ${err}`)
-    log_file(`Play track failed: ${playlist.tracks[index].name} Error: ${err}`, '../logs/player_log.log')
     return false
   }
-  if (flag_mqtt_ok == 1) {
-    if ((playlist.tracks[index].pub_on_start != '') && (playlist.tracks[index].type == 'interactive')) {
-      scribbles.log(`start action interactive track: ${playlist.tracks[current_track_index].pub_on_start}`)
-      try {
-        let tmpTopic = playlist.tracks[index].pub_on_start.split(/[: ]/).slice(0, 1)
-        let tmpPayload = playlist.tracks[index].pub_on_start.split(/[: ]/).slice(-1)
-        client.publish(tmpTopic[0], tmpPayload[0], { retain: true })
-      } catch (err) {
-        scribbles.log('publish error' + err)
-      }
-    }
-  }
+
+  //---report actions---
+  report_actions(index, "start")
+
   current_track_index = index
-  setTimeout(()=>{
+  setTimeout(() => {
     report_state(player_state = 'Playing')
-  },100)
+  }, 10)
   return true
 }
 
 function stop_track(index) {
   try {
+    //scribbles.debug(`let stop player`)
     mpvPlayer.stop()
   } catch {
     scribbles.error(`Stop track failed: ${playlist.tracks[index].name} Error: ${err}`)
-    log_file(`Stop track failed: ${playlist.tracks[index].name} Error: ${err}`, '../logs/player_log.log')
     return false
   }
-  if (flag_mqtt_ok == 1) {
-    if (playlist.tracks[current_track_index].pub_on_end != '' && playlist.tracks[current_track_index].type == 'interactive') {
-      scribbles.log(`end action interactive track: ${playlist.tracks[current_track_index].pub_on_end}`)
-      try {
-        let tmpTopic = playlist.tracks[current_track_index].pub_on_end.split(/[: ]/).slice(0, 1)
-        let tmpPayload = playlist.tracks[current_track_index].pub_on_end.split(/[: ]/).slice(-1)
-        client.publish(tmpTopic[0], tmpPayload[0], { retain: true })
-      } catch (err) {
-        scribbles.log('publish error' + err)
-      }
-    }
-  }
-  scribbles.log('Stop OK')
+
+
+  //---report actions---
+  report_actions(index, "stop")
+
+
+  //scribbles.log('Stop OK')
   report_state(player_state = 'Idle')
   return true
 }
 
-function play_pause(state) {
-  if (state == playlist.play_pause_topic.split(/[: ]/).slice(-1)[0]) {
+function play_pause() {
+  if (player_state != "Playing") {
     if (player_state == 'Pause') {
       mpvPlayer.resume()
       report_state(player_state = 'Playing')
     } else if (player_state == 'Idle') {
       play_track(current_track_index)
     }
-  } else if (state != playlist.play_pause_topic.split(/[: ]/).slice(-1)[0]) {
+  } else if (player_state == "Playing") {
     mpvPlayer.pause()
     report_state(player_state = 'Pause')
   }
@@ -404,7 +399,7 @@ function shift_simple_track(dir) {
       }
     }
     if (playlist.tracks[current_track_index].type != 'simple') {
-      scribbles.log(`Is not simple truck index ${current_track_index}, seek`)
+      scribbles.log(`Is not simple truck index ${current_track_index}, skip`)
       shift_simple_track(dir)
     }
     return true
@@ -414,52 +409,30 @@ function shift_simple_track(dir) {
 
 }
 
-
-// //mpvPlayer.fullscreen();
-
-// mpvPlayer.on('started', function () {
-  
-// })
-
 mpvPlayer.on('stopped', function () {
-  if(flag_first_run==1){
-    flag_first_run = 0
-    play_track(current_track_index);
-    return
-  }
-  
-  if((player_state!='Idle')&&(player_state!='stop')){
-    scribbles.log(`stopped from event`)
-    stop_track(current_track_index)
-  }
-
-  scribbles.log(`stopped event`)
-  
-  // if (flag_mqtt_ok == 1) {
-  //   if (playlist.tracks[current_track_index].pub_on_end != '' && playlist.tracks[current_track_index].type == 'interactive') {
-  //     scribbles.log(`end action interactive track: ${playlist.tracks[current_track_index].pub_on_end}`)
-  //     try {
-  //       let tmpTopic = playlist.tracks[current_track_index].pub_on_end.split(/[: ]/).slice(0, 1)
-  //       let tmpPayload = playlist.tracks[current_track_index].pub_on_end.split(/[: ]/).slice(-1)
-  //       client.publish(tmpTopic[0], tmpPayload[0], { retain: true })
-  //     } catch (err) {
-  //       scribbles.log('publish error' + err)
-  //     }
-  //   }
+  // if (flag_first_run == 1) {
+  //   flag_first_run = 0
+  //   scribbles.log(`First run`)
+  //   play_track(current_track_index);
+  //   return
   // }
 
-  if (simple_track_num > 0 && player_state == "Idle") {
-    if ((playlist.tracks[current_track_index].loop == 'on')&&(playlist.tracks[current_track_index].type!='simple')) {//----------Loop current track----------------------
+  if(player_state!="Idle"){
+    report_actions(current_track_index, "stop")
+  }
+
+  
+  scribbles.log(`stopped event`)
+
+
+
+  if (simple_track_num > 0 && player_state != "stop") {
+    if (shift_simple_track(+1)) {
       if (play_track(current_track_index)) {
-        scribbles.log(`Prev track End, loop current track OK, index: ${current_track_index}`)
-      }
-    } else {//----------shift next track----------------------
-      if (shift_simple_track(+1)) {
-        if (play_track(current_track_index)) {
-          scribbles.log(`Prev track End, play Next track OK, index: ${current_track_index}`)
-        }
+        scribbles.log(`Prev track End, play Next track OK, index: ${current_track_index}`)
       }
     }
-  }
-});
 
+  }
+
+});

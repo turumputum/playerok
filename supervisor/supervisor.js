@@ -180,6 +180,7 @@ setTimeout(() => {
   })
 
   scribbles.log(`watchers started`)
+  exec(`beep -r 3`)
 }, 4000)
 
 

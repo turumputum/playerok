@@ -30,62 +30,41 @@
 
                                         th
                                             input#path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+
+                            card.card.h-100.mt-4
+                                .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                    .h5.mx-2.mt-2 Actions
+                                table.table#table_actions_topics.table-hover
+                                    datalist#action_topics_list
+                                    thead
+                                        tr
+                                            th(scope='col' style="width: 15%;") Event
+                                            th(scope='col') Topic
+                                            th(scope='col' style="width: 15%;") Payload
+                                            th(scope='col' style="width: 15%;") Controls
+
+                                    tbody
                     //-------------------CARD Triggers and actions-----------------------------
                     card.card.card_shadow.h-100.mt-4
                         .bg-secondary.card-img-top
                             .h4.mx-2.mt-2 Interactive settings
                         .card_body.p-2
-                            table#interactiveContTable.table.table-hover
-                                thead
-                                    tr
-                                        //th(scope='col' style='width:8%') 
-                                        th(scope='col' style='width:20%') Name
-                                        th(scope='col') Topic
-                                        th(scope='col' style='width:15%') Payload
-                                tbody
-                                    tr
+                          
+                            card.card.h-100.mt-2
+                                .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                    .h5.mx-2.mt-2 Triggers
+                                table.table#table_triggers_topics.table-hover
+                                    datalist#trigger_topics_list
+                                    thead
+                                        tr
+                                            th(scope='col' style="width: 15%;") Event
+                                            th(scope='col') Topic
+                                            th(scope='col' style="width: 15%;") Payload
+                                            th(scope='col' style="width: 15%;") Controls
 
-                                    tr#turnOn_row.css_inactive
-                                        th 
-                                            h6.mt-2 Turn on triger
-                                        th 
-                                            input#turnOn_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#turnOn_Payload.form-control(type='text' aria-label='') 
-                                    tr#turnOff_row.css_inactive
-                                        th 
-                                            h6.mt-2 Turn off triger
-                                        th 
-                                            input#turnOff_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#turnOff_Payload.form-control(type='text' aria-label='') 
-                                    tr#startAction_row.css_inactive
-                                        th 
-                                            h6.mt-2 Start action
-                                        th 
-                                            input#startAction_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#startAction_Payload.form-control(type='text'  aria-label='') 
-                                    tr#endAction_row.css_inactive
-                                        th 
-                                            h6.mt-2 End action
-                                        th 
-                                            input#endAction_Topic.form-control(type='text' aria-label='')
-                                        th 
-                                            input#endAction_Payload.form-control(type='text'  aria-label='') 
-                                    tr#loop_row.css_inactive
-                                        th 
-                                            h6.mt-2 Loop track
-                                        th
-                                            input#loop_Enable(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
-                                        th
-                                    
-                                    
-                                    //each playlist, index in playlist_table
-                                        //- var pt_ind = playlist_table.findIndex(o => o.id_md5 == task.id_md5)
-                                        //- console.log(playlist_table[0].name)
-                                        if playlist.type == 'json'
-                                            +table-row(index+1, playlist.name, playlist.path)
+                                    tbody
+
+                            
                 .modal-footer
                     button.btn.btn-secondary(onclick = 'saveTrack()') Save
                     button.btn.btn-secondary(onclick = 'cancelEditTrack()') Cancel
@@ -103,21 +82,24 @@ script.
             type : '',
             error: "",
             loop : $('#loop_Enable').prop('checked'),
-            triger_on : $('#turnOn_Topic').val() + " : " + $('#turnOn_Payload').val(),
-            triger_off : $('#turnOff_Topic').val() + " : " + $('#turnOff_Payload').val(),
-            pub_on_start : $('#startAction_Topic').val() + " : " + $('#startAction_Payload').val(),
-            pub_on_end : $('#endAction_Topic').val() + " : " + $('#endAction_Payload').val()
+            triggers:[],
+            actions:[]
         }
 
-        if((track.triger_on.length>3) ||
-            (track.triger_off.length>3) ||
-            (track.pub_on_start.length>3) ||
-            (track.pub_on_end.length>3)){
+        update_array_data(triggers_topic_table, 'T')
+        track.triggers = triggers_topic_table.data_array
+        update_array_data(actions_topic_table, 'A')
+        track.actions = actions_topic_table.data_array
+
+        if(track.triggers.length>0){
             track.type = 'interactive'  
         }else{
             track.type = 'simple'
         }
 
+        console.log(track)
+
+        //--------verify order num-----------
         current_playlist.tracks.forEach(item => {
             if(item.order_num== track.order_num){
                 item.order_num = parseInt(current_track_index)+1
@@ -156,34 +138,121 @@ script.
         
     }
 
-    //------------------------TRACK MODAL-----------------EVRNTS-------------
+    //--------------end of interactive settings group-------------------
+    var triggers_topic_table={
+        DOM_table : document.getElementById('table_triggers_topics').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
+    var actions_topic_table={
+        DOM_table : document.getElementById('table_actions_topics').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
+    var actionEventList = ["start", "stop"]
+    var triggerEventList = ["start", "stop"]
+
+    function show_interactive_card(){
+
+        //console.log(current_playlist.tracks[current_track_index])
+
+
+
+    }
+
+    function add_topic(identify){
+        let topic = {
+            "event":"",
+            "topic": "",
+            "payload": "",
+        }
+        if(identify=='A'){
+            update_array_data(actions_topic_table,'A')
+            actions_topic_table.data_array.push(topic)
+            topic_table_show(actions_topic_table, actionEventList, 'action_topics_list', 'A')
+        }else if(identify=='T'){
+            update_array_data(triggers_topic_table,'T')
+            triggers_topic_table.data_array.push(topic)
+            topic_table_show(triggers_topic_table, triggerEventList, 'trigger_topics_list', 'T')
+        }
+    }
+
+    function update_array_data(table, identify){
+        for (let row=0; row < (table.DOM_table.rows.length-1); row++) {
+            table.data_array[row].event = $(`#${identify}_event_${row}`).val()
+            table.data_array[row].topic = $(`#${identify}_topic_${row}`).val()
+            table.data_array[row].payload = $(`#${identify}_payload_${row}`).val()
+            if(table.data_array[row].event=='' || table.data_array[row].topic=='' || table.data_array[row].payload==''){
+
+            }
+        }
+    }
+
+    function delete_topic(identify, index){
+        if(identify=='A'){
+            actions_topic_table.data_array.splice(parseInt(index),1)
+            topic_table_show(actions_topic_table, actionEventList, 'action_topics_list', 'A')
+        }else if(identify=='T'){
+            triggers_topic_table.data_array.splice(parseInt(index),1)
+            topic_table_show(triggers_topic_table, triggerEventList, 'trigger_topics_list', 'T')
+        }
+    }
+
+    function topic_table_show(table, event_array, available_topic_list, identify){
+
+        table.DOM_table.innerHTML = ""
+        for (let topic_index in table.data_array) {
+
+            let topic = table.data_array[topic_index]
+
+            let newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
+
+            newRow.insertCell().innerHTML = `<select id='${identify}_event_${topic_index}' class="form-select"></select>`
+            event_array.forEach(event =>{
+                $(`#${identify}_event_${topic_index}`).append($('<option>', {value: `${event}`, text : `${event}`}));
+            })
+            $(`#${identify}_event_${topic_index}`).val(topic.event)
+
+            newRow.insertCell().innerHTML = `<input id='${identify}_topic_${topic_index}' class="form-control" list='${available_topic_list}'></input>`
+            $(`#${identify}_topic_${topic_index}`).val(topic.topic)
+
+            newRow.insertCell().innerHTML = `<input id='${identify}_payload_${topic_index}' class="form-control"></input>`
+            $(`#${identify}_payload_${topic_index}`).val(topic.payload)
+
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic('${identify}','${topic_index}')">delete</button>`
+        }
+        newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic('${identify}')">add</button>`
+    }
+    //--------------end of interactive settings group-------------------
+
+
+
+    //------------------------TRACK MODAL-----------------EVENTS-------------
 
     editTrackModal.addEventListener('show.bs.modal', function (event) {
-        var track_name = document.getElementById('track_name_input')
-        $('#turnOn_Topic').val('')
-        $('#turnOn_Payload').val('')
-        $('#turnOn_row').addClass("css_inactive")
-        $('#turnOff_Topic').val('')
-        $('#turnOff_Payload').val('')
-        $('#turnOff_row').addClass("css_inactive")
-        $('#startAction_Topic').val('')
-        $('#startAction_Payload').val('')
-        $('#startAction_row').addClass("css_inactive")
-        $('#endAction_Topic').val('')
-        $('#endAction_Payload').val('')
-        $('#endAction_row').addClass("css_inactive")
-        $('#loop_Enable').bootstrapToggle('off')
+        //fetch_getTopicList()
+        show_interactive_card()
+
 
         $('#type_select').empty()
-        for(let key in Object.keys(content_table)){
-            $('#type_select').append(`<option value="">${Object.keys(content_table)[key]}</option>`)
+        for(let key in content_table){
+        //console.log(content_table[key].length)
+            if(content_table[key].length>0){
+                $('#type_select').append(`<option value="">${key}</option>`)
+            }   
         }
+
+        //console.log($('#type_select'))
         $('#name_select').empty()
+        
         
 
         if(current_track_index<current_playlist.tracks.length){ 
+            console.log("edit exist track")
             //------------------------EDIT SIMPLE SETTINGS-------------------------
-            track_name.value = current_playlist.tracks[current_track_index].name
+            $('#track_name_input').val(current_playlist.tracks[current_track_index].name)
             let track_type = current_playlist.tracks[current_track_index].content_group
             $('#order_input').val(parseInt(current_track_index)+1)
             //let indexType = content_table.findIndex(s=>s.path==current_playlist.tracks[current_track_index].path)
@@ -197,52 +266,28 @@ script.
             $('#path_input').val(current_playlist.tracks[current_track_index].path)
             let indexOf = content_table[track_type].findIndex(s=>s.path==current_playlist.tracks[current_track_index].path)
             let FileName = content_table[track_type][indexOf].name
-            $('#name_select option:contains('+FileName+')').prop('selected', true);
-            
-            
-            //------------------------EDIT INTERACTIVE TRACK-------------------------
-            if(current_playlist.tracks[current_track_index].type=='interactive'){
-                if(current_playlist.tracks[current_track_index].triger_on!=''){
-                    $('#turnOn_Topic').val(current_playlist.tracks[current_track_index].triger_on.split(':').slice(0,1))
-                    $('#turnOn_Payload').val(current_playlist.tracks[current_track_index].triger_on.split(':').slice(-1))
-                    $('#turnOn_row').removeClass("css_inactive")
-                }
-                if(current_playlist.tracks[current_track_index].triger_off!=''){
-                    $('#turnOff_Topic').val(current_playlist.tracks[current_track_index].triger_off.split(':').slice(0,1))
-                    $('#turnOff_Payload').val(current_playlist.tracks[current_track_index].triger_off.split(':').slice(-1))
-                    $('#turnOff_row').removeClass("css_inactive")
-                }
-                if(current_playlist.tracks[current_track_index].pub_on_start!=''){
-                    $('#startAction_Topic').val(current_playlist.tracks[current_track_index].pub_on_start.split(':').slice(0,1))
-                    $('#startAction_Payload').val(current_playlist.tracks[current_track_index].pub_on_start.split(':').slice(-1))
-                    $('#startAction_row').removeClass("css_inactive")
-                }
-                if(current_playlist.tracks[current_track_index].pub_on_end!=''){
-                    $('#endAction_Topic').val(current_playlist.tracks[current_track_index].pub_on_end.split(':').slice(0,1))
-                    $('#endAction_Payload').val(current_playlist.tracks[current_track_index].pub_on_end.split(':').slice(-1))
-                    $('#endAction_row').removeClass("css_inactive")
-                }
-                if(current_playlist.tracks[current_track_index].loop=='on'){
-                    $('#loop_Enable').bootstrapToggle('on')
-                    $('#loop_row').removeClass("css_inactive")
-                }
+            $('#name_select option:contains('+FileName+')').prop('selected', true);  
 
-            }
-            
 
+            actions_topic_table.data_array = current_playlist.tracks[current_track_index].actions
+            triggers_topic_table.data_array = current_playlist.tracks[current_track_index].triggers       
         }else{
             //------------------------NEW TRACK-------------------------
-            track_name.value = 'new_track'
+            console.log("add new track")
+            $('#track_name_input').val('new_track')
             $('#order_input').val(current_playlist.tracks.length+1)
-            //$('#type_select option:contains("video")').prop('selected', true);
+            
+            //console.log($('#type_select'))
 
-            for (let index in content_table[$("#type_select option:selected").text()]){
-                //console.log("nsme select "+ content_table[$("#type_select option:selected").text()][index].name )
-                $('#name_select').append(`<option value="">${content_table[$("#type_select option:selected").text()][index].name}</option>`)
-            }
+            content_table[$('#type_select').find(":selected").text()].forEach(item =>{
+                $('#name_select').append(`<option value="">${item.name}</option>`)
+            })
             $('#path_input').val(content_table[$("#type_select option:selected").text()][0].path)
             
         }
+
+        topic_table_show(actions_topic_table, actionEventList, 'action_topics_list', 'A')
+        topic_table_show(triggers_topic_table, triggerEventList, 'trigger_topics_list', 'T') 
 
     })
 
@@ -263,41 +308,6 @@ script.
         $('#path_input').val(content_table[$("#type_select option:selected").text()][tmpIndex].path) 
     })
 
-    $('#turnOn_Topic,#turnOn_Payload').on("change", function(){
-        $('#turnOn_row').addClass("css_inactive")
-        if($('#turnOn_Topic').val()!=''){
-            if(($('#turnOn_Payload').val()!='')){
-                $('#turnOn_row').removeClass("css_inactive")
-            }
-        }
-    })
-
-    $('#turnOff_Topic,#turnOff_Payload').on("change", function(){
-        $('#turnOff_row').addClass("css_inactive")
-        if($('#turnOff_Topic').val()!=''){
-            if(($('#turnOff_Payload').val()!='')){
-                $('#turnOff_row').removeClass("css_inactive")
-            }
-        }
-    })
-
-    $('#startAction_Topic,#startAction_Payload').on("change", function(){
-        $('#startAction_row').addClass("css_inactive")
-        if($('#startAction_Topic').val()!=''){
-            if(($('#startAction_Payload').val()!='')){
-                $('#startAction_row').removeClass("css_inactive")
-            }
-        }
-    })
-
-    $('#endAction_Topic,#endAction_Payload').on("change", function(){
-        $('#endAction_row').addClass("css_inactive")
-        if($('#endAction_Topic').val()!=''){
-            if(($('#endAction_Payload').val()!='')){
-                $('#endAction_row').removeClass("css_inactive")
-            }
-        }
-    })
     $('#loop_Enable').on("change",function() {
         // try {
         //     current_playlist.tracks[current_track_index].loop = $(this).prop('checked')

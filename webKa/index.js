@@ -506,8 +506,7 @@ app.get("/Scheduler", (req, res) => {
   tasks.forEach(task => {
     
     if(!fs.existsSync('/home/playerok/playerok/'+task.playlist_path)){
-      task.playlist_path = 'File not foud'
-      task.state ='warning'
+      task.state ='File not foud'
     }
   });
 

@@ -30,7 +30,6 @@ function mqtt_sub(topic) {
 
 class portListener {
   constructor(port_path) {
-    var name = ''
     this.name = 'rr'
     this.path = port_path
     scribbles.log(`create new port listener for: ${port_path}`)
@@ -64,14 +63,7 @@ class portListener {
 
       if (data.toString('utf8').slice(0, 2) != 'OK') {
         try {
-          //let name= data.toString('utf8').split('/')[0]
-          //let number= parseInt((data.toString('utf8').split('/')[1]).split(':')[0].split('_')[1])
-          //let state= parseInt((data.toString('utf8').split('/')[1]).split(':')[1])
-          //let cmd = `${name}/led_${number}:${state}\r\n`
           client.publish(`${data.toString('utf8').split(':')[0]}`, `${data.toString('utf8').split(':')[1]}`, { retain: true })
-
-          // scribbles.log(cmd)
-          // portH.write(cmd)
         } catch (err) {
           scribbles.log(`Publish fail: ${err}`)
         }

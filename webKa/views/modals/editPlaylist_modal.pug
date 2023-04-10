@@ -4,55 +4,92 @@
             .modal-header(style='background-color: rgb(177, 220, 226);')
                 h4 Edit playlist
             .modal-body
-                .input-group
+                .input-group.px-4
                     span.input-group-text.fs-5.fw-bold Playlist name:
                     input#playlist_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
-                card.card.card_shadow.h-100.mt-4
-                    .bg-secondary.card-img-top
-                        .h4.mx-2.mt-2 Simple content
-                    .card_body.p-2
-                        table#simpleContTable.table.table-hover
-                            thead
-                                tr
-                                    th(scope='col' style='width:3%') #
-                                    th(scope='col' style='width:20%') Name
-                                    th(scope='col' style='width:62%') Path
-                                    th(scope='col' style='width:15%') Control
-                            tbody
-                
-                card.card.card_shadow.h-100.mt-4
-                    .bg-secondary.card-img-top
-                        .h4.mx-2.mt-2 Interactive content
-                    .card_body.p-2
-                        table#interactiveContTable.table.table-hover
-                            thead
-                                tr
-                                    th(scope='col' style='width:3%') #
-                                    th(scope='col' style='width:20%') Name
-                                    th(scope='col' style='width:62%') Path
-                                    th(scope='col' style='width:15%') Control
-                            tbody
+                        
+                .card.m-4.card_shadow
+                        //- .bg-secondary.card-img-top
+                        //-     .h4.mx-2.mt-2 Triggers
+                        .card-header.text-center
+                            ul#triggerTabs.nav.nav-tabs.card-header-tabs
+                                li
+                                    button#content_tab.nav-link.active(aria-current='true' data-toggle="tab") Content
+                                li
+                                    button#advanced_tab.nav-link(data-toggle="tab") Advanced 
+                        .card-body            
+                            
+                            card#simple_content_card.card.mt-4
+                                .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                    .h4.mx-2.mt-2 Looped tracks
+                                .card_body.p-2
+                                    table#simpleContTable.table.table-hover
+                                        thead
+                                            tr
+                                                th(scope='col' style='width:3%') #
+                                                th(scope='col' style='width:20%') Name
+                                                th(scope='col' style='width:62%') Path
+                                                th(scope='col' style='width:15%') Controls
+                                        tbody
+                            
+                            card#interactive_content_card.card.mt-4
+                                .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                    .h4.mx-2.mt-2 Triggered tracks
+                                .card_body.p-2
+                                    table#interactiveContTable.table.table-hover
+                                        thead
+                                            tr
+                                                th(scope='col' style='width:3%') #
+                                                th(scope='col' style='width:20%') Name
+                                                th(scope='col' style='width:62%') Path
+                                                th(scope='col' style='width:15%') Controls
+                                        tbody
+
+                            card#actions_card.card.mt-4(style='display: none;')
+                                .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                    .h4.mx-2.mt-2 Actions
+                                .card_body.p-2
+                                    table#playlistActionsTable.table.table-hover
+                                        datalist#action_topics_list
+                                        thead
+                                            tr
+                                                th(scope='col' style="width: 15%;") Event
+                                                th(scope='col') Topic
+                                                th(scope='col' style="width: 15%;") Payload
+                                                th(scope='col' style="width: 15%;") Controls
+                                        tbody
+
+                            card#controls_card.card.mt-4(style='display: none;')
+                                .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                    .h4.mx-2.mt-2 Controls
+                                .card_body.p-2
+                                    table#playlistControlsTable.table.table-hover
+                                        datalist#trigger_topics_list
+                                        thead
+                                            tr
+                                                th(scope='col' style="width: 15%;") Event
+                                                th(scope='col') Topic
+                                                th(scope='col' style="width: 15%;") Payload
+                                                th(scope='col' style="width: 15%;") Controls
+                                        tbody
                 
             .modal-footer
                 button.btn.btn-secondary(onclick = 'save_edit_playlist()') Save
                 button.btn.btn-secondary(onclick = 'cancel_edit_playlist()') Cancel
 
 script.
-    function insertAddTrackButtons(){
-        var newRow = tableSC.insertRow(-1)
-        newRow.insertCell()
-        newRow.insertCell()
-        newRow.insertCell()
-        var addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
 
-        newRow = tableIC.insertRow(tableIC.rows.length)
-        newRow.insertCell()
-        newRow.insertCell()
-        newRow.insertCell()
-        addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
-    }
 
-    function update_playlist_modal(){   
+    //-------- Content tab group ---------------------------
+    function show_content_tab(){    
+        $("#content_tab").tab('show');
+
+        $("#actions_card").hide()
+        $("#controls_card").hide()
+        $("#simple_content_card").show()
+        $("#interactive_content_card").show()
+
+        
         tableSC.innerHTML = ""
         tableIC.innerHTML = ""
 
@@ -84,10 +121,133 @@ script.
             
     }
 
+    function insertAddTrackButtons(){
+        var newRow = tableSC.insertRow(-1)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        var addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
+
+        newRow = tableIC.insertRow(tableIC.rows.length)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
+    }
+    //-------- End Content tab group ---------------------------
+
+    //-------- Advanced tab group ---------------------------
+    var controls_topic_table={
+        DOM_table : document.getElementById('playlistControlsTable').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
+    var actions_topic_table_for_p={
+        DOM_table : document.getElementById('playlistActionsTable').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
+    var actionEventList = ["start", "stop"]
+    var controlEventList = ["next", "previous", "play/pause", "set_volume", "volume_up", "volume_down"]
+
+    function topic_table_show_for_p(table, event_array, available_topic_list, identify){
+        console.log("show topic table")
+        table.DOM_table.innerHTML = ""
+        for (let topic_index in table.data_array) {
+
+            let topic = table.data_array[topic_index]
+
+            let newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
+
+            newRow.insertCell().innerHTML = `<select id='${identify}_event_${topic_index}' class="form-select"></select>`
+            event_array.forEach(event =>{
+                $(`#${identify}_event_${topic_index}`).append($('<option>', {value: `${event}`, text : `${event}`}));
+            })
+            $(`#${identify}_event_${topic_index}`).val(topic.event)
+
+            newRow.insertCell().innerHTML = `<input id='${identify}_topic_${topic_index}' class="form-control" list='${available_topic_list}'></input>`
+            $(`#${identify}_topic_${topic_index}`).val(topic.topic)
+
+            newRow.insertCell().innerHTML = `<input id='${identify}_payload_${topic_index}' class="form-control"></input>`
+            $(`#${identify}_payload_${topic_index}`).val(topic.payload)
+
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic_for_p('${identify}','${topic_index}')">delete</button>`
+        }
+        newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell()
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic_for_p('${identify}')">add</button>`
+    }
+
+    function show_advanced_tab(){
+        $("#advanced_tab").tab('show');
+
+        $("#actions_card").show()
+        $("#controls_card").show()
+        $("#simple_content_card").hide()
+        $("#interactive_content_card").hide()
+
+        console.log("update tables")
+
+        actions_topic_table_for_p.data_array = current_playlist.actions
+        topic_table_show_for_p(actions_topic_table_for_p, actionEventList, 'action_topics_list', 'A')
+        controls_topic_table.data_array = current_playlist.controls;     
+        topic_table_show_for_p(controls_topic_table, controlEventList, 'trigger_topics_list', 'C');
+    }
+
+    function add_topic_for_p(identify){
+        let topic = {
+            "event":"",
+            "topic": "",
+            "payload": "",
+        }
+        if(identify=='A'){
+            update_array_data(actions_topic_table_for_p,'A')
+            actions_topic_table_for_p.data_array.push(topic)
+            topic_table_show_for_p(actions_topic_table_for_p, actionEventList, 'action_topics_list', 'A')
+        }else if(identify=='C'){
+            update_array_data(controls_topic_table,'C')
+            controls_topic_table.data_array.push(topic)
+            topic_table_show_for_p(controls_topic_table, controlEventList, 'trigger_topics_list', 'C')
+        }
+    }
+
+    function update_array_data(table, identify){
+        for (let row=0; row < (table.DOM_table.rows.length-1); row++) {
+            table.data_array[row].event = $(`#${identify}_event_${row}`).val()
+            table.data_array[row].topic = $(`#${identify}_topic_${row}`).val()
+            table.data_array[row].payload = $(`#${identify}_payload_${row}`).val()
+            if(table.data_array[row].event=='' || table.data_array[row].topic=='' || table.data_array[row].payload==''){
+
+            }
+        }
+    }
+
+    function delete_topic_for_p(identify, index){
+        if(identify=='A'){
+            actions_topic_table_for_p.data_array.splice(parseInt(index),1)
+            topic_table_show_for_p(actions_topic_table_for_p, actionEventList, 'action_topics_list', 'A')
+        }else if(identify=='C'){
+            controls_topic_table.data_array.splice(parseInt(index),1)
+            topic_table_show_for_p(controls_topic_table, controlEventList, 'trigger_topics_list', 'C')
+        }
+    }
+
+    
+
+    
+    //-------- End Advanced tab group ---------------------------
+
+
     function save_edit_playlist(){
+        update_array_data(actions_topic_table_for_p,'A')
+        current_playlist.actions = actions_topic_table_for_p.data_array
+        update_array_data(controls_topic_table,'C')
+        current_playlist.controls = controls_topic_table.data_array
+
         $('#editPlaylistModal').modal('hide')
+        console.log(current_playlist)
         fetch_post_playlist(current_playlist_path, current_playlist).then(()=>{
-            window.location.reload();
+            //window.location.reload();
         })
     }
 
@@ -113,6 +273,21 @@ script.
         current_playlist.playlist_name = $('#playlist_name_input').val()
     })
 
+
     $('#editPlaylistModal').on('shown.bs.modal', function(){
-        update_playlist_modal()
+        show_content_tab()
+        //fetch_getTopicList()
+    })
+
+
+    $("#content_tab").click(function (evt) {
+        //console.log(`content tab click`)
+        show_content_tab();
+        evt.preventDefault();
+    })
+
+    $("#advanced_tab").click(function (evt) {
+        //console.log(`advanced tab click`)
+        show_advanced_tab()
+        evt.preventDefault();
     })

@@ -14,5 +14,10 @@
       "name": "videoplayback"
     }
   ],
-  "sound": []
+  "sound": [
+    {
+      "path": "data/content/monofonRus.mp3",
+      "name": "monofonRus"
+    }
+  ]
 }

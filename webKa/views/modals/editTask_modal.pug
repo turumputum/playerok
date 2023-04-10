@@ -77,19 +77,19 @@
                             tbody
                                 tr
 
-                card.card.card_shadow.h-100.mt-4
-                    .bg-secondary.card-img-top
-                        .h4.mx-2.mt-2 Actions
-                    table.table#table_actions_topics.table-hover
-                        datalist#action_topics_list
-                        thead
-                            tr
-                                th(scope='col') Event
-                                th(scope='col') Topic
-                                th(scope='col' style="width: 15%;") Payload
-                                th(scope='col' style="width: 15%;") Controls
+                //- card.card.card_shadow.h-100.mt-4
+                //-     .bg-secondary.card-img-top
+                //-         .h4.mx-2.mt-2 Actions
+                //-     table.table#table_actions_topics.table-hover
+                //-         datalist#action_topics_list
+                //-         thead
+                //-             tr
+                //-                 th(scope='col') Event
+                //-                 th(scope='col') Topic
+                //-                 th(scope='col' style="width: 15%;") Payload
+                //-                 th(scope='col' style="width: 15%;") Controls
 
-                        tbody
+                //-         tbody
 
             .modal-footer
                 button.btn.btn-secondary(onclick = 'save_task()') Save
@@ -103,10 +103,10 @@ script.
         DOM_table : document.getElementById('table_trigger_topics').getElementsByTagName('tbody')[0],
         data_array : []
     }
-    var action_topic_table={
-        DOM_table : document.getElementById('table_actions_topics').getElementsByTagName('tbody')[0],
-        data_array : []
-    }
+    //- var action_topic_table={
+    //-     DOM_table : document.getElementById('table_actions_topics').getElementsByTagName('tbody')[0],
+    //-     data_array : []
+    //- }
 
 
     //____________OPEN MODAL_____________
@@ -114,7 +114,7 @@ script.
         //let button = event.relatedTarget
         //edit_task_index = button.getAttribute('d-index')
         trigger_topic_table.data_array = scheduler_table[edit_task_index-1].trigger_topics
-        action_topic_table.data_array = scheduler_table[edit_task_index-1].actions
+        //action_topic_table.data_array = scheduler_table[edit_task_index-1].actions
 
         fetch_getTopicList()
 
@@ -141,7 +141,7 @@ script.
             show_topics(edit_task_index)
         }
 
-        topic_table_show(action_topic_table, ['start', 'stop'], 'action_topics_list', 'A')
+        //topic_table_show(action_topic_table, ['start', 'stop'], 'action_topics_list', 'A')
     })
 
     function topic_table_show(table, event_array, available_topic_list, identify){
@@ -276,8 +276,8 @@ script.
             scheduler_table[edit_task_index-1].trigger_topics = trigger_topic_table.data_array
         }
 
-        update_array_data(action_topic_table,'A')
-        scheduler_table[edit_task_index-1].actions = action_topic_table.data_array
+        //- update_array_data(action_topic_table,'A')
+        //- scheduler_table[edit_task_index-1].actions = action_topic_table.data_array
 
         scheduler_table[edit_task_index-1].state = 'stop'
 

@@ -6,10 +6,14 @@
 GRUB_DEFAULT=0
 GRUB_TIMEOUT=0
 GRUB_TIMEOUT_STYLE=hidden
+GRUB_HIDDEN_TIMEOUT=1
 GRUB_HIDDEN_TIMEOUT_QUIET=true
+GRUB_DISABLE_OS_PROBER=true
 GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
 GRUB_CMDLINE_LINUX_DEFAULT="rhgb quiet splash console=tty3 rd.plymouth=0 plymouth.enable=0 --log-level=0 net.ifnames=0 intel_iommu=on,igfx_off"
+GRUB_CMDLINE_LINUX=""
 
+#GRUB_DISABLE_OS_PROBER=false
 
 # Uncomment to enable BadRAM filtering, modify to suit your needs
 # This works with Linux (no patch required) and with any kernel that obtains

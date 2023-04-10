@@ -83,6 +83,7 @@ function stop_player() {
         client.publish('scheduler/current_playlist', `none`, { retain: true })
         client.publish('player/state', `stop`, { retain: true })
         client.publish('scheduler/on_off_time', `--:--/--:--`, { retain: true })
+        client.publish('scheduler/current_task', none, { retain: true })
 
         state.player_state = 'stop'
     } catch (err) {
@@ -92,7 +93,7 @@ function stop_player() {
     state.current_task_trigger =''
 
     state.current_actions.forEach(action=>{
-        if(action.event == 'start'){
+        if(action.event == 'stop'){
             scribbles.log(`publish action ${action.topic}:${action.payload}`)
             client.publish(action.topic, action.payload, { retain: true })
         }
@@ -106,7 +107,7 @@ function stop_player() {
 }
 
 function check_state() {
-    scribbles.log(`check state`)
+    //scribbles.log(`check state`)
     let date_ob = new Date();
     let current_time_in_minutes = date_ob.getMinutes() + date_ob.getHours() * 60
     let current_day = date_ob.getDay()
@@ -132,7 +133,7 @@ function check_state() {
                     let playlist_start_time_in_minutes = parseInt(task.schedule.start_time.split(':')[0]) * 60 + parseInt(task.schedule.start_time.split(':')[1])
                     if (playlist_start_time_in_minutes <= current_time_in_minutes) {
                         let playlist_end_time_in_minutes = parseInt(task.schedule.end_time.split(':')[0]) * 60 + parseInt(task.schedule.end_time.split(':')[1])
-                        scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
+                        //scribbles.log(`current_time_in_minutes: ${current_time_in_minutes} \n playlist_start_time_in_minutes: ${playlist_start_time_in_minutes} \n playlist_end_time_in_minutes: ${playlist_end_time_in_minutes}`)
                         if (playlist_end_time_in_minutes > current_time_in_minutes) {
                             if ((state.current_playlist_path != task.playlist_path) && (task.type == 'multimedia')) {
                                 //----- it's playlist ok ----
@@ -143,8 +144,10 @@ function check_state() {
                                 } else if (state.player_state == "play") {
                                     stop_player()
                                     start_player(playlist.playlist_path)
+                                    
                                     //scribbles.log(`lets play playlist ${state.current_playlist_name} overlay previus playlist`)
                                 }
+                                client.publish('scheduler/current_task', task.task_name, { retain: true })
                             }
                             flag_valid_playlist = 1
                             //scribbles.log(`valid playlist is ${state.current_playlist_name} playing....`)
@@ -235,6 +238,7 @@ client.on('message', function (topic, message) {
                         if(task_topic.event=='start'){
                             stop_player()
                             start_player(task.playlist_path)
+                            client.publish('scheduler/current_task', task.task_name, { retain: true })
                             flag_valid_playlist = 1
                         }else if(task_topic.event=='stop'){
                             stop_player()

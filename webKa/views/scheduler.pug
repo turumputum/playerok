@@ -27,14 +27,13 @@ block content
                             th(scope='col') Path
                             th(scope='col') Type
                             th(scope='col') Trigger
-                            th(scope='col') State
                             th(scope='col' style="width: 15%;") Controls
                     tbody
                         each task, index in tasks
                             //+table-row(index+1, task.task_name, task.playlist_path, task.type, task.trigger_type, task.state)
                         
                         tr
-                            td(colspan='6')
+                            td(colspan='5')
                             td(data-label="Controls") 
                                 button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' onclick='add_task()') add
 
@@ -89,13 +88,12 @@ block content
                 newRow.insertCell().innerHTML = `<p>${task.playlist_path}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.type}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.trigger_type}</p>`
-                newRow.insertCell().innerHTML = `<p>${task.state}</p>`
                 newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_edit_task(${index+1})'>edit</button>
                                                 <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'delete_task(${index})'>delete</button>`
             })
 
             let newRow = DOM_table.insertRow(DOM_table.rows.length)
-            for (let index=0; index<6; index++){
+            for (let index=0; index<5; index++){
                 newRow.insertCell()
             }
             newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'add_task()'>add</button>`

@@ -4,9 +4,9 @@
       "DHCP": 0,
       "IP": "192.168.0.1",
       "net_mask": "255.255.255.0",
-      "gateway": "",
+      "gateway": "192.168.88.1",
       "enable": 1,
-      "DNS": ""
+      "DNS": "192.168.88.1"
     },
     "eth1": {
       "DHCP": 1,
@@ -20,11 +20,11 @@
       "SSID": "Ap",
       "password": "123456q!",
       "DHCP": 1,
-      "IP": "192.168.43.228",
-      "net_mask": "255.255.255.0",
-      "DNS": "192.168.43.219",
+      "IP": "",
+      "net_mask": "",
+      "DNS": "",
       "enable": 1,
-      "gateway": "192.168.43.219"
+      "gateway": ""
     },
     "mDNS_name": "playerok"
   },
@@ -50,7 +50,7 @@
     ],
     "output_sink": "",
     "output_device": "Audio Jack",
-    "volume": 24
+    "volume": 100
   },
   "screen": {
     "screen_dev_list": [
@@ -69,6 +69,7 @@
     "_comment": [
       "error",
       "warning",
+      "info",
       "debug"
     ],
     "level": "debug"
