@@ -2,23 +2,23 @@
   "net": {
     "eth0": {
       "DHCP": 0,
-      "IP": "192.168.0.1",
+      "IP": "192.168.137.10",
       "net_mask": "255.255.255.0",
-      "gateway": "192.168.88.1",
+      "gateway": "192.168.137.1",
       "enable": 1,
-      "DNS": "192.168.88.1"
+      "DNS": "192.168.137.1"
     },
     "eth1": {
       "DHCP": 1,
-      "IP": "192.168.88.158",
-      "net_mask": "255.255.255.0",
-      "gateway": "192.168.88.1",
-      "DNS": "192.168.88.1",
+      "IP": "",
+      "net_mask": "",
+      "gateway": "",
+      "DNS": "",
       "enable": 1
     },
     "wlan0": {
-      "SSID": "Ap",
-      "password": "123456q!",
+      "SSID": "MOVISTAR_PLUS_4358",
+      "password": "LR9o8955gsM2u6e3B7T9",
       "DHCP": 1,
       "IP": "",
       "net_mask": "",
