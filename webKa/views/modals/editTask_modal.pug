@@ -116,7 +116,7 @@ script.
         trigger_topic_table.data_array = scheduler_table[edit_task_index-1].trigger_topics
         //action_topic_table.data_array = scheduler_table[edit_task_index-1].actions
 
-        fetch_getTopicList()
+        getTopicList()
 
         $("#task_name_input").val(scheduler_table[edit_task_index-1].task_name)
 
@@ -358,24 +358,29 @@ script.
         show_topics(edit_task_index)
     })
 
-    function fetch_getTopicList(){
-        fetch(`/get_topic_list`, {
-            method: 'GET',
-            headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
-            }
-            }).then((res) => res.json()
-            ).then((dat) => {
-                //console.log(dat)
-                for(let i in dat.triggers){
-                    $(`#trigger_topics_list`).append($('<option>', {value: `${dat.triggers[i]}`}))
-                }
-                for(let i in dat.actions){
-                    $(`#action_topics_list`).append($('<option>', {value: `${dat.actions[i]}`}))
+    function getTopicList(){
+            let brokerAddress = `ws://${location.host}:1890/mqtt`
+            client = mqtt.connect(brokerAddress)
+            
+            client.on('connect', function () {
+                console.log("mqtt brocker connected!");
+                client.subscribe('clients/#')
+            })
+
+            client.on('message', function (topic, message) {
+                if(topic.includes('topics')){
+                    //console.log("Incoming topic list msg")
+                    let msg = JSON.parse(message)
+                    //console.log(msg)
+                    for(let i in msg.triggers){
+                        $(`#trigger_topics_list`).append($('<option>', {value: `${msg.triggers[i]}`}))
+                    }
+                    for(let i in msg.actions){
+                        $(`#action_topics_list`).append($('<option>', {value: `${msg.actions[i]}`}))
+                    }
                 }
             })
-    }
+        }
 
 
 

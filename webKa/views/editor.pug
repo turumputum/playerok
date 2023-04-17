@@ -104,7 +104,7 @@ block content
         var current_playlist
         var content_table
 
-        fetch_getTopicList()
+        getTopicList()
 
         function newPlaylist(){
             let playlist = {
@@ -218,23 +218,28 @@ block content
         }
 
 
-        function fetch_getTopicList(){
-            fetch(`/get_topic_list`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded'
+        function getTopicList(){
+            let brokerAddress = `ws://${location.host}:1890/mqtt`
+            client = mqtt.connect(brokerAddress)
+            
+            client.on('connect', function () {
+                console.log("mqtt brocker connected!");
+                client.subscribe('clients/#')
+            })
+
+            client.on('message', function (topic, message) {
+                if(topic.includes('topics')){
+                    //console.log("Incoming topic list msg")
+                    let msg = JSON.parse(message)
+                    //console.log(msg)
+                    for(let i in msg.triggers){
+                        $(`#trigger_topics_list`).append($('<option>', {value: `${msg.triggers[i]}`}))
+                    }
+                    for(let i in msg.actions){
+                        $(`#action_topics_list`).append($('<option>', {value: `${msg.actions[i]}`}))
+                    }
                 }
-                }).then((res) => res.json()
-                ).then((dat) => {
-                    //console.log(dat)
-                    for(let i in dat.triggers){
-                        $(`#trigger_topics_list`).append($('<option>', {value: `${dat.triggers[i]}`}))
-                    }
-                    for(let i in dat.actions){
-                        $(`#action_topics_list`).append($('<option>', {value: `${dat.actions[i]}`}))
-                    }
-                })
+            })
         }
     
 

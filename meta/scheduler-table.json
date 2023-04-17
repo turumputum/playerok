@@ -6,11 +6,17 @@
     "trigger_type": "schedule",
     "state": "stop",
     "schedule": {
-      "start_time": "04:05",
-      "end_time": "23:56",
+      "start_time": "20:38",
+      "end_time": "20:40",
       "day_of_week": "1 2 3 4 5 6 7 "
     },
-    "trigger_topics": [],
+    "trigger_topics": [
+      {
+        "event": "start",
+        "topic": "button_module_1/button_1",
+        "payload": "1"
+      }
+    ],
     "actions": []
   }
 ]

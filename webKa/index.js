@@ -1020,21 +1020,6 @@ app.get("/get_logs", (req, res) => {
 
 })
 
-app.get("/get_topic_list", (req, res) => {
-
-  try {
-    let topics_list = fs.readFileSync('/home/playerok/playerok/meta/topics_list.json')
-    res.send(topics_list)
-    scribbles.log(`send topics_list ok`)
-  } catch {
-    scribbles.error(`send topics_list fail`)
-  }
-
-})
-// fs.readdir('../data/playlists', function(err, list){
-//   if (err) return done(err);
-//     //------to-do-------chek playlist table---------------------
-// })
 
 scribbles.log(`Listening on port ${port}`);
 

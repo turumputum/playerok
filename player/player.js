@@ -4,7 +4,7 @@ const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
 const process = require('process');
-const workerpool = require('workerpool');
+//const workerpool = require('workerpool');
 
 var playlist
 var current_track_index = 0
@@ -25,7 +25,7 @@ function lastWill(){
   stop_track(current_track_index)
   mpvPlayer.quit()
 
-  playlist.actions.forEach(function (action) {
+  playlist.actions.forEach(action => {
     if (action.event == "stop") {
       try {
         client.publish(action.topic, action.payload, { retain: true })
@@ -140,7 +140,7 @@ function mqtt_init() {
 
 
     //-------MQTT-------report playlist start actions------------------
-    playlist.actions.forEach(function (action) {
+    playlist.actions.forEach(action => {
       if (action.event == "start") {
         try {
           client.publish(action.topic, action.payload, { retain: true })
@@ -154,9 +154,9 @@ function mqtt_init() {
 
 
     flag_mqtt_ok = 1
-    if (simple_track_num > 0) {
-      play_track(current_track_index);
-    }
+    // if (simple_track_num > 0) {
+    //   play_track(current_track_index);
+    // }
   })
 
   client.on('message', function (topic, message) {
@@ -410,12 +410,12 @@ function shift_simple_track(dir) {
 }
 
 mpvPlayer.on('stopped', function () {
-  // if (flag_first_run == 1) {
-  //   flag_first_run = 0
-  //   scribbles.log(`First run`)
-  //   play_track(current_track_index);
-  //   return
-  // }
+  if (flag_first_run == 1) {
+    flag_first_run = 0
+    scribbles.log(`First run`)
+    play_track(current_track_index);
+    return
+  }
 
   if(player_state!="Idle"){
     report_actions(current_track_index, "stop")

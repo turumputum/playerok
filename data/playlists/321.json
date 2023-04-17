@@ -1,39 +1,29 @@
 {
   "playlist_name": "321",
   "version": "1.0",
-  "actions": [
-    {
-      "event": "start",
-      "topic": "button_module_1/led_2",
-      "payload": "1"
-    },
-    {
-      "event": "stop",
-      "topic": "button_module_1/led_2",
-      "payload": "0"
-    }
-  ],
+  "actions": [],
   "controls": [],
   "tracks": [
     {
       "order_num": 1,
-      "name": "new_track",
-      "path": "data/content/Groot_1.mkv",
-      "content_group": "video",
-      "type": "simple",
-      "error": "",
-      "triggers": [],
-      "actions": []
-    },
-    {
-      "order_num": 2,
       "name": "new_track",
       "path": "data/content/Groot_2.mkv",
       "content_group": "video",
       "type": "simple",
       "error": "",
       "triggers": [],
-      "actions": []
+      "actions": [
+        {
+          "event": "start",
+          "topic": "button_module_1/led_2",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "button_module_1/led_2",
+          "payload": "0"
+        }
+      ]
     }
   ]
 }

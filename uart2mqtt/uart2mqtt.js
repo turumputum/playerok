@@ -9,7 +9,7 @@ const { argv } = require('process');
 
 const scribbles = require('scribbles');
 
-const queue = require('queue');
+//const queue = require('queue');
 
 let dev_watcher = watch('/dev/', { recursive: false });
 var active_ports = [] //device connected from serial
@@ -203,6 +203,9 @@ client.on('connect', function () {
   scanConnectedDevs()
   startDevWatcher()
   mqtt_sub("clients/#")
+  
+  // scribbles.log("clean topics_list")
+  // fs.writeFile('/home/playerok/playerok/meta/topics_list.json', "")
 })
 
 client.on('message', function (topic, message) {
@@ -249,10 +252,10 @@ client.on('message', function (topic, message) {
           }
         })
         //fs.writeFile("/home/playerok/playerok/meta/topics_list.json", JSON.stringify(topicList, null,2))
-        fs.writeFile('/home/playerok/playerok/meta/topics_list.json', JSON.stringify(topicList, null, 2), function (err) {
-          if (err) throw err;
-          scribbles.log(`topic list refresh OK`)
-        });
+        // fs.writeFile('/home/playerok/playerok/meta/topics_list.json', JSON.stringify(topicList, null, 2), function (err) {
+        //   if (err) throw err;
+        //   scribbles.log(`topic list refresh OK`)
+        // });
 
       }
 
