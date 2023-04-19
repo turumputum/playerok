@@ -48,7 +48,8 @@ class portListener {
     this.portH = portH
     const parser = portH.pipe(new DelimiterParser({ delimiter: '\n' }))
     this.parser = parser
-
+    this.devType = " "
+    
     let state = 'new'
     portH.write(`Who are you?\n`)
 
@@ -71,11 +72,11 @@ class portListener {
                 scribbles.log(`Set name: ${devName} for ${port_path}`)
               }
             })
+            this.devType=devType
             state = 'get_topics'
             portH.write(`Get topic list.\n`)
           }
         }
-
       } else if (state == 'get_topics') { //------------get topic list-----------------------
         if (in_data.indexOf('End of topic list') >= 0) {
           client.publish(`clients/${devName}/state`, '1', { retain: true })
@@ -95,11 +96,10 @@ class portListener {
           }
         }
       } else if (state == 'working') {
-        //scribbles.log(`lets Publish: ${in_data}`)
+        scribbles.log(`lets Publish: ${in_data}`)
         if (in_data.slice(0, 2) != 'OK') {
           try {
-
-            client.publish(`${in_data.split(':')[0]}`, `${in_data.split(':')[1]}`, { retain: true })
+            client.publish(`${in_data.split(':')[0]}`, `${in_data.split(':')[1]}`)
           } catch (err) {
             scribbles.log(`Publish fail: ${err}`)
           }
@@ -118,6 +118,10 @@ class portListener {
         //scribbles.debug(`eba^${process.hrtime()[1]}`)
       }
       //scribbles.debug(`Waiting end`)
+    }
+    if(this.devType=='monofon'){
+      data = data.split("/")[1]
+      scribbles.debug(`data^${data}`)
     }
     this.portH.write(`${data}\n`)
     this.lastSendMillis = process.hrtime()[1]

@@ -10,14 +10,37 @@
       "name": "Groot_2"
     },
     {
+      "path": "data/content/a_1.mp4",
+      "name": "a_1"
+    },
+    {
+      "path": "data/content/a_2.mp4",
+      "name": "a_2"
+    },
+    {
+      "path": "data/content/a_3.mp4",
+      "name": "a_3"
+    },
+    {
+      "path": "data/content/a_4.mp4",
+      "name": "a_4"
+    },
+    {
+      "path": "data/content/m_eng.mp4",
+      "name": "m_eng"
+    },
+    {
+      "path": "data/content/m_loop.mp4",
+      "name": "m_loop"
+    },
+    {
+      "path": "data/content/m_rus.mp4",
+      "name": "m_rus"
+    },
+    {
       "path": "data/content/videoplayback.avi",
       "name": "videoplayback"
     }
   ],
-  "sound": [
-    {
-      "path": "data/content/monofonRus.mp3",
-      "name": "monofonRus"
-    }
-  ]
+  "sound": []
 }

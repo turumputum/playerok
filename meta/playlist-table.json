@@ -1,12 +1,12 @@
 [
   {
-    "path": "data/playlists/123.json",
-    "name": "123",
+    "path": "data/playlists/p_buttons.json",
+    "name": "p_buttons",
     "type": "multimedia"
   },
   {
-    "path": "data/playlists/321.json",
-    "name": "321",
+    "path": "data/playlists/p_monofon.json",
+    "name": "p_monofon",
     "type": "multimedia"
   }
 ]
