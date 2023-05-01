@@ -1,0 +1,16 @@
+{
+  "name": "mqtt_test_js",
+  "version": "1.0.0",
+  "description": "",
+  "main": "mqtt_test.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "mqtt": "^4.3.7",
+    "nexe": "^4.0.0-rc.2",
+    "scribbles": "^1.5.0"
+  }
+}

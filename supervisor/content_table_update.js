@@ -38,14 +38,14 @@ try {
 
     for (var filePath of fileList) {
         filePath = filePath.slice(3)
-        // if (file_tools.check_type(filePath) == 'pic') {
-        //     let pic_file = {
-        //         "path": filePath,
-        //         "name": filePath.split('/').slice(-1)[0]
-        //     }
-        //     pic_file.name = pic_file.name.split('.').slice(-2, -1)[0]
-        //     content_list.image.push(pic_file)
-        // }
+        if (file_tools.check_type(filePath) == 'pic') {
+            let pic_file = {
+                "path": filePath,
+                "name": filePath.split('/').slice(-1)[0]
+            }
+            pic_file.name = pic_file.name.split('.').slice(-2, -1)[0]
+            content_list.image.push(pic_file)
+        }
 
         if (file_tools.check_type(filePath) == 'video') {
             let vid_file = {

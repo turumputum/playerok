@@ -8,7 +8,7 @@ const child_process = require('child_process');
 
 
 var scheduler_table
-var daemonList
+
 
 
 
@@ -28,6 +28,7 @@ var state = {
     player_state: 'stop',
     current_task_pid: '',
     current_task_index: -1,
+    runing_scripts_list:[]
 }
 
 function start_player(index) {
@@ -36,6 +37,7 @@ function start_player(index) {
 
     try {
         state.current_task_pid = child_process.fork(`../player/player.js`, [`${scheduler_table[index].playlist_path}`])
+        flag_player_started = 1;
     } catch (err) {
         scribbles.log(`start player FAILED: ${err}`)
     }
@@ -48,6 +50,7 @@ function stop_player() {
     try {
 
         scribbles.log(`stop player:` + state.current_task_pid.kill('SIGTERM'))
+        flag_player_started = 0;
 
     } catch (err) {
         scribbles.log(`stop player FAILED: ${err}`)
@@ -270,12 +273,13 @@ function get_millis_before_event(valid_days, target_hour, target_min) {
 }
 
 function start_task(index) {
-    if (state.current_task_index >= 0) {
-        stop_task(state.current_task_index)
-    }
+    
 
     state.current_task_index = index
     if (scheduler_table[index].type == "multimedia") {
+        if (state.current_task_index >= 0) {
+            stop_task(state.current_task_index)
+        }
         start_player(index)
     } else {
         //start task

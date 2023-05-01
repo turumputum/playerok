@@ -38,5 +38,19 @@
       }
     ],
     "actions": []
+  },
+  {
+    "task_name": "onSchedule",
+    "playlist_path": "data/playlists/loop.json",
+    "type": "multimedia",
+    "trigger_type": "schedule",
+    "state": "stop",
+    "schedule": {
+      "start_time": "05:21",
+      "end_time": "15:21",
+      "day_of_week": "1 2 3 4 5 6 7 "
+    },
+    "trigger_topics": [],
+    "actions": []
   }
 ]

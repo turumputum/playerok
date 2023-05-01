@@ -1,5 +1,10 @@
 [
   {
+    "path": "data/playlists/loop.json",
+    "name": "loop",
+    "type": "multimedia"
+  },
+  {
     "path": "data/playlists/p_buttons.json",
     "name": "p_buttons",
     "type": "multimedia"

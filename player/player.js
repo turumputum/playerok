@@ -4,6 +4,8 @@ const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
 const process = require('process');
+
+const file_tools = require("../meta/tools/file_tools");
 //const workerpool = require('workerpool');
 
 var playlist
@@ -17,7 +19,6 @@ var flag_first_run = 1;
 var flag_player_started = 0;
 
 let client
-
 process.stdin.resume();
 
 function lastWill(){
@@ -348,6 +349,12 @@ function play_track(index) {
   //stop_track(current_track_index)
   try {
     mpvPlayer.load('../' + playlist.tracks[index].path);
+    if((simple_track_num==1)&&(playlist.tracks[index].type=="simple")){
+      scribbles.log(`Loop single simple track`)
+      mpvPlayer.loop()
+    }
+    
+    
     scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}  -- index:${index}`)
     //return true
   } catch (err) {

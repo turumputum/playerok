@@ -1,5 +1,14 @@
 {
-  "image": [],
+  "image": [
+    {
+      "path": "data/content/images.jpg",
+      "name": "images"
+    },
+    {
+      "path": "data/mqtt_test_js/node_modules/string-template/coverage/sort-arrow-sprite.png",
+      "name": "sort-arrow-sprite"
+    }
+  ],
   "video": [
     {
       "path": "data/content/Groot_1.mkv",
