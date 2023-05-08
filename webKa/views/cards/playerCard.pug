@@ -3,9 +3,9 @@ card.card.card_shadow.h-100
     .bg-secondary.card-img-top
         .row.mt-1
             .col-4
-                .h5.d-flex.justify-content-end Current Task
+                .h5.d-flex.justify-content-end Player state
             .col
-                .b#task_name_title none
+                .b#task_name_title  
     .card-body 
         .container 
             .row
@@ -69,9 +69,9 @@ card.card.card_shadow.h-100
         
         client.subscribe('player/state')
         client.subscribe('player/volume_val')
-        client.subscribe('scheduler/current_playlist')
+        client.subscribe('scheduler/current_player_task')
         client.subscribe('scheduler/on_off_time')
-        client.subscribe('scheduler/current_task')
+        client.subscribe('scheduler/current_playlist')
         })
 
         client.on('message', function (topic, message) {
@@ -90,17 +90,13 @@ card.card.card_shadow.h-100
                 console.log("mqtt set volume val")
                 $('#volumeRange').val(parseInt(message))
             }
-            if(topic=='scheduler/current_playlist'){
-                //console.log('set playlist name')
-                $('#playlist_name_title').text(message)
-            }
             if(topic=='scheduler/on_off_time'){
                 //console.log('set time vals')
                 $('#time_vals').text(message)
             }
-            if(topic=='scheduler/current_task'){
+            if(topic=='scheduler/current_player_task'){
                 //console.log('set time vals')
-                $('#task_name_title').text(message)
+                $('#playlist_name_title').text(message)
             }
 
         })

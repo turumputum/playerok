@@ -1,54 +1,26 @@
 {
   "image": [
     {
-      "path": "data/content/images.jpg",
-      "name": "images"
+      "path": "data/bmk_touch/node_modules/string-template/coverage/sort-arrow-sprite.png",
+      "name": "sort-arrow-sprite"
     },
     {
-      "path": "data/mqtt_test_js/node_modules/string-template/coverage/sort-arrow-sprite.png",
-      "name": "sort-arrow-sprite"
+      "path": "data/content/i_girl.jpg",
+      "name": "i_girl"
+    },
+    {
+      "path": "data/content/i_man.jpg",
+      "name": "i_man"
     }
   ],
   "video": [
     {
-      "path": "data/content/Groot_1.mkv",
-      "name": "Groot_1"
+      "path": "data/content/v_girl.mp4",
+      "name": "v_girl"
     },
     {
-      "path": "data/content/Groot_2.mkv",
-      "name": "Groot_2"
-    },
-    {
-      "path": "data/content/a_1.mp4",
-      "name": "a_1"
-    },
-    {
-      "path": "data/content/a_2.mp4",
-      "name": "a_2"
-    },
-    {
-      "path": "data/content/a_3.mp4",
-      "name": "a_3"
-    },
-    {
-      "path": "data/content/a_4.mp4",
-      "name": "a_4"
-    },
-    {
-      "path": "data/content/m_eng.mp4",
-      "name": "m_eng"
-    },
-    {
-      "path": "data/content/m_loop.mp4",
-      "name": "m_loop"
-    },
-    {
-      "path": "data/content/m_rus.mp4",
-      "name": "m_rus"
-    },
-    {
-      "path": "data/content/videoplayback.avi",
-      "name": "videoplayback"
+      "path": "data/content/v_man.mp4",
+      "name": "v_man"
     }
   ],
   "sound": []

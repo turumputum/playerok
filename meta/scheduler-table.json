@@ -1,56 +1,16 @@
 [
   {
-    "task_name": "new_task",
-    "playlist_path": "data/playlists/p_monofon.json",
-    "type": "multimedia",
-    "trigger_type": "topic",
-    "state": "stop",
-    "schedule": {
-      "start_time": "",
-      "end_time": "",
-      "day_of_week": ""
-    },
-    "trigger_topics": [
-      {
-        "event": "start",
-        "topic": "button_module_1/button_1",
-        "payload": "1"
-      }
-    ],
-    "actions": []
-  },
-  {
-    "task_name": "new_task",
-    "playlist_path": "data/playlists/p_buttons.json",
-    "type": "multimedia",
-    "trigger_type": "topic",
-    "state": "stop",
-    "schedule": {
-      "start_time": "",
-      "end_time": "",
-      "day_of_week": ""
-    },
-    "trigger_topics": [
-      {
-        "event": "start",
-        "topic": "button_module_1/button_5",
-        "payload": "1"
-      }
-    ],
-    "actions": []
-  },
-  {
-    "task_name": "onSchedule",
-    "playlist_path": "data/playlists/loop.json",
-    "type": "multimedia",
+    "task_name": "new_task_1",
+    "task_path": "data/bmk_touch/touch_script.js",
+    "type": "script",
     "trigger_type": "schedule",
-    "state": "stop",
     "schedule": {
-      "start_time": "05:21",
-      "end_time": "15:21",
+      "start_time": "03:10",
+      "end_time": "22:10",
       "day_of_week": "1 2 3 4 5 6 7 "
     },
     "trigger_topics": [],
-    "actions": []
+    "actions": [],
+    "state": "stop"
   }
 ]

@@ -127,12 +127,12 @@ uart2mqtt.on('close', function (code) {
 });
 
 setTimeout(() => {
-
   chokidar.watch('/home/playerok/playerok/data', { ignoreInitial: true }).on('all', function (evt, path) {
     //scribbles.log(`data_watcher activity evt:${evt} path:${path}`)
     //if (path == '../data/usb/player_config.json') {
     let name = path.split('/').slice(-1)[0]
 
+    //--------applay config from flash drive----------
     if (name.slice(0, 2) == 'sd') {
       //scribbles.log("Evet path:"+path+" name: "+name+" try: "+name.slice(0,2))
       if (fs.existsSync(`${path}/player_config.json`)) {
@@ -141,7 +141,7 @@ setTimeout(() => {
       }
     }
 
-
+    //--------update content table----------
     if ((file_tools.check_type(path) == 'pic') || (file_tools.check_type(path) == 'video') || (file_tools.check_type(path) == 'sound')) {
       try {
         scribbles.log("Let's update content table")
@@ -180,6 +180,8 @@ setTimeout(() => {
   })
 
   scribbles.log(`watchers started`)
+  //exec(`chmod a+r /dev/input/event2`)
+  exec(`xdotool mousemove 0 0`)
   exec(`beep -r 3`)
 }, 4000)
 

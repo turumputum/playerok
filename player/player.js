@@ -5,7 +5,7 @@ const path = require("path");
 const mqtt = require("mqtt");
 const process = require('process');
 
-const file_tools = require("../meta/tools/file_tools");
+const file_tools = require("/home/playerok/playerok/meta/tools/file_tools");
 //const workerpool = require('workerpool');
 
 var playlist
@@ -52,7 +52,7 @@ process.on('SIGQUIT', () => {
 });
 
 try {
-  var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+  var config = JSON.parse(fs.readFileSync('/home/playerok/playerok/meta/player_config.json'))
   scribbles.config({
     logLevel: config.log.level,
     format: '{time} [{fileName}] <{logLevel}> {message}'
@@ -76,7 +76,7 @@ const mpvPlayer = new mpvAPI({
 
 function read_playlist(path) {
   try {
-    playlist = JSON.parse(fs.readFileSync('../' + path))
+    playlist = JSON.parse(fs.readFileSync('/home/playerok/playerok/' + path))
   } catch (err) {
     scribbles.error(`Error read playlist: ${err}`)
     process.exit(1);
@@ -231,13 +231,11 @@ function mqtt_init() {
           } else if ((trigger.event == 'stop') && (trigger.payload ==  parseInt(message))) {
             if(current_track_index==t_index){
               if (simple_track_num > 0) {
-                  if (play_track(interrupted_track_index)) {
-                    scribbles.log(`mqtt trigger_off return to interrupted Track OK, index: ${current_track_index}`)
-                  }
-                } 
-                // else {
-                //   stop_track()
-                // }
+                  scribbles.log(`mqtt trigger_off return to interrupted_index:${interrupted_track_index}, index: ${current_track_index}`)
+                  play_track(interrupted_track_index)
+                }else {
+                  stop_track()
+                }
               }
           }
         }
@@ -327,9 +325,9 @@ function set_volume(volume) {
   mpvPlayer.volume(volume)
 
   try {
-    var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+    var config = JSON.parse(fs.readFileSync('/home/playerok/playerok/meta/player_config.json'))
     config.sound.volume = volume
-    fs.writeFileSync('../meta/player_config.json', JSON.stringify(config, null, 2))
+    fs.writeFileSync('/home/playerok/playerok/meta/player_config.json', JSON.stringify(config, null, 2))
   } catch (err) {
     scribbles.log(`set config fail: ${err}`)
   }
@@ -347,15 +345,18 @@ function play_track(index) {
   }
 
   //stop_track(current_track_index)
+  scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}  -- index:${index}`)
   try {
-    mpvPlayer.load('../' + playlist.tracks[index].path);
-    if((simple_track_num==1)&&(playlist.tracks[index].type=="simple")){
-      scribbles.log(`Loop single simple track`)
+    mpvPlayer.load('/home/playerok/playerok/' + playlist.tracks[index].path);
+    if(((simple_track_num==1)&&(playlist.tracks[index].type=="simple"))||(playlist.tracks[index].repeat==true)){
+      scribbles.log(`Loop track`)
       mpvPlayer.loop()
+    }else{
+      mpvPlayer.clearLoop()
     }
     
     
-    scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}  -- index:${index}`)
+    
     //return true
   } catch (err) {
     scribbles.error(`Play track failed: ${playlist.tracks[index].name} Error: ${err}`)

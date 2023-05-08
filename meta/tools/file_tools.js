@@ -1,7 +1,7 @@
 const EXT_IMAGES = [".jpg", ".jpeg", ".png", ".webp", ".svg", ".gif", ".tiff"];
 const EXT_VIDEO = [".mp4", ".avi", ".mkv"];
 const EXT_SOUND = [".mp3", ".wav"];
-const EXT_SCRIPT = [".py", ".sh"];
+const EXT_SCRIPT = [".py", ".sh", ".js"];
 const EXT_JSON = [".json"];
 
 const dirTree = require('directory-tree');

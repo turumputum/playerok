@@ -11,6 +11,7 @@ Environment="PULSE_RUNTIME_PATH=/run/user/1000/pulse/"
 User=playerok
 Type=simple
 WorkingDirectory = /home/playerok/playerok/scheduler/
+ExecStartPre=/bin/sleep 10
 ExecStart=node /home/playerok/playerok/scheduler/scheduler.js
 StandardError=append:/home/playerok/playerok/logs/scheduler.log
 StandardOutput=append:/home/playerok/playerok/logs/playerok.log
@@ -18,5 +19,6 @@ StandardInput=tty-force
 Restart=on-failure
 
 [Install]
+
 WantedBy=graphical.target
 WantedBy=sound.target

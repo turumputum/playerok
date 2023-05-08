@@ -19,6 +19,7 @@
     "scribbles": "^1.5.0",
     "sudo-js": "^1.0.2",
     "tail-file": "^1.4.15",
+    "tar-fs": "^2.1.1",
     "usb": "^2.5.2",
     "xrandr-parse": "^1.0.0"
   },

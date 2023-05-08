@@ -8,7 +8,7 @@
                         span.input-group-text.fs-5.fw-bold Track name:
                         input#track_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
                     //-------------------CARD Main settings-----------------------------
-                    card.card.card_shadow.h-100.mt-4
+                    card.card.card_shadow.mt-4
                         .bg-secondary.card-img-top
                             .h4.mx-2.mt-2 Main settings
                         .card_body.p-2
@@ -19,6 +19,7 @@
                                         th(scope='col' style='width:10%') Type
                                         th(scope='col' style='width:25%') File name
                                         th(scope='col' ) Path
+                                        th(scope='col' style='width:5%') Repeat
                                 tbody
                                     tr
                                         th 
@@ -27,11 +28,15 @@
                                             select#type_select.form-select
                                         th
                                             select#name_select.form-select
-
                                         th
                                             input#path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                        th 
+                                            input#bt_repeat.btn-check(type='checkbox' checked='' autocomplete='off')
+                                            label.btn.bi.bi-arrow-repeat.btn-outline-secondary.mb-2.mx-1(for='bt_repeat' style="--bs-btn-font-size: 15px; width: 60px;") 
 
-                            card.card.h-100.mt-4
+
+
+                            card.card.mt-4 
                                 .card-img-top(style='background-color: rgb(177, 177, 177);')
                                     .h5.mx-2.mt-2 Actions
                                 table.table#table_actions_topics.table-hover
@@ -45,7 +50,7 @@
 
                                     tbody
                     //-------------------CARD Triggers and actions-----------------------------
-                    card.card.card_shadow.h-100.mt-4
+                    card.card.card_shadow.mt-4
                         .bg-secondary.card-img-top
                             .h4.mx-2.mt-2 Interactive settings
                         .card_body.p-2
@@ -81,7 +86,7 @@ script.
             content_group : $("#type_select option:selected").text(),
             type : '',
             error: "",
-            loop : $('#loop_Enable').prop('checked'),
+            repeat : $("#bt_repeat").prop('checked'),
             triggers:[],
             actions:[]
         }
@@ -153,9 +158,6 @@ script.
     function show_interactive_card(){
 
         //console.log(current_playlist.tracks[current_track_index])
-
-
-
     }
 
     function add_topic(identify){
@@ -230,7 +232,7 @@ script.
 
 
     //------------------------TRACK MODAL-----------------EVENTS-------------
-
+    //
     editTrackModal.addEventListener('show.bs.modal', function (event) {
         //fetch_getTopicList()
         show_interactive_card()
@@ -266,8 +268,13 @@ script.
             $('#path_input').val(current_playlist.tracks[current_track_index].path)
             let indexOf = content_table[track_type].findIndex(s=>s.path==current_playlist.tracks[current_track_index].path)
             let FileName = content_table[track_type][indexOf].name
-            $('#name_select option:contains('+FileName+')').prop('selected', true);  
+            $('#name_select option:contains('+FileName+')').prop('selected', true); 
 
+            if(current_playlist.tracks[current_track_index]['repeat']==true){
+                $("#bt_repeat").prop('checked', true);
+            }else{
+                $("#bt_repeat").prop('checked', false);
+            }
 
             actions_topic_table.data_array = current_playlist.tracks[current_track_index].actions
             triggers_topic_table.data_array = current_playlist.tracks[current_track_index].triggers       

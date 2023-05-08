@@ -1,17 +1,17 @@
 [
   {
-    "path": "data/playlists/loop.json",
-    "name": "loop",
+    "path": "data/bmk_touch/touch_script.js",
+    "name": "touch_script",
+    "type": "script"
+  },
+  {
+    "path": "data/playlists/p_boy.json",
+    "name": "p_boy",
     "type": "multimedia"
   },
   {
-    "path": "data/playlists/p_buttons.json",
-    "name": "p_buttons",
-    "type": "multimedia"
-  },
-  {
-    "path": "data/playlists/p_monofon.json",
-    "name": "p_monofon",
+    "path": "data/playlists/p_girl.json",
+    "name": "p_girl",
     "type": "multimedia"
   }
 ]

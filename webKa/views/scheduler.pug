@@ -70,6 +70,8 @@ block content
             $("#editTaskModal_2").modal('show')
         }
 
+        
+
         $(document).ready(function() {
             console.log( "ready!" );
             DOM_table.innerHTML = ""
@@ -84,12 +86,12 @@ block content
 
 
                 newRow.insertCell().innerHTML = `<p>${index+1}</p>`
-                newRow.insertCell().innerHTML = `<p>${task.task_name}</p>`
-                newRow.insertCell().innerHTML = `<p>${task.playlist_path}</p>`
+                newRow.insertCell().innerHTML = `<p class="name">${task.task_name}</p>`
+                newRow.insertCell().innerHTML = `<p>${task.task_path}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.type}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.trigger_type}</p>`
                 newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_edit_task(${index+1})'>edit</button>
-                                                <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'delete_task(${index})'>delete</button>`
+                                                <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_delete_modal(${index})'>delete</button>`
             })
 
             let newRow = DOM_table.insertRow(DOM_table.rows.length)
@@ -97,17 +99,51 @@ block content
                 newRow.insertCell()
             }
             newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'add_task()'>add</button>`
+        
+        
+            let brokerAddress = `ws://${location.host}:1890/mqtt`
+            client = mqtt.connect(brokerAddress)
+            client.on('connect', function () {
+                console.log("mqtt brocker connected!");
+                client.subscribe('scheduler/current_player_task')
+                client.subscribe('scheduler/runing_scripts_list')
+            })
+            client.on('message', function (topic, message) {
+                if(topic=='scheduler/current_player_task'){
+                    $("#task_table tr").each(function(index) {
+                        $row = $(this);
+                        var $tdElement = $row.find(".name");
+                        if(message == $tdElement.text()){
+                            console.log(`td element:${$tdElement.text()}`)
+                            $row.addClass("table-success")
+                        } 
+                     })
+                }
+
+                if(topic=='scheduler/runing_scripts_list'){
+                    var tmpList=JSON.parse(message)
+                    console.log(`tmpList:${tmpList[0]}`)
+                    $("#task_table tr").each(function(index) {
+                        $row = $(this);
+                        var $tdElement = $row.find(".name");
+                        if(tmpList.find(element => element == $tdElement.text())){
+                            console.log(`td element:${$tdElement.text()}`)
+                            $row.addClass("table-success")
+                        } 
+                     })
+                }
+            })
+        
         });
         
         
 
         function add_task(){
             let new_task ={
-                "task_name": "new_task",
-                "playlist_path": `${playlist_table[0].path}`,
+                "task_name": `new_task_${scheduler_table.length+1}`,
+                "task_path": `${playlist_table[0].path}`,
                 "type": `${playlist_table[0].type}`,
                 "trigger_type": "",
-                "state": "",
                 "schedule": {
                     "start_time": "",
                     "end_time": "",
@@ -133,11 +169,16 @@ block content
 
             var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
 
-            modal_header_task_name.innerHTML = delete_button.getAttribute('d-name')
-            delete_index = delete_button.getAttribute('d-index')
+            modal_header_task_name.innerHTML = scheduler_table[delete_index].task_name
+            //delete_index = delete_button.getAttribute('d-index')
         })
         
-        function delete_task(index){
+        function open_delete_modal(index){
+            delete_index = index;
+            $("#verify_delete.modal").modal('show')
+        }
+
+        function delete_task(){
             var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
             var delete_button = event.relatedTarget
             var data = {

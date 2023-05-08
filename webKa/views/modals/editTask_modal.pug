@@ -127,13 +127,27 @@ script.
             }))
         })
 
-        const current_playlist = playlist_table.find(x => x.path === scheduler_table[edit_task_index-1].playlist_path)
-        console.log(current_playlist)
-        if(current_playlist!== undefined){
+        const current_playlist = playlist_table.find(x => x.path === scheduler_table[edit_task_index-1].task_path)
+        console.log(`current_playlist:${current_playlist} edit task index:${edit_task_index}`)
+        if(current_playlist!= undefined){
             $("#name_input").val(current_playlist.name)
+            //- $("#path_input").val(scheduler_table[edit_task_index-1].task_path) 
+            //- $("#type_input").val(scheduler_table[edit_task_index-1].type)
+            $("#path_input").val(scheduler_table[edit_task_index-1].task_path) 
+            $("#type_input").val(scheduler_table[edit_task_index-1].type)
+        }else{
+            console.log(`new task!!!`)
+            $("#name_input").val(playlist_table[0].name)
+            $("#path_input").val(playlist_table[0].path)
+            $("#type_input").val(playlist_table[0].type)
         }
-        $("#path_input").val(scheduler_table[edit_task_index-1].playlist_path) 
-        $("#type_input").val(scheduler_table[edit_task_index-1].type)
+
+        //console.log(`table length:${scheduler_table.length}, index:${edit_task_index}`)
+
+        if(scheduler_table.length>=edit_task_index){
+           scheduler_table[edit_task_index-1].trigger_type= 'schedule'
+        }
+        
 
         if(scheduler_table[edit_task_index-1].trigger_type == 'schedule'){
             show_schedule(edit_task_index)
@@ -235,12 +249,15 @@ script.
     }
 
     function save_task(){
+        console.log(`trigger:${$("#table_trigger_topics").is(':hidden')}`)
+        console.log(`schedule:${$("#table_playlist_schedule").is(':hidden')}`)
+
         scheduler_table[edit_task_index-1].task_name = $("#task_name_input").val() 
-        scheduler_table[edit_task_index-1].playlist_path = $("#path_input").val()
+        scheduler_table[edit_task_index-1].task_path = $("#path_input").val()
         scheduler_table[edit_task_index-1].type = $("#type_input").val()
 
         if($("#table_trigger_topics").is(':hidden')){
-            console.log("schedule type")
+            //console.log("schedule type")
             scheduler_table[edit_task_index-1].trigger_type = 'schedule'
 
             scheduler_table[edit_task_index-1].schedule.start_time = $("#s_time_input").val()
@@ -270,7 +287,7 @@ script.
             }
 
         }else{
-            console.log("trigger topic")
+            //console.log("trigger topic")
             scheduler_table[edit_task_index-1].trigger_type = 'topic'
             update_array_data(trigger_topic_table,'T')
             scheduler_table[edit_task_index-1].trigger_topics = trigger_topic_table.data_array
@@ -281,6 +298,7 @@ script.
 
         scheduler_table[edit_task_index-1].state = 'stop'
 
+        //console.log(scheduler_table)
         fetch('/save_scheduler_table', {
             method: 'POST',
             headers: {
@@ -293,8 +311,6 @@ script.
             }).catch((err) => {
             console.log(err)
         })
-
-        //console.log(scheduler_table[task_index-1])
         $("#editTaskModal_2").modal('hide')
         location.reload()
 

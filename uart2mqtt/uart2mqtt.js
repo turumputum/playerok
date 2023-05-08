@@ -99,7 +99,7 @@ class portListener {
         scribbles.log(`lets Publish: ${in_data}`)
         if (in_data.slice(0, 2) != 'OK') {
           try {
-            client.publish(`${in_data.split(':')[0]}`, `${in_data.split(':')[1]}`)
+            client.publish(`${in_data.split(':')[0]}`, `${in_data.split(':')[1]}`, { retain: true })
           } catch (err) {
             scribbles.log(`Publish fail: ${err}`)
           }

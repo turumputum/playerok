@@ -47,6 +47,7 @@ function set_ss_config(newConfig) {
     let sink = execSync(`pactl info | grep 'Default Sink'`).toString().replace("\n", '').split(":")[1]
     //console.log(sink)
     execPromise(`pactl set-sink-volume ${sink} ${newConfig.sound.volume}%`)
+    execPromise(`pactl set-sink-mute ${sink} 0`)
     //scribbles.log("Set screen&sound config OK")
 }
 

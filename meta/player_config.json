@@ -50,7 +50,7 @@
     ],
     "output_sink": "",
     "output_device": "Audio Jack",
-    "volume": 100
+    "volume": 150
   },
   "screen": {
     "screen_dev_list": [
@@ -58,7 +58,7 @@
     ],
     "autoTurnOff": null,
     "resolution": "1920x1080",
-    "orientation": "normal",
+    "orientation": "left",
     "output_port": "HDMI-1"
   },
   "boot": {

@@ -85,7 +85,7 @@ scribbles.config({
 
 app.get('/reboot', function (req, res) {
   scribbles.log("time to reboot")
-  execPromise('sudo reboot')
+  execPromise('sudo reboot now')
   return res.redirect('/');
 });
 
@@ -524,8 +524,10 @@ app.post("/Scheduler/delete", (req, res) => {
   scribbles.log('task index to delete ' + task_to_delete.index_to_delete)
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
   let tasks = JSON.parse(rawdata);
-
-  tasks.splice(task_to_delete.index_to_delete - 1, 1)
+  
+  let index = tasks.findIndex(element => element.task_name == task_to_delete.name_to_delete)
+  //scribbles.log(`name to delete:${task_to_delete.name_to_delete} index:${index}`)
+  tasks.splice(index, 1)
   //scribbles.log(tasks)
   fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(tasks, null, 2))
 
