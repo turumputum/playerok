@@ -58,7 +58,7 @@
     ],
     "autoTurnOff": null,
     "resolution": "1920x1080",
-    "orientation": "left",
+    "orientation": "normal",
     "output_port": "HDMI-1"
   },
   "boot": {

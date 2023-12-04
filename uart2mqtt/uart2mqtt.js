@@ -61,7 +61,7 @@ class portListener {
         devType = in_data.split(':')[0]
         devName = in_data.split(':')[1]
         scribbles.log(`Verify name:${devName}`)
-        const devMassE = ['button_module', 'monofon', 'swiper', 'custom_device'];
+        const devMassE = ['button_module', 'monofon', 'swiper', 'moduleBox','custom_device'];
         for (let item of devMassE) {
           if (devType == item) {
             scribbles.log(`Verifyed device name: ${devName} type:${devType}`)

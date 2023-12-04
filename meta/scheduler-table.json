@@ -1,15 +1,26 @@
 [
   {
     "task_name": "new_task_1",
-    "task_path": "data/bmk_touch/touch_script.js",
-    "type": "script",
-    "trigger_type": "schedule",
+    "task_path": "data/playlists/playlist.json",
+    "type": "multimedia",
+    "trigger_type": "topic",
     "schedule": {
-      "start_time": "03:10",
-      "end_time": "22:10",
-      "day_of_week": "1 2 3 4 5 6 7 "
+      "start_time": "",
+      "end_time": "",
+      "day_of_week": ""
     },
-    "trigger_topics": [],
+    "trigger_topics": [
+      {
+        "event": "start",
+        "topic": "module_box/button_0",
+        "payload": "1"
+      },
+      {
+        "event": "stop",
+        "topic": "module_box/button_0",
+        "payload": "0"
+      }
+    ],
     "actions": [],
     "state": "stop"
   }

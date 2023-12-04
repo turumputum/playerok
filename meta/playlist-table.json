@@ -1,17 +1,7 @@
 [
   {
-    "path": "data/bmk_touch/touch_script.js",
-    "name": "touch_script",
-    "type": "script"
-  },
-  {
-    "path": "data/playlists/p_boy.json",
-    "name": "p_boy",
-    "type": "multimedia"
-  },
-  {
-    "path": "data/playlists/p_girl.json",
-    "name": "p_girl",
+    "path": "data/playlists/playlist.json",
+    "name": "playlist",
     "type": "multimedia"
   }
 ]
