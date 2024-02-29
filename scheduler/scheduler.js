@@ -5,6 +5,7 @@ const path = require("path");
 const mqtt = require("mqtt");
 var watch = require('node-watch')
 const child_process = require('child_process').fork;
+const spawn_process = require('child_process').spawn;
 
 var started_task_list=[]
 var scheduler_table
@@ -236,17 +237,22 @@ function start_task(index) {
             scheduler_table[index]['state']="run"
             scheduler_table[index]['pid']=child_process(`../${scheduler_table[index].task_path}`)
 
-            var taskList = []
-            for (var tIndex in scheduler_table) {
-                task = scheduler_table[tIndex]
-                if (task.hasOwnProperty('state')) {
-                    if (task.state == "run") {
-                        taskList.push(scheduler_table[tIndex].task_name)
-                    }
+        }else if(path.extname(scheduler_table[index].task_path) == ".py") {
+            scheduler_table[index]['state']="run"
+            scheduler_table[index]['pid']=spawn_process('python3', [`../${scheduler_table[index].task_path}`])
+
+        }
+
+        var taskList = []
+        for (var tIndex in scheduler_table) {
+            task = scheduler_table[tIndex]
+            if (task.hasOwnProperty('state')) {
+                if (task.state == "run") {
+                    taskList.push(scheduler_table[tIndex].task_name)
                 }
             }
-            client.publish('scheduler/runing_scripts_list', `${JSON.stringify(taskList)}`, { retain: true })
         }
+        client.publish('scheduler/runing_scripts_list', `${JSON.stringify(taskList)}`, { retain: true })
     }
 
 
@@ -348,12 +354,14 @@ function scheduler_init() {
     // }
 
     scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
-
+    //cribbles.log(JSON.stringify(scheduler_table), null, " ")
 
     for (var index in scheduler_table) {
         let task = scheduler_table[index]
-        //scribbles.log(task.task_name)
-        if (task.trigger_type == 'schedule') {
+        
+        
+        if (task.trigger_type == 'schedule' && task.schedule.day_of_week!="") {
+            //scribbles.log(`calc time for: ${task.task_name}`)
             let millis_to_start = get_millis_before_event(task.schedule.day_of_week, task.schedule.start_time.split(':')[0], task.schedule.start_time.split(':')[1])
             let millis_to_stop = get_millis_before_event(task.schedule.day_of_week, task.schedule.end_time.split(':')[0], task.schedule.end_time.split(':')[1])
             let date_ob = new Date();
@@ -364,12 +372,12 @@ function scheduler_init() {
                 scribbles.log(`Lets run scheduled task: ${task.task_path}`)
                 start_task(index)
             } else {
-
                 let millis_to_start = get_millis_before_event(scheduler_table[index].schedule.day_of_week, scheduler_table[index].schedule.start_time.split(':')[0], scheduler_table[index].schedule.start_time.split(':')[1])
+                scribbles.log(`Start timer to start ${millis_to_start} `)
                 scheduler_table[index]['timer'] = setTimeout(function () {
                     start_task(index)
                 }, millis_to_start)
-                scribbles.log(`Start timer to start ${millis_to_start} `)
+                
             }
         }
     }

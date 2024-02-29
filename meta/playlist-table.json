@@ -1,5 +1,10 @@
 [
   {
+    "path": "data/actuatorGate/script.py",
+    "name": "script",
+    "type": "script"
+  },
+  {
     "path": "data/playlists/playlist.json",
     "name": "playlist",
     "type": "multimedia"

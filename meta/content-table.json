@@ -1,26 +1,23 @@
 {
-  "image": [],
-  "video": [],
-  "sound": [
+  "image": [
     {
-      "path": "data/content/1.mp3",
-      "name": "1"
+      "path": "data/content/i_girl.jpg",
+      "name": "i_girl"
     },
     {
-      "path": "data/content/2.mp3",
-      "name": "2"
-    },
-    {
-      "path": "data/content/3.mp3",
-      "name": "3"
-    },
-    {
-      "path": "data/content/4.mp3",
-      "name": "4"
-    },
-    {
-      "path": "data/content/5.mp3",
-      "name": "5"
+      "path": "data/content/i_man.jpg",
+      "name": "i_man"
     }
-  ]
+  ],
+  "video": [
+    {
+      "path": "data/content/v_girl.mp4",
+      "name": "v_girl"
+    },
+    {
+      "path": "data/content/v_man.mp4",
+      "name": "v_man"
+    }
+  ],
+  "sound": []
 }

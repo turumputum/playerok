@@ -3,10 +3,10 @@
     "task_name": "new_task_1",
     "task_path": "data/playlists/playlist.json",
     "type": "multimedia",
-    "trigger_type": "topic",
+    "trigger_type": "schedule",
     "schedule": {
-      "start_time": "",
-      "end_time": "",
+      "start_time": "00:13",
+      "end_time": "23:13",
       "day_of_week": ""
     },
     "trigger_topics": [
@@ -21,6 +21,20 @@
         "payload": "0"
       }
     ],
+    "actions": [],
+    "state": "File not foud"
+  },
+  {
+    "task_name": "new_task_2",
+    "task_path": "data/actuatorGate/script.py",
+    "type": "script",
+    "trigger_type": "schedule",
+    "schedule": {
+      "start_time": "00:49",
+      "end_time": "23:50",
+      "day_of_week": "1 2 3 4 5 6 7 "
+    },
+    "trigger_topics": [],
     "actions": [],
     "state": "stop"
   }
