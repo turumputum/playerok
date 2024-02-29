@@ -441,12 +441,7 @@ mpvPlayer.on('stopped', function () {
   if(player_state!="Idle"){
     report_actions(current_track_index, "stop")
   }
-
-  
   scribbles.log(`stopped event`)
-
-
-
   if (simple_track_num > 0 && player_state != "stop") {
     if (shift_simple_track(+1)) {
       if (play_track(current_track_index)) {
@@ -457,3 +452,5 @@ mpvPlayer.on('stopped', function () {
   }
 
 });
+
+mpvPlayer.stop()

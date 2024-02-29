@@ -1,5 +1,10 @@
 {
-  "image": [],
+  "image": [
+    {
+      "path": "data/content/horn.jpg",
+      "name": "horn"
+    }
+  ],
   "video": [
     {
       "path": "data/content/a_1.mp4",
@@ -8,6 +13,10 @@
     {
       "path": "data/content/a_2.mp4",
       "name": "a_2"
+    },
+    {
+      "path": "data/content/a_3.mp4",
+      "name": "a_3"
     }
   ],
   "sound": []

@@ -58,7 +58,7 @@ async function set_net_config() {
   const ifMassE = ['eth0', 'eth1', 'wlan0'];
   for (let iface of ifMassE) {
     //console.log(tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface))
-    
+    await execPromise(`sudo nmcli connection delete ${iface}`)
     if(!tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface)){
       scribbles.log(`Conn: ${iface} not fount, creating...`)
       if((iface=='eth0')||(iface=='eth1')){
