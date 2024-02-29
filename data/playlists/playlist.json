@@ -7,7 +7,7 @@
     {
       "order_num": 1,
       "name": "start_track",
-      "path": "data/content/v_girl.mp4",
+      "path": "data/content/a_1.mp4",
       "content_group": "video",
       "type": "simple",
       "error": "",
@@ -18,7 +18,7 @@
     {
       "order_num": 2,
       "name": "t1",
-      "path": "data/content/v_man.mp4",
+      "path": "data/content/a_2.mp4",
       "content_group": "video",
       "type": "interactive",
       "error": "",

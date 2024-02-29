@@ -8,20 +8,22 @@ commmand_topic = "moduleBox/out_0"
 player_topic = "script/play"
 vidoEnd_topic = "script/playEnd"
 
+door_cmd = "CLOSE"
 door_state = "CLOSED"
 
 def input_mqtt_msg(client, userdata, msg):
+    global door_cmd
     global door_state
 
     if(str(msg.topic) == str(knock_topic)):
         if(msg.payload.decode("utf-8")=='1'):
             if(door_state=="CLOSED"):
-                control_door("OPEN")
+                door_cmd = "OPEN"
                 client.publish(player_topic, "1")
             print("knock")
 
     if(msg.topic == vidoEnd_topic):
-        control_door("CLOSE")
+        door_cmd = "CLOSE"
         print("close door")
 
     if(msg.topic == doorSenes_topic):
@@ -51,27 +53,38 @@ def mqtt_init():
 
 
 
-last_command_time = 0 
+# last_command_time = 0 
 def control_door(command):
-    global last_command_time
+    # global last_command_time
+    global door_state
     
     if door_state == 'OPEN' and command == 'OPEN':
         return
     if door_state == 'CLOSED' and command == 'CLOSE':
         return
 
-    now = time.time()
-    if now - last_command_time < 30:
-        client.publish(commmand_topic, 1)
-        time.sleep(2)
-        client.publish(commmand_topic, 1)
-    else:
-        client.publish(commmand_topic, 1)
+    # now = time.time()
 
-    last_command_time = now
+    print("command:"+command + " doorState:" + door_state)
+    # if now - last_command_time < 30:
+    #     print("double comm")
+    #     client.publish(commmand_topic, 1)
+    #     time.sleep(5.0)
+    #     client.publish(commmand_topic, 1)
+    #     time.sleep(30.0)
+    # else:
+    client.publish(commmand_topic, 1)
+    time.sleep(10.0)
+    print("door wait OFF") 
+
+    # last_command_time = now
 
 
 mqtt_init()
+time.sleep(3)
+# control_door("CLOSE")
+
 print("START LOOP")
 while 1:
-    time.sleep(1)
+    time.sleep(0.1)
+    control_door(door_cmd)

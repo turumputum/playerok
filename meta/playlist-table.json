@@ -5,6 +5,11 @@
     "type": "script"
   },
   {
+    "path": "data/actuatorGate/tt.js",
+    "name": "tt",
+    "type": "script"
+  },
+  {
     "path": "data/playlists/playlist.json",
     "name": "playlist",
     "type": "multimedia"

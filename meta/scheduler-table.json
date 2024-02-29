@@ -7,7 +7,7 @@
     "schedule": {
       "start_time": "00:13",
       "end_time": "23:13",
-      "day_of_week": ""
+      "day_of_week": "1 2 3 4 5 6 7 "
     },
     "trigger_topics": [
       {
@@ -32,7 +32,7 @@
     "schedule": {
       "start_time": "00:49",
       "end_time": "23:50",
-      "day_of_week": "1 2 3 4 5 6 7 "
+      "day_of_week": ""
     },
     "trigger_topics": [],
     "actions": [],
