@@ -59,6 +59,7 @@ async function set_net_config() {
   for (let iface of ifMassE) {
     //console.log(tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface))
     await execPromise(`sudo nmcli connection delete ${iface}`)
+    await execPromise(`sudo nmcli con mod ${iface} ipv6.method "disabled"`)
     if(!tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface)){
       scribbles.log(`Conn: ${iface} not fount, creating...`)
       if((iface=='eth0')||(iface=='eth1')){
@@ -75,7 +76,7 @@ async function set_net_config() {
       //await execPromise(`nmcli con mod ${iface} ipv4.mdns 2`)
       if (config.net[iface].DHCP == 1) {
         await execPromise(`nmcli con mod ${iface} ipv4.method auto`)
-        await execPromise(`dhclient`)
+        await execPromise(`sudo dhclient`)
       } else if (config.net[iface].DHCP == 0) {
         await execPromise(`nmcli con mod ${iface} ipv4.addresses ${config.net[iface].IP}/${netmask2CIDR(config.net[iface].net_mask)}`)
         await execPromise(`nmcli con mod ${iface} ipv4.gateway ${config.net[iface].gateway}`)

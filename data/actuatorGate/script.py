@@ -74,7 +74,7 @@ def control_door(command):
     #     time.sleep(30.0)
     # else:
     client.publish(commmand_topic, 1)
-    time.sleep(10.0)
+    time.sleep(30.0)
     print("door wait OFF") 
 
     # last_command_time = now
