@@ -9,29 +9,35 @@ player_topic = "script/play"
 vidoEnd_topic = "script/playEnd"
 
 door_cmd = "CLOSE"
-door_state = "CLOSED"
+sens_state = "OPEN"
+door_state = "IDLE"
+
+flagKnock = 0
 
 def input_mqtt_msg(client, userdata, msg):
     global door_cmd
-    global door_state
+    global sens_state
+    global flagKick
+    global flagKnock
 
     if(str(msg.topic) == str(knock_topic)):
         if(msg.payload.decode("utf-8")=='1'):
-            if(door_state=="CLOSED"):
-                door_cmd = "OPEN"
-                client.publish(player_topic, "1")
             print("knock")
+            if(sens_state=="CLOSE"):
+                door_cmd = "OPEN"
+                print("lets open")
+                
 
     if(msg.topic == vidoEnd_topic):
         door_cmd = "CLOSE"
-        print("close door")
+        print("video end, lets close")
 
     if(msg.topic == doorSenes_topic):
         if(msg.payload.decode("utf-8")=='1'):
-            door_state = "CLOSED"
+            sens_state = "CLOSE"
             print("door is closed")
         else:
-            door_state = "OPEN"
+            sens_state = "OPEN"
             print("door is open")
 
 def on_connect(client, userdata, flags, rc, properties):
@@ -53,38 +59,48 @@ def mqtt_init():
 
 
 
-# last_command_time = 0 
-def control_door(command):
-    # global last_command_time
-    global door_state
-    
-    if door_state == 'OPEN' and command == 'OPEN':
-        return
-    if door_state == 'CLOSED' and command == 'CLOSE':
-        return
+last_command_time = 0 
+def gateKick():
+    global last_command_time
 
-    # now = time.time()
+    now = time.time()
 
-    print("command:"+command + " doorState:" + door_state)
-    # if now - last_command_time < 30:
-    #     print("double comm")
-    #     client.publish(commmand_topic, 1)
-    #     time.sleep(5.0)
-    #     client.publish(commmand_topic, 1)
-    #     time.sleep(30.0)
-    # else:
-    client.publish(commmand_topic, 1)
-    time.sleep(30.0)
-    print("door wait OFF") 
+    print("time delta:"+str(now - last_command_time))
+    if now - last_command_time < 31:
+        print("double kick")
+        client.publish(commmand_topic, 1)
+        time.sleep(1.0)
+        client.publish(commmand_topic, 1)
+    else:
+        client.publish(commmand_topic, 1)
+        print("one kick")
 
-    # last_command_time = now
+    last_command_time = now
 
 
 mqtt_init()
 time.sleep(3)
 # control_door("CLOSE")
 
+
+
 print("START LOOP")
 while 1:
     time.sleep(0.1)
-    control_door(door_cmd)
+
+    if door_state=="IDLE":
+        if(sens_state!=door_cmd):
+            door_state="MOVING"
+            gateKick()
+            if(door_cmd=="OPEN"):
+                client.publish(player_topic, 1)
+
+    if door_state=="MOVING":
+        if(sens_state==door_cmd):
+            door_state="IDLE"
+            print("door_state=IDLE")
+    # if(sens_state!=door_cmd){
+
+    # }
+
+    # control_door(door_cmd)

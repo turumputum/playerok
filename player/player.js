@@ -274,7 +274,7 @@ function mqtt_init() {
   })
 
 }
-mqtt_init()
+
 
 
 function mqtt_sub(topic) {
@@ -293,13 +293,26 @@ function mqtt_sub(topic) {
 
 function report_state(state) {
   if (flag_mqtt_ok == 1) {
-    if (state == 'Playing') {
-      client.publish('player/state', `Playing : ${playlist.tracks[current_track_index].name}`, { retain: true })
-    } else if (state == 'Pause') {
-      client.publish('player/state', `Pause : ${playlist.tracks[current_track_index].name}`, { retain: true })
-    } else if (state == 'Idle') {
-      client.publish('player/state', `Idle`, { retain: true })
-    }
+    mpvPlayer.getProperty('duration')
+    .then(function(duration){
+      //console.log(`kuwq ${duration}`);
+      mpvPlayer.getProperty('time-pos')
+      .then(function(time){
+        mpvPlayer.getProperty('filename')
+          .then(function(filename){
+            //console.log(`${filename}:${time}/${duration}`);
+            client.publish('player/state', `${state}:${filename}  ${((time/duration)*100).toFixed(2)}%`)
+          })
+      })
+    })
+    
+    // if (state == 'Playing') {
+    //   client.publish('player/state', `Playing : ${playlist.tracks[current_track_index].name}`, { retain: true })
+    // } else if (state == 'Pause') {
+    //   client.publish('player/state', `Pause : ${playlist.tracks[current_track_index].name}`, { retain: true })
+    // } else if (state == 'Idle') {
+    //   client.publish('player/state', `Idle`, { retain: true })
+    // }
   }
 }
 
@@ -441,7 +454,7 @@ mpvPlayer.on('stopped', function () {
   if(player_state!="Idle"){
     report_actions(current_track_index, "stop")
   }
-  scribbles.log(`stopped event`)
+  scribbles.log(`stopped event. player_sate: ${player_state}`)
   if (simple_track_num > 0 && player_state != "stop") {
     if (shift_simple_track(+1)) {
       if (play_track(current_track_index)) {
@@ -453,4 +466,19 @@ mpvPlayer.on('stopped', function () {
 
 });
 
-mpvPlayer.stop()
+mpvPlayer.on('statuschange', function(status){
+  console.log(status);
+});
+
+setTimeout(() => {
+  mpvPlayer.stop()
+}, 500);
+
+setTimeout(() => {
+  mqtt_init()
+}, 1000);
+
+setInterval(() => {
+  report_state(player_state)
+  
+}, 1000);
