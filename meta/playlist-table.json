@@ -10,6 +10,21 @@
     "type": "script"
   },
   {
+    "path": "data/playlists/1234.json",
+    "name": "1234",
+    "type": "multimedia"
+  },
+  {
+    "path": "data/playlists/button_module.json",
+    "name": "button_module",
+    "type": "multimedia"
+  },
+  {
+    "path": "data/playlists/monofon.json",
+    "name": "monofon",
+    "type": "multimedia"
+  },
+  {
     "path": "data/playlists/playlist.json",
     "name": "playlist",
     "type": "multimedia"
