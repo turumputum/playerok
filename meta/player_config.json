@@ -17,8 +17,8 @@
       "enable": 1
     },
     "wlan0": {
-      "SSID": "Ap",
-      "password": "123456q!",
+      "SSID": "Home",
+      "password": "!q654321",
       "DHCP": 1,
       "IP": "",
       "net_mask": "",
@@ -50,7 +50,7 @@
     ],
     "output_sink": "",
     "output_device": "Audio Jack",
-    "volume": 150
+    "volume": null
   },
   "screen": {
     "screen_dev_list": [

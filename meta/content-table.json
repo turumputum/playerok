@@ -1,8 +1,20 @@
 {
   "image": [
     {
-      "path": "data/content/horn.jpg",
-      "name": "horn"
+      "path": "data/content/_MG_8980.jpg",
+      "name": "_MG_8980"
+    },
+    {
+      "path": "data/content/_MG_8999.jpg",
+      "name": "_MG_8999"
+    },
+    {
+      "path": "data/content/_MG_9038.jpg",
+      "name": "_MG_9038"
+    },
+    {
+      "path": "data/content/images.jpg",
+      "name": "images"
     }
   ],
   "video": [
@@ -17,6 +29,42 @@
     {
       "path": "data/content/a_3.mp4",
       "name": "a_3"
+    },
+    {
+      "path": "data/content/a_4.mp4",
+      "name": "a_4"
+    },
+    {
+      "path": "data/content/m_eng.mp4",
+      "name": "m_eng"
+    },
+    {
+      "path": "data/content/m_loop.mp4",
+      "name": "m_loop"
+    },
+    {
+      "path": "data/content/m_rus.mp4",
+      "name": "m_rus"
+    },
+    {
+      "path": "data/content/videoplayback.avi",
+      "name": "videoplayback"
+    },
+    {
+      "path": "data/content/w1.mp4",
+      "name": "w1"
+    },
+    {
+      "path": "data/content/w2.mp4",
+      "name": "w2"
+    },
+    {
+      "path": "data/content/w3.mp4",
+      "name": "w3"
+    },
+    {
+      "path": "data/content/w4.mp4",
+      "name": "w4"
     }
   ],
   "sound": []

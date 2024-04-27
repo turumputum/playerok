@@ -3,9 +3,9 @@
   "version": "1.0",
   "actions": [
     {
-      "event": "stop",
-      "topic": "monofon_1/set_RGB",
-      "payload": "0 0 0"
+      "event": "start",
+      "topic": "module_box/led_5",
+      "payload": "1"
     },
     {
       "event": "start",
@@ -13,35 +13,24 @@
       "payload": "0 200 200"
     },
     {
-      "event": "start",
-      "topic": "button_module_1/led_1",
-      "payload": "1"
+      "event": "stop",
+      "topic": "module_box/led_5",
+      "payload": "0"
     },
     {
       "event": "stop",
-      "topic": "button_module_1/led_1",
-      "payload": "0"
+      "topic": "monofon_1/set_RGB",
+      "payload": "0 0 0"
     }
   ],
   "controls": [],
   "tracks": [
     {
       "order_num": 1,
-      "name": "1",
+      "name": "new_track",
       "path": "data/content/m_loop.mp4",
       "content_group": "video",
       "type": "simple",
-      "error": "",
-      "repeat": true,
-      "triggers": [],
-      "actions": []
-    },
-    {
-      "order_num": 2,
-      "name": "2",
-      "path": "data/content/m_rus.mp4",
-      "content_group": "video",
-      "type": "interactive",
       "error": "",
       "repeat": true,
       "triggers": [
@@ -51,21 +40,21 @@
           "payload": "1"
         },
         {
-          "event": "stop",
-          "topic": "monofon_1/phoneUp",
+          "event": "start",
+          "topic": "monofon_1/changeTrack",
           "payload": "0"
         },
         {
-          "event": "start",
-          "topic": "monofon_1/changeTrack",
+          "event": "stop",
+          "topic": "monofon_1/phoneUp",
           "payload": "0"
         }
       ],
       "actions": []
     },
     {
-      "order_num": 3,
-      "name": "3",
+      "order_num": 2,
+      "name": "new_track-2",
       "path": "data/content/m_eng.mp4",
       "content_group": "video",
       "type": "interactive",
@@ -73,13 +62,40 @@
       "repeat": true,
       "triggers": [
         {
+          "event": "start",
+          "topic": "monofon_1/changeTrack",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "monofon_1/phoneUp",
+          "payload": "0"
+        }
+      ],
+      "actions": []
+    },
+    {
+      "order_num": 3,
+      "name": "new_track",
+      "path": "data/content/m_rus.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": true,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "monofon_1/changeTrack",
+          "payload": "0"
+        },
+        {
           "event": "stop",
           "topic": "monofon_1/phoneUp",
           "payload": "0"
         },
         {
           "event": "start",
-          "topic": "monofon_1/changeTrack",
+          "topic": "monofon_1/phoneUp",
           "payload": "1"
         }
       ],

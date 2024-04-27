@@ -159,7 +159,7 @@ function mqtt_init() {
     setTimeout(() => {
       mpvPlayer.getProperty('duration')
       .then(function(duration){
-        console.log("Duration: ", duration);
+        //console.log("Duration: ", duration);
         if(duration==undefined){
           play_track(current_track_index);
         }
@@ -177,7 +177,7 @@ function mqtt_init() {
     playlist.controls.forEach(control => {
       if (control.topic == topic) {
         if (control.event == 'next') {
-          if (control.payload == parseInt(message)) {
+          if (control.payload == message) {
             if (shift_simple_track(+1)) {
               if (play_track(current_track_index)) {
                 scribbles.log(`Next track OK command, index: ${current_track_index}`)
@@ -185,7 +185,7 @@ function mqtt_init() {
             }
           }
         } else if (control.event == 'previous') {
-          if (control.payload ==  parseInt(message)) {
+          if (control.payload ==  message) {
             if (shift_simple_track(-1)) {
               if (play_track(current_track_index)) {
                 scribbles.log(`Prev track OK command, index: ${current_track_index}`)
@@ -193,7 +193,7 @@ function mqtt_init() {
             }
           }
         } else if (control.event == 'play/pause') {
-          if (control.payload ==  parseInt(message)) {
+          if (control.payload == message) {
             play_pause()
           }
         } else if (control.event == 'set_volume') {
@@ -216,7 +216,7 @@ function mqtt_init() {
     playlist.tracks.forEach(function (track, t_index) {
       track.triggers.forEach(trigger => {
         if (trigger.topic == topic) {
-          if ((trigger.event == 'start') && (trigger.payload ==  parseInt(message))) {
+          if ((trigger.event == 'start') && (trigger.payload == message)) {
             if(current_track_index!=t_index){
               // if(player_state!="Idle"){
               //   stop_track(current_track_index)
@@ -228,7 +228,7 @@ function mqtt_init() {
                 scribbles.log(`mqtt trigger_on Track OK, current_index: ${current_track_index} -- interupted_index:${interrupted_track_index}`)
               }
             }
-          } else if ((trigger.event == 'stop') && (trigger.payload ==  parseInt(message))) {
+          } else if ((trigger.event == 'stop') && (trigger.payload ==  message)) {
             if(current_track_index==t_index){
               if (simple_track_num > 0) {
                   scribbles.log(`mqtt trigger_off return to interrupted_index:${interrupted_track_index}, index: ${current_track_index}`)
@@ -467,7 +467,7 @@ mpvPlayer.on('stopped', function () {
 });
 
 mpvPlayer.on('statuschange', function(status){
-  console.log(status);
+  //console.log(status);
 });
 
 setTimeout(() => {

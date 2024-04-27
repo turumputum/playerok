@@ -96,10 +96,14 @@ class portListener {
           }
         }
       } else if (state == 'working') {
-        scribbles.log(`lets Publish: ${in_data}`)
+        scribbles.log(`lets Publish: ${in_data} len:${in_data.length}`)
+        if (in_data.endsWith(' ')) {
+          in_data = in_data.slice(0, -1) 
+        }
+
         if (in_data.slice(0, 2) != 'OK') {
           try {
-            client.publish(`${in_data.split(':')[0]}`, `${in_data.split(':')[1]}`, { retain: true })
+            client.publish(`${in_data.split(':')[0]}`, `${in_data.split(':')[1]}`, { retain: false })
           } catch (err) {
             scribbles.log(`Publish fail: ${err}`)
           }
