@@ -15,6 +15,10 @@
     {
       "path": "data/content/images.jpg",
       "name": "images"
+    },
+    {
+      "path": "data/phd24/node_modules/string-template/coverage/sort-arrow-sprite.png",
+      "name": "sort-arrow-sprite"
     }
   ],
   "video": [
