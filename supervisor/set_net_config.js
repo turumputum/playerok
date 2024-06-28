@@ -53,8 +53,9 @@ async function set_net_config() {
     process.exit(1);
   }
   
-  await execPromise(`sudo nmcli general hostname ${config.net.mDNS_name}`)
-
+  //await execPromise(`sudo nmcli general hostname ${config.net.mDNS_name}`)
+  await execPromise(`sudo hostnamectl set-hostname ${config.net.mDNS_name}`)
+  
   const ifMassE = ['eth0', 'eth1', 'wlan0'];
   for (let iface of ifMassE) {
     //console.log(tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface))

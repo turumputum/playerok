@@ -13,6 +13,7 @@
       "name": "i_1_2"
     },
     {
+<<<<<<< HEAD
       "path": "data/content/i_2_1.jpg",
       "name": "i_2_1"
     },
@@ -34,6 +35,13 @@
     },
     {
       "path": "data/usbKill/node_modules/string-template/coverage/sort-arrow-sprite.png",
+=======
+      "path": "data/content/images.jpg",
+      "name": "images"
+    },
+    {
+      "path": "data/phd24/node_modules/string-template/coverage/sort-arrow-sprite.png",
+>>>>>>> 3f98ea186babedb23c6b720a656bcd4d8452353a
       "name": "sort-arrow-sprite"
     }
   ],
