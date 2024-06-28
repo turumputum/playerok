@@ -1,22 +1,12 @@
 [
   {
-    "path": "data/actuatorGate/script.py",
-    "name": "script",
+    "path": "data/usbKill/delay.js",
+    "name": "delay",
     "type": "script"
   },
   {
-    "path": "data/actuatorGate/tt.js",
-    "name": "tt",
+    "path": "data/usbKill/usbKill.js",
+    "name": "usbKill",
     "type": "script"
-  },
-  {
-    "path": "data/playlists/button_module_x_swiper.json",
-    "name": "button_module_x_swiper",
-    "type": "multimedia"
-  },
-  {
-    "path": "data/playlists/monofon.json",
-    "name": "monofon",
-    "type": "multimedia"
   }
 ]
