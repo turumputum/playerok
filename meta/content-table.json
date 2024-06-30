@@ -1,142 +1,37 @@
 {
-  "image": [
-    {
-      "path": "data/content/horn.jpg",
-      "name": "horn"
-    },
-    {
-      "path": "data/content/i_1_1.jpg",
-      "name": "i_1_1"
-    },
-    {
-      "path": "data/content/i_1_2.jpg",
-      "name": "i_1_2"
-    },
-    {
-<<<<<<< HEAD
-      "path": "data/content/i_2_1.jpg",
-      "name": "i_2_1"
-    },
-    {
-      "path": "data/content/i_2_2.jpg",
-      "name": "i_2_2"
-    },
-    {
-      "path": "data/content/i_3_1.jpg",
-      "name": "i_3_1"
-    },
-    {
-      "path": "data/content/i_3_2.jpg",
-      "name": "i_3_2"
-    },
-    {
-      "path": "data/content/standby.jpg",
-      "name": "standby"
-    },
-    {
-      "path": "data/usbKill/node_modules/string-template/coverage/sort-arrow-sprite.png",
-=======
-      "path": "data/content/images.jpg",
-      "name": "images"
-    },
-    {
-      "path": "data/phd24/node_modules/string-template/coverage/sort-arrow-sprite.png",
->>>>>>> 3f98ea186babedb23c6b720a656bcd4d8452353a
-      "name": "sort-arrow-sprite"
-    }
-  ],
+  "image": [],
   "video": [
     {
-      "path": "data/content/(1).mp4",
-      "name": "(1)"
-    },
-    {
-      "path": "data/content/(2).mp4",
-      "name": "(2)"
-    },
-    {
-      "path": "data/content/(3).mp4",
-      "name": "(3)"
-    },
-    {
-      "path": "data/content/(4).mp4",
-      "name": "(4)"
-    },
-    {
-      "path": "data/content/(5).mp4",
-      "name": "(5)"
-    },
-    {
-      "path": "data/content/(6).mp4",
-      "name": "(6)"
-    },
-    {
-      "path": "data/content/(7).mp4",
-      "name": "(7)"
-    },
-    {
-      "path": "data/content/Office%20(1).mp4",
-      "name": "Office%20(1)"
-    },
-    {
-      "path": "data/content/Office%20(2).mp4",
-      "name": "Office%20(2)"
-    },
-    {
-      "path": "data/content/Office%20(3).mp4",
-      "name": "Office%20(3)"
-    },
-    {
-      "path": "data/content/Office%20(4).mp4",
-      "name": "Office%20(4)"
-    },
-    {
-      "path": "data/content/Office%20(5).mp4",
-      "name": "Office%20(5)"
-    },
-    {
-      "path": "data/content/Office%20(6).mp4",
-      "name": "Office%20(6)"
-    },
-    {
-      "path": "data/content/Office%20(7).mp4",
-      "name": "Office%20(7)"
+      "path": "data/content/a_1.mp4",
+      "name": "a_1"
     },
     {
       "path": "data/content/a_2.mp4",
       "name": "a_2"
     },
     {
-      "path": "data/content/loop.mp4",
-      "name": "loop"
+      "path": "data/content/a_3.mp4",
+      "name": "a_3"
     },
     {
-      "path": "data/content/v_1_1.mp4",
-      "name": "v_1_1"
+      "path": "data/content/a_4.mp4",
+      "name": "a_4"
     },
     {
-      "path": "data/content/v_1_2.mp4",
-      "name": "v_1_2"
+      "path": "data/content/w1.mp4",
+      "name": "w1"
     },
     {
-      "path": "data/content/v_2_1.mp4",
-      "name": "v_2_1"
+      "path": "data/content/w2.mp4",
+      "name": "w2"
     },
     {
-      "path": "data/content/v_2_2.mp4",
-      "name": "v_2_2"
+      "path": "data/content/w3.mp4",
+      "name": "w3"
     },
     {
-      "path": "data/content/v_3_1.mp4",
-      "name": "v_3_1"
-    },
-    {
-      "path": "data/content/v_3_2.mp4",
-      "name": "v_3_2"
-    },
-    {
-      "path": "data/content/v_man.mp4",
-      "name": "v_man"
+      "path": "data/content/w4.mp4",
+      "name": "w4"
     }
   ],
   "sound": []

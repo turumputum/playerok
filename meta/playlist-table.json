@@ -1,12 +1,7 @@
 [
   {
-    "path": "data/usbKill/delay.js",
-    "name": "delay",
-    "type": "script"
-  },
-  {
-    "path": "data/usbKill/usbKill.js",
-    "name": "usbKill",
-    "type": "script"
+    "path": "data/playlists/testP.json",
+    "name": "testP",
+    "type": "multimedia"
   }
 ]

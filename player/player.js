@@ -447,8 +447,8 @@ mpvPlayer.on('stopped', function () {
   if (flag_first_run == 1) {
     flag_first_run = 0
     scribbles.log(`First run`)
-    play_track(current_track_index);
-    return
+    //play_track(current_track_index);
+    //return
   }
 
   if(player_state!="Idle"){
