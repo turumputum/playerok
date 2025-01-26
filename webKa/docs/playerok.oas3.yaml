@@ -1,0 +1,497 @@
+openapi: 3.0.0
+info:
+  title: playerok
+  version: 0.0.1
+servers:
+  - url: http://localhost
+tags:
+
+paths:
+  /playlist_1:
+    get:
+      summary: Get a playlist
+      tags: [playlist]
+      responses:
+        '200':
+          description: A playlist object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Playlist' }
+
+  /playlist_table:
+    get:
+      summary: Get a list of playlists
+      tags: [playlist]
+      responses:
+        '200':
+          description: A list of playlist objects
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PlaylistList' }
+
+  /config:
+    get:
+      summary: Get a configuration
+      # tags: [config]
+      responses:
+        '200':
+          description: A configuration object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Config' }
+
+  /get_status:
+    get:
+      summary: Get a status
+      # tags: [status]
+      responses:
+        '200':
+          description: A status object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SystemStatus' }
+
+  /../meta/scheduler-table:
+    get:
+      summary: Get a list of tasks
+      # tags: [task]
+      responses:
+        '200':
+          description: A list of task objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: '#/components/schemas/Task' }
+
+  /get_time:
+    get:
+      summary: Get a time
+      responses:
+        '200':
+          description: time
+
+
+  /get_playlist:
+    get:
+      summary: Get a playlist by path
+      tags: [playlist]
+      parameters:
+        - name: path
+          in: query
+          required: true
+          schema:
+            type: string
+          example: "data/playlists/button_module_x_swiper.json"
+          description: The name of the playlist
+      responses:
+        '200':
+          description: A playlist object
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Playlist' }
+
+
+components:
+  schemas:
+
+    SystemStatus:
+      type: object
+      properties:
+        cpu_load:
+          type: number
+          example: 30.65
+        ram_usage:
+          type: string # array?
+          example: "2.3/3.8"
+        hdd_usage:
+          type: string # array?
+          example: "7.0/54.0"
+        soc_temp:
+          type: number
+          example: 49
+
+    TaskType:
+      type: string
+      enum: [multimedia, script]
+
+    PlaylistListItem:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "playlist_1.json"
+        path:
+          type: string
+          example: "/data/playlist_1.json"
+          description: "folder maybe more useful?"
+        type: { $ref: '#/components/schemas/PlaylistListItem' }
+
+    PlaylistList:
+      type: array
+      items: { $ref: '#/components/schemas/PlaylistListItem' }
+
+    Playlist:
+      type: object
+      properties:
+        version: # ???
+          type: string
+        loop:
+          type: boolean
+
+        defaults: { $ref: '#/components/schemas/PlaylistDefaults' }
+        tracks:
+          type: array
+          items: { $ref: '#/components/schemas/PlaylistTrack' }
+        effects:
+          type: array
+          items: { $ref: '#/components/schemas/PlaylistEffect' }
+
+    PlaylistDefaults:
+      type: object
+      properties:
+        time: # enum?
+          type: string
+        eff_on_begin: # enum?
+          type: string
+        eff_on_end: # enum?
+          type: string
+        duration: # enum?
+          type: string
+          enum: [original, ???]
+
+    PlaylistTrack:
+      type: object
+      properties:
+        order:
+          type: string # integer?
+          description: The sequence order of the track
+          example: "1"
+        content_id:
+          type: string # integer?
+          description: Identifier for the content
+          example: "012345678"
+        type: { $ref: '#/components/schemas/PlaylistTrackType' }
+        pub_on_start:
+          type: string
+          description: Topic published at the start of the track
+          example: "button_module_1/led_1 : 1"
+        duration:
+          type: string # integer?
+          description: Duration of the track in milliseconds
+          example: "50000"
+        pub_on_end:
+          type: string
+          description: Topic published at the end of the track
+          example: "button_module_1/led_1 : 0"
+
+    PlaylistTrackType:
+      type: string
+      enum: [simple, interactive]
+      example: "interactive"
+
+    PlaylistEffect:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "fade in"
+        type:
+          type: string # enum?
+          example: "fadein"
+        duration:
+          type: string # integer
+          example: "4000"
+
+    PlaylistEdit:
+      type: object
+      properties:
+        playlist_name:
+          type: string
+          example: "button_module_x_swiper"
+        version:
+          type: string
+          example: "1.0"
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/EventObject' }
+          example:
+            - event: "start"
+              topic: "module_box_2/led_0"
+              payload: "1"
+        controls:
+          type: array
+          items: { $ref: '#/components/schemas/EventObject' }
+          example:
+            - event: "next"
+              topic: "module_box/swiper_0"
+              payload: "right"
+        tracks:
+          type: array
+          items: { $ref: '#/components/schemas/PlaylistEditTrack' }
+
+    EventObject:
+      type: object
+      properties:
+        event:
+          type: string
+          enum: ["start", "stop", "next", "previous"]
+          example: "start"
+        topic:
+          type: string
+          example: "module_box_2/led_0"
+        payload:
+          type: string
+          example: "1"
+
+    PlaylistEditTrack:
+      type: object
+      properties:
+        order_num:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: "01"
+        path:
+          type: string
+          example: "data/content/w1.mp4"
+        content_group: # enum?
+          type: string
+          example: "video"
+        type: { $ref: '#/components/schemas/PlaylistTrackType' }
+        error:
+          type: string
+          example: ""
+        repeat:
+          type: boolean
+          example: false
+        triggers:
+          type: array
+          items: { $ref: '#/components/schemas/EventObject' }
+          example: []
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/EventObject' }
+          example: []
+      example:
+        - order_num: 6
+          name: "3"
+          path: "data/content/a_3.mp4"
+          content_group: "video"
+          type: "interactive"
+          error: ""
+          repeat: false
+          triggers:
+            - event: "start"
+              topic: "module_box_2/button_2"
+              payload: "1"
+          actions:
+            - event: "stop"
+              topic: "module_box_2/led_2"
+              payload: "0"
+
+    ContentTable:
+      type: object
+      properties:
+        image:
+          type: array
+          items: { $ref: '#/components/schemas/PlaylistEditContentItem' }
+        video:
+          type: array
+          items: { $ref: '#/components/schemas/PlaylistEditContentItem' }
+        sound:
+          type: array
+          items: { $ref: '#/components/schemas/PlaylistEditContentItem' }
+          example: []
+
+    PlaylistEditContentItem:
+      type: object
+      properties:
+        path:
+          type: string
+          example: "data/content/_MG_8980.jpg"
+        name:
+          type: string
+          example: "_MG_8980"
+
+# ////////////////////////////////////////////////////////////////////////
+
+    Task:
+      type: object
+      properties:
+        task_name:
+          type: string
+          example: "new_task_2"
+        task_path:
+          type: string
+          example: "data/playlists/monofon.json"
+        type: { $ref: '#/components/schemas/TaskType' }
+        trigger_type:
+          type: string
+          enum: ["topic", "schedule"]
+          example: "topic"
+        schedule:
+          $ref: '#/components/schemas/Schedule'
+        trigger_topics:
+          type: array
+          items:
+            $ref: '#/components/schemas/EventObject'
+          example:
+            - event: "start"
+              topic: "module_box/button_5"
+              payload: "1"
+        actions:
+          type: array
+          items: { $ref: '#/components/schemas/EventObject' }
+        state:
+          type: string
+          example: "File not foud"
+
+    Schedule:
+      type: object
+      properties:
+        start_time:
+          type: string
+          example: ""
+        end_time:
+          type: string
+          example: ""
+        day_of_week:
+          type: string
+          example: ""
+
+# ////////////////////////////////////////////////////////////////////////
+
+    Config:
+      type: object
+      properties:
+        net:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              en0:  { $ref: '#/components/schemas/ConfigNetwork' }
+              wlan0: { $ref: '#/components/schemas/ConfigNetwork' }
+        time: { $ref: '#/components/schemas/ConfigTime' }
+        security: { $ref: '#/components/schemas/ConfigSecurity' }
+        intractivity: { $ref: '#/components/schemas/ConfigInteractivity' }
+        sound: { $ref: '#/components/schemas/ConfigSound' }
+        screen: { $ref: '#/components/schemas/ConfigScreen' }
+        boot:  { $ref: '#/components/schemas/ConfigBoot' }
+        log:  { $ref: '#/components/schemas/ConfigLog' }
+
+    ConfigNetwork:
+      type: object
+      properties:
+        DHCP:
+          type: string # boolean?
+          example: "1"
+        IP:
+          type: string
+          example: "192.168.0.11"
+        net_mask:
+          type: string
+          example: "255.255.255.0"
+        gateway:
+          type: string
+          example: "192.168.0.1"
+        enable:
+          type: boolean
+        DNS:
+          type: string
+          example: "192.168.0.1"
+        mDNS_name:
+          type: string
+          example: "playerok_<<mac>>"
+
+    ConfigTime:
+      type: object
+      properties:
+        NTP:
+          type: string # boolean?
+          example: "1"
+        time_zone:
+          type: string # integer?
+          example: "+3"
+
+    ConfigSecurity:
+      type: object
+      properties:
+        admin_pass:
+          type: string
+          example: "1234"
+        SFTP:
+          type: string # boolean?
+          example: "1"
+        SSH:
+          type: string # boolean?
+          example: "1"
+        ext_MQTT:
+          type: string # boolean?
+          example: "1"
+        MQTT_login:
+          type: string # boolean?
+          example: "1"
+        MQTT_pass:
+          type: string # boolean?
+          example: "1"
+
+    ConfigInteractivity:
+      type: object
+      properties:
+        UART_to_MQTT:
+          type: string # boolean?
+          example: "1"
+
+    ConfigSound:
+      type: object
+      properties:
+        sound_dev_list:
+          type: array
+        output_sink:
+          type: string
+        output_device:
+          type: string
+        volume:
+          type: string # integer?
+          example: "80"
+
+    ConfigScreen:
+      type: object
+      properties:
+        screen_dev_list:
+          type: array
+        rotation:
+          type: string
+          enum: ["0", "90", "180", "270"]
+        resolution:
+          type: string
+          example: "1920x1080"
+        orientation:
+          type: string
+          enum: ["normal", "???"]
+        output_port:
+          type: string
+          example: "HDMI-1"
+
+    ConfigBoot:
+      type: object
+      properties:
+        net_info_on_start:
+          type: string # boolean?
+          example: "1"
+        logo_path:
+          type: string
+          example: "data/logo.jpeg"
+
+    LogLevel:
+      type: string
+      enum: ["error", "warning", "info", "debug"]
+
+    ConfigLog:
+      type: object
+      properties:
+        _comment:
+          items: { $ref: '#/components/schemas/LogLevel' }
+        level: { $ref: '#/components/schemas/LogLevel' }
