@@ -12,7 +12,6 @@ dotenv.config();
 
 const app = express();
 const FRONTEND_ROOT = path.resolve(process.env.FRONTEND_ROOT);
-const FS_ROOT = path.resolve(process.env.FS_ROOT);
 
 process.on("unhandledRejection", (err) => {
   console.error(err);
@@ -32,7 +31,6 @@ async function init () {
   app.use(express.json());
 
   // Routes
-  app.use('/api/file-system/preview', express.static(FS_ROOT));
   app.use("/api/file-system", fileSystemRoutes);
 
   // Swagger documentation
