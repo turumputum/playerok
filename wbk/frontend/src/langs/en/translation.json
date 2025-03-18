@@ -1,0 +1,27 @@
+{
+  "fs": {
+    "uploadFile": "Upload File",
+    "home": "Home",
+    "view": "View",
+    "grid": "Grid",
+    "list": "List",
+
+    "refresh": "Refresh",
+    "newFolder": "New Folder",
+    "upload": "Upload",
+    "selectAll": "Select All",
+    "open": "Open",
+    "cut": "Cut",
+    "copy": "Copy",
+    "paste": "Paste",
+    "rename": "Rename",
+    "download": "Download",
+    "delete": "Delete",
+    "previewUnavailable": "Preview is not available for this file.",
+    "preview": "Preview",
+    "itemsSelected_one": "1 item selected",
+    "itemsSelected_other": "{{count}} items selected",
+
+    "_": "_"
+  }
+}

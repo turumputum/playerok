@@ -1,0 +1,21 @@
+.FsmApp {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--p);
+  box-sizing: content-box;
+  margin: 16px 0;
+
+  .file-manager-container {
+    height: 100%;
+    width: 100%;
+  }
+
+  * {
+    box-sizing: content-box;
+  }
+
+  .file-explorer {
+    box-shadow: 0 0 1px;
+  }
+}

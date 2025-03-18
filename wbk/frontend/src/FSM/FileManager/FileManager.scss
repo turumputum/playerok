@@ -1,0 +1,127 @@
+@import url("https://fonts.googleapis.com/css2?family=Nunito+Sans:ital,opsz,wght@0,6..12,200..1000;1,6..12,200..1000&display=swap");
+@import "../styles/_variables.scss";
+
+.text-white {
+  color: white;
+}
+
+.text-truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+img,
+svg {
+  vertical-align: middle;
+}
+
+.fm-modal {
+  border: 1px solid #c6c6c6;
+  border-radius: 5px;
+  width: fit-content;
+  overflow-x: hidden;
+  padding: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.253);
+}
+
+.w-25 {
+  width: 25%;
+}
+
+.file-explorer {
+  min-height: 400px;
+  height: 100%;
+  width: 100%;
+  font-family: var(--file-manager-font-family);
+
+  button {
+    font-family: var(--file-manager-font-family);
+  }
+
+  border-radius: 8px;
+  position: relative;
+  background-color: white;
+  cursor: default;
+  // Disable Text Selection on Double Click
+  -webkit-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+
+  .files-container {
+    display: flex;
+    height: calc(100% - 46px); // Toolbar total height = baseHeight: 35px, padding top + bottom: 10px, border: 1px.
+
+    .navigation-pane {
+      z-index: 1;
+      padding-top: 8px;
+
+      position: relative;
+
+      .sidebar-resize {
+        position: absolute;
+        right: 0px;
+        top: 0px;
+        bottom: 0px;
+        width: 5px;
+        cursor: col-resize;
+        z-index: 10;
+        border-right: 1px solid $border-color;
+
+        &:hover {
+          border-right: 1px solid #1e3a8a;
+        }
+      }
+
+      .sidebar-dragging {
+        border-right: 1px solid #1e3a8a;
+      }
+    }
+
+    .folders-preview {
+      z-index: 2;
+      background-color: white;
+      padding-right: 0px;
+      padding-left: 0px;
+      border-bottom-right-radius: 8px;
+    }
+  }
+}
+
+.close-icon {
+  padding: 5px;
+  border-radius: 50%;
+
+  &:hover {
+    cursor: pointer;
+    background-color: rgb(0, 0, 0, 0.07);
+  }
+}
+
+.fm-rename-folder-container {
+  padding: 8px 0;
+
+  .fm-rename-folder-input {
+    border-bottom: 1px solid #c6c6c6;
+    padding: 8px 12px 12px;
+
+    .fm-rename-warning {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+  }
+
+  .fm-rename-folder-action {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    padding: 8px 8px 0 0;
+  }
+}
+
+.file-selcted {
+  .select-files {
+    width: 40%;
+  }
+}
