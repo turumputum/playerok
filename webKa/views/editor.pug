@@ -93,6 +93,7 @@ block content
         let config = !{JSON.stringify(config)}
 
         var editPlaylistModal = document.getElementById('editPlaylistModal')
+        var editTrackModal = document.getElementById('editTrackModal')
         //var simpleContTable = editModal.querySelector('.simpleContTable')
         var tableSC = document.getElementById('simpleContTable').getElementsByTagName('tbody')[0];
         var tableIC = document.getElementById('interactiveContTable').getElementsByTagName('tbody')[0];
@@ -103,6 +104,16 @@ block content
         var edit_track_mode
         var current_playlist
         var content_table
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.modalManager) {
+                modalManager.registerModal('editPlaylistModal')
+                modalManager.registerModal('editTrackModal')
+                modalManager.registerModal('confirmDeleteTrackModal')
+                modalManager.registerModal('verify_delete')
+                modalManager.registerModal('newPlaylistModal')
+            }
+        })
 
         getTopicList()
 
@@ -123,7 +134,11 @@ block content
         function edit_playlist_modal(path) {
             current_playlist_path = path
             fetch_get_playlist().then(()=>{
-                $('#editPlaylistModal').modal('show')
+                if (window.modalManager) {
+                    modalManager.show('editPlaylistModal')
+                } else {
+                    $('#editPlaylistModal').modal('show')
+                }
             })
         }
 
@@ -189,15 +204,28 @@ block content
                 //window.location.reload();
                 //update_playlist_modal()
                 //$('#editPlaylistModal').reload()
-                $('#confirmDeleteTrackModal').modal('hide')
+                if (window.modalManager) {
+                    modalManager.hide('confirmDeleteTrackModal')
+                } else {
+                    $('#confirmDeleteTrackModal').modal('hide')
+                }
             }).then(()=>{
-                $('#editPlaylistModal').modal('show')
+                if (window.modalManager) {
+                    modalManager.show('editPlaylistModal', 200)
+                } else {
+                    $('#editPlaylistModal').modal('show')
+                }
             })
         }
 
         function cancel_delete_track(){
-            $('#confirmDeleteTrackModal').modal('hide')
-            $('#editPlaylistModal').modal('show')
+            if (window.modalManager) {
+                modalManager.hide('confirmDeleteTrackModal')
+                modalManager.show('editPlaylistModal', 200)
+            } else {
+                $('#confirmDeleteTrackModal').modal('hide')
+                $('#editPlaylistModal').modal('show')
+            }
         }
 
         async function fetch_get_playlist(){

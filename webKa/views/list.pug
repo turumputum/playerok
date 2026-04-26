@@ -4,7 +4,7 @@ extends layout.pug
 mixin table-row(file_name, file_type, file_size)
     tr  
         td(data-label="#")
-            input.form-check-input.multi-select(type='checkbox' data-select='{{name}}' data-select-size='{{size}}' id='check{{@index}}' disabled)
+            input.form-check-input.multi-select(type='checkbox' data-file-name=file_name data-file-type=file_type)
         td(data-label="type")
             case file_type
                 when 'dir'
@@ -21,8 +21,10 @@ mixin table-row(file_name, file_type, file_size)
                     i.bi.bi-filetype-json.d-flex.justify-content-center.mt-2
                 
         td(data-label="Name")
-            a(href='./' + file_name + '/' )
-                | #{file_name}
+            if file_type == 'dir'
+                a(href='./' + file_name + '/') #{file_name}
+            else
+                a(href='./' + file_name) #{file_name}
         td(data-label="size")
             - var tSize = (Math.ceil((file_size/(1024*1024))*10))/10
             | #{tSize} MB
@@ -31,6 +33,11 @@ mixin table-row(file_name, file_type, file_size)
                 button.btn.btn-sm.btn-light.dropdown-toggle(type='button' data-bs-toggle='dropdown' aria-expanded='false')
                     i.mx-1.bi.bi-three-dots
                 ul.dropdown-menu
+                    li
+                        a.dropdown-item(href='#' data-action='preview-file' data-file-name=file_name data-file-type=file_type) Preview
+                    if file_type == 'script' || file_type == 'json'
+                        li
+                            a.dropdown-item(href='#' data-action='edit-file' data-file-name=file_name) Edit
                     li
                         a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' d-name=file_name) Move
                     li
@@ -66,6 +73,12 @@ block content
                                     a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#uploadModal' ) Upload
                                 li
                                     a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#mkdirModal' ) Make directory
+                                li
+                                    hr.dropdown-divider
+                                li
+                                    a#bulk_move_btn.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' disabled) Move selected
+                                li
+                                    a#bulk_delete_btn.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#deleteModal' disabled) Delete selected
                                 //li
                                     //a.dropdown-item(href='#' disabled) Remove selected
                                 //li
@@ -76,7 +89,8 @@ block content
                 table.table.table-hover
                     thead
                         tr
-                            th(scope='col' style="width: 20px;") #
+                            th(scope='col' style="width: 20px;")
+                                input#select_all.form-check-input(type='checkbox')
                             th(scope='col' style="width: 40px;") Type
                             th(scope='col') Name
                             th(scope='col' style="width: 10%;") Size
@@ -101,7 +115,8 @@ block content
                         button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
                     .modal-body
                         input(type='hidden' name='hidenName' value='0')
-                        input#upload_file.form-control(type='file' name='file')
+                        input#upload_file.form-control(type='file' name='file' multiple)
+                        small#upload_files_info.text-muted
 
                         .progress.mt-2
                             .progress-bar#upload_progress.progress-bar-striped.progress-bar-animated(role='progressbar' aria-valuenow='75' aria-valuemin='0' aria-valuemax='100' style='width: 0%')
@@ -119,7 +134,7 @@ block content
             .modal-content
                 .modal-header
                     .hstack 
-                        h4 Move:  &nbsp
+                        h4 Move selected:  &nbsp
                         h4.m_file-name(style='color: rgb(106, 143, 148)')
                 .modal-body
                     h5 Select folder
@@ -162,13 +177,35 @@ block content
             .modal-content
                 .modal-header
                     .hstack 
-                        h4 Confirm delete:  &nbsp
+                        h4 Confirm delete selected:  &nbsp
                         h4.file-name(style='color: rgb(106, 143, 148)')
                 .modal-footer
                     button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_delete()') Ok
                     button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
-    
-    
+
+    #previewModal.modal.fade(aria-hidden='true' aria-labelledby='previewModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered.modal-xl
+            .modal-content
+                .modal-header
+                    h4#previewModalTitle.modal-title Preview
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                .modal-body
+                    #previewBody
+                .modal-footer
+                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Close
+
+    #editModal.modal.fade(aria-hidden='true' aria-labelledby='editModalLabel' tabindex='-1')
+        .modal-dialog.modal-dialog-centered.modal-xl
+            .modal-content
+                .modal-header
+                    h4.modal-title Edit file
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                .modal-body
+                    textarea#edit_file_content.form-control(style='min-height: 50vh; font-family: monospace; white-space: pre; overflow:auto;')
+                .modal-footer
+                    button.btn.btn-secondary(type='button' onclick='saveEditFile()') Save
+                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Close
+
     script.
         let config = !{JSON.stringify(config)}
 
@@ -179,6 +216,63 @@ block content
 
        
         let $select = $(".multi-select")
+        let move_targets = []
+        let delete_targets = []
+        let selected_destination = null  // Store selected tree node for move
+        let selected_destination_path = null  // Store path of selected node
+        let editFileName = ''
+
+        document.addEventListener('DOMContentLoaded', function () {
+            if (window.modalManager && typeof modalManager.registerModal === 'function') {
+                modalManager.registerModal('previewModal')
+                modalManager.registerModal('editModal')
+            }
+        })
+
+        function getSelectedFiles(){
+            return $(".multi-select:checked")
+                .map(function(){ return $(this).attr('data-file-name') })
+                .get()
+                .filter(name => typeof name === 'string' && name.length > 0)
+        }
+
+        function refreshBulkControls(){
+            const selected = getSelectedFiles()
+            const hasSelected = selected.length > 0
+            $('#bulk_move_btn').attr('disabled', !hasSelected)
+            $('#bulk_delete_btn').attr('disabled', !hasSelected)
+        }
+
+        document.addEventListener('click', function (event) {
+            const target = event.target.closest('[data-action]')
+            if (!target) return
+            const action = target.getAttribute('data-action')
+            const file_name = target.getAttribute('data-file-name')
+            const file_type = target.getAttribute('data-file-type')
+            if (action === 'preview-file') {
+                event.preventDefault()
+                openPreviewModal(file_name, file_type)
+            }
+            if (action === 'edit-file') {
+                event.preventDefault()
+                openEditModal(file_name)
+            }
+        })
+
+        $select.on("change", function(){
+            const total = $select.length
+            const selected = getSelectedFiles().length
+            $('#select_all').prop('checked', total > 0 && selected === total)
+            refreshBulkControls()
+        })
+
+        $('#select_all').on('change', function(){
+            const checked = $(this).is(':checked')
+            $select.prop('checked', checked)
+            refreshBulkControls()
+        })
+
+        refreshBulkControls()
         //disabled="true"
         //- $select.on("change", (e, files) => {
         //-     $('#conf_btn').attr('disabled')
@@ -186,45 +280,72 @@ block content
         //- })
 
         //-----------------------UPLOAD--------------------
-        $("#upload_file").on("change", (e, files) => {
-            //$(".multi-files-value").val(JSON.stringify(files.map((f) => f.name)));
-            let input = $("#upload_file").val()
-            console.log("upload file name lenght:" + input.length)
-            if(input.length > 0){
-                $('#upload_btn').attr('disabled',  false)
+        $("#upload_file").on("change", () => {
+            const files = document.getElementById('upload_file').files
+            const count = files ? files.length : 0
+            if(count > 0){
+                $('#upload_files_info').text(`Selected files: ${count}`)
+                $('#conf_btn').attr('disabled',  false)
             } else {
-                $('#upload_btn').attr('disabled',  true)
+                $('#upload_files_info').text('')
+                $('#conf_btn').attr('disabled',  true)
             }
         })
 
         //const formElement = $("form[action='@upload']");
         const $file = $("#upload-file");
 
-        function xhr_upload(){
-            var formData = new FormData();
-            var file = document.getElementById('upload_file').files[0];
-            formData.append('file', file)
-            
-            var xhr = new XMLHttpRequest();
+        function uploadSingleFile(file, fileIndex, totalFiles){
+            return new Promise((resolve, reject) => {
+                var formData = new FormData();
+                formData.append('file', file)
 
-            xhr.open('post', `./${file.name}@upload`, true);
+                var xhr = new XMLHttpRequest();
+                xhr.open('post', `./${encodeURIComponent(file.name)}@upload`, true);
 
-            xhr.upload.onprogress = function(e) {
-                if (e.lengthComputable) {
-                    var percentage = (e.loaded / e.total) * 100;
-                    $("#upload_progress").css('width', percentage + '%');
+                xhr.upload.onprogress = function(e) {
+                    if (e.lengthComputable) {
+                        const filePart = e.loaded / e.total
+                        const percentage = ((fileIndex + filePart) / totalFiles) * 100
+                        $("#upload_progress").css('width', percentage + '%');
+                    }
                 }
-            }
 
-            xhr.onload = function() {
-                console.log(this.statusText);
-                window.location.reload();
+                xhr.onload = function() {
+                    if (xhr.status >= 200 && xhr.status < 300) {
+                        resolve()
+                    } else {
+                        reject(new Error(`Upload failed for ${file.name}`))
+                    }
+                }
+
+                xhr.onerror = function() {
+                    reject(new Error(`Network error for ${file.name}`))
+                }
+
+                xhr.send(formData);
+            })
+        }
+
+        async function xhr_upload(){
+            const files = Array.from(document.getElementById('upload_file').files || [])
+            if(files.length === 0){
+                return
             }
-            xhr.send(formData);
 
             $('#upload_file').attr('disabled',  true)
             $('#conf_btn').attr('disabled',  true)
 
+            try {
+                for (let index = 0; index < files.length; index++) {
+                    await uploadSingleFile(files[index], index, files.length)
+                }
+                window.location.reload();
+            } catch (err) {
+                console.log(err)
+                $('#upload_file').attr('disabled',  false)
+                $('#conf_btn').attr('disabled',  false)
+            }
         }
 
         function fetch_upload(){
@@ -292,11 +413,20 @@ block content
         var m_file_name_p = move_mw.querySelector('.m_file-name')
         
         move_mw.addEventListener('show.bs.modal', function (event) {//get data on load
-            //---
+            $('#confirm_btn').prop('disabled', true)  // Disable until destination is selected
             var move_button = event.relatedTarget
-            const file_name = move_button.getAttribute('d-name')
-            m_file_name_p.innerHTML = file_name
-            console.log("open move modal for file: " + file_name)
+            const file_name = move_button ? move_button.getAttribute('d-name') : null
+            move_targets = file_name ? [file_name] : getSelectedFiles()
+            if(move_targets.length === 0){
+                m_file_name_p.innerHTML = 'No files selected'
+                return
+            }
+            if(move_targets.length === 1){
+                m_file_name_p.innerHTML = move_targets[0]
+            }else{
+                m_file_name_p.innerHTML = `${move_targets.length} files`
+            }
+            console.log("open move modal for files: " + JSON.stringify(move_targets))
         })
 
         $('#tree').treeview({//create tree
@@ -307,10 +437,17 @@ block content
         })
         //$('#tree').treeview('collapseAll', { silent: true });
         $('#tree').on('nodeSelected', function(event, data) { //enable confirm button if dest selected
-            //$('#conf_btn').attr('disabled',  'disabled')
-            //$('#conf_btn').attr('disabled',false)
-            //$('#conf_btn').prop('disabled',false)
-            console.log("set disable false" + JSON.stringify($('#confirm_btn').prop('disabled',false)))
+            selected_destination = data.text  // Save selected folder name
+            selected_destination_path = data.path  // Save path
+            $('#confirm_btn').prop('disabled', false)
+            console.log("Destination folder selected: " + data.text + " path: " + data.path)
+        });
+
+        $('#tree').on('nodeUnselected', function(event, data) {
+            selected_destination = null
+            selected_destination_path = null
+            $('#confirm_btn').prop('disabled', true)
+            console.log("Destination cleared")
         });
 
 
@@ -336,14 +473,19 @@ block content
         }
         
         function fetch_move(){
-            let folder_name = $('.node-selected').text()
-            let new_path_val = searchTree(!{JSON.stringify(dDirs)}, "nodes", "text", folder_name).path
-            let file_name = m_file_name_p.innerHTML
-            console.log("fetch move: " + file_name + "  to  " + new_path_val) 
+            if(!selected_destination || !selected_destination_path){
+                alert('Please select destination folder')
+                return
+            }
+            let new_path_val = selected_destination_path
+            if(move_targets.length === 0){
+                alert('No files selected')
+                return
+            }
+            console.log("fetch move: " + JSON.stringify(move_targets) + "  to  " + new_path_val) 
             var data = {
-                file_name: file_name,
+                file_names: move_targets,
                 new_path_val: new_path_val
-
             }
 
             const move_rename = '@move'
@@ -351,7 +493,7 @@ block content
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             }).then((res) => {
@@ -407,24 +549,32 @@ block content
 
         delete_mm.addEventListener('show.bs.modal', function (event) {
             var del_button = event.relatedTarget
-            
-            const file_name = del_button.getAttribute('d-name')
-            file_name_p.innerHTML = file_name
-            console.log("open delete modal for file: " + file_name)
+
+            const file_name = del_button ? del_button.getAttribute('d-name') : null
+            delete_targets = file_name ? [file_name] : getSelectedFiles()
+            if(delete_targets.length === 0){
+                file_name_p.innerHTML = 'No files selected'
+                return
+            }
+            if(delete_targets.length === 1){
+                file_name_p.innerHTML = delete_targets[0]
+            }else{
+                file_name_p.innerHTML = `${delete_targets.length} files`
+            }
+            console.log("open delete modal for files: " + JSON.stringify(delete_targets))
         })
 
         function fetch_delete(){
-            const del_name_val = file_name_p.innerHTML
-            console.log("fetch delete file: " + del_name_val) 
+            console.log("fetch delete files: " + JSON.stringify(delete_targets)) 
             var data = {
-                del_name_val: del_name_val
+                del_names_val: delete_targets
             }
             const path_rename = '@delete'
             fetch(path_rename, {
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             }).then((res) => {
@@ -435,6 +585,108 @@ block content
                 })
         }
 
+        function getCurrentFolderPath(){
+            let pathname = window.location.pathname
+            if (!pathname.endsWith('/')) pathname += '/'
+            return pathname
+        }
+
+        function getRelativeFilePath(file_name){
+            const currentFolder = getCurrentFolderPath().replace(/^\/data\/?/, '')
+            return currentFolder ? `${currentFolder}${file_name}` : file_name
+        }
+
+        function fileUrl(file_name){
+            return getCurrentFolderPath() + encodeURIComponent(file_name)
+        }
+
+        function openPreviewModal(file_name, file_type){
+            const title = document.getElementById('previewModalTitle')
+            const body = document.getElementById('previewBody')
+            title.textContent = `Preview: ${file_name}`
+            body.innerHTML = ''
+            const url = fileUrl(file_name)
+            if (file_type === 'pic') {
+                body.innerHTML = `<img src="${url}" class="img-fluid" style="max-height:70vh; width:auto;" />`
+            } else if (file_type === 'video') {
+                body.innerHTML = `<video controls class="w-100" style="max-height:70vh;"><source src="${url}"></video>`
+            } else if (file_type === 'sound') {
+                body.innerHTML = `<audio controls class="w-100"><source src="${url}"></audio>`
+            } else if (file_type === 'script' || file_type === 'json') {
+                body.innerHTML = `<div class="mb-2">Text preview</div><pre id="previewText" class="p-2 bg-light border rounded" style="max-height:65vh; overflow:auto; white-space: pre-wrap; word-break: break-word"></pre>`
+                fetch(url)
+                    .then((res) => res.text())
+                    .then((text) => {
+                        document.getElementById('previewText').textContent = text
+                    })
+                    .catch((err) => {
+                        document.getElementById('previewText').textContent = 'Error loading preview: ' + err
+                    })
+            } else {
+                body.innerHTML = `<p>No preview available for this file type.</p>`
+            }
+            if (window.modalManager) {
+                modalManager.show('previewModal')
+            } else {
+                $('#previewModal').modal('show')
+            }
+        }
+
+        function openEditModal(file_name){
+            editFileName = file_name
+            const title = document.querySelector('#editModal .modal-title')
+            const textarea = document.getElementById('edit_file_content')
+            title.textContent = `Edit: ${file_name}`
+            textarea.value = ''
+            fetch(fileUrl(file_name))
+                .then((res) => res.text())
+                .then((text) => {
+                    textarea.value = text
+                })
+                .catch((err) => {
+                    textarea.value = 'Error loading file: ' + err
+                })
+            if (window.modalManager) {
+                modalManager.show('editModal')
+            } else {
+                $('#editModal').modal('show')
+            }
+        }
+
+        function getEditPath(file_name){
+            const currentFolder = getCurrentFolderPath().replace(/\/data\/?/, '')
+            const encodedName = encodeURIComponent(file_name)
+            return `/data/${currentFolder}${encodedName}@edit`
+        }
+
+        async function saveEditFile(){
+            const textarea = document.getElementById('edit_file_content')
+            const content = textarea.value
+            const editPath = getEditPath(editFileName)
+            try {
+                const res = await fetch(editPath, {
+                    method: 'POST',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ content })
+                })
+                if (!res.ok) {
+                    const err = await res.text()
+                    alert('Save failed: ' + err)
+                    return
+                }
+                if (window.modalManager) {
+                    modalManager.hide('editModal')
+                } else {
+                    $('#editModal').modal('hide')
+                }
+                window.location.reload()
+            } catch (e) {
+                alert('Save failed: ' + e)
+            }
+        }
 
 
 

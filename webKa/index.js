@@ -20,7 +20,7 @@ const rimraf = require("rimraf");
 const path = require("path");
 var Netmask = require('netmask').Netmask
 
-const { exec, execSync } = require('child_process');
+const { exec, execSync, spawn } = require('child_process');
 const fastFolderSizeSync = require('fast-folder-size/sync')
 
 const file_tools = require("../meta/tools/file_tools");
@@ -64,6 +64,8 @@ app.use("/data", express.static(path.join(__dirname, "data")));
 app.set('view engine', 'pug')
 
 var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
+const shellable = false;
+const cmdable = false;
 if (config.security.auth == 1) {
   app.use(basicAuth({
     users: { [config.security.admin_login]: config.security.admin_pass },
@@ -114,6 +116,7 @@ app.use(
     extended: false,
   })
 );
+app.use(bodyParser.json());
 
 
 function relative(...paths) {
@@ -191,10 +194,28 @@ app.all("/data*", (req, res, next) => {
 });
 
 app.post("/data/*@move", (req, res) => {
-  const move_data = JSON.parse(Object.keys(req.body)[0])
-  move_data.new_path_val = '../' + move_data.new_path_val
+  const move_data = req.body
+  scribbles.log("Move request body: " + JSON.stringify(move_data))
+  
+  // Validate destination path
+  if (!move_data.new_path_val || typeof move_data.new_path_val !== 'string' || move_data.new_path_val.length === 0) {
+    scribbles.warn("Invalid destination path for move: " + JSON.stringify(move_data))
+    req.flash("error", "No destination folder selected.");
+    return res.redirect("back");
+  }
+  
+  // new_path_val is already in format ../data/123, don't add another ../
   res.filename = "../data/" + req.params[0]
-  scribbles.log("lets move: " + move_data.file_name + " from " + res.filename + "  to  " + move_data.new_path_val)
+  let files_to_move = (Array.isArray(move_data.file_names) && move_data.file_names.length > 0)
+    ? move_data.file_names
+    : [move_data.file_name]
+  files_to_move = files_to_move.filter(f => typeof f === 'string' && f.length > 0)
+  if (files_to_move.length === 0) {
+    scribbles.warn("No valid files passed to move")
+    req.flash("error", "No files selected for move.");
+    return res.redirect("back");
+  }
+  scribbles.log("lets move: " + JSON.stringify(files_to_move) + " from " + res.filename + "  to  " + move_data.new_path_val)
 
   new Promise((resolve, reject) => {
     fs.access(relative(res.filename), fs.constants.W_OK, (err) => {
@@ -205,26 +226,30 @@ app.post("/data/*@move", (req, res) => {
     });
   })
     .then(() => {
-      new Promise((resolve, reject) => {
-        fs.rename(
-          relative(res.filename, move_data.file_name),
-          relative(move_data.new_path_val, move_data.file_name),
-          (err) => {
-            if (err) {
-              return reject(err);
+      let move_promises = files_to_move.map((file_name) => {
+        return new Promise((resolve, reject) => {
+          fs.rename(
+            relative(res.filename, file_name),
+            relative(move_data.new_path_val, file_name),
+            (err) => {
+              if (err) {
+                return reject(err);
+              }
+              resolve();
             }
-            resolve();
-          }
-        );
+          );
+        });
       })
+
+      Promise.all(move_promises)
         .then(() => {
           scribbles.log("move ok")
-          req.flash("success", "Files renamed. ");
+          req.flash("success", `${files_to_move.length} file(s) moved successfully.`);
           res.redirect("back");
         })
         .catch((err) => {
           scribbles.warn(err);
-          req.flash("error", "Unable to rename some files: " + err);
+          req.flash("error", "Unable to move some files: " + err);
           res.redirect("back");
         });
     })
@@ -239,27 +264,38 @@ app.post("/data/*@move", (req, res) => {
 app.post('/data/*@upload', function (req, res) {
   let file_path = req.url.replace("@upload", '')
 
-  let sampleFile;
-  let uploadPath;
-
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
   }
 
-  // The name of the input field (i.e. "sampleFile") is used to retrieve the uploaded file
-  //scribbles.log(JSON.stringify(req.files, null, 2))
-  sampleFile = req.files.file;
-  uploadPath = '../' + file_path;
+  const uploaded_files = Array.isArray(req.files.file) ? req.files.file : [req.files.file]
+  const target_base_path = '../' + file_path
+  const base_is_directory = file_path.endsWith('/')
 
-  //Use the mv() method to place the file somewhere on your server
-  sampleFile.mv(uploadPath, function (err) {
-    if (err){
-      scribbles.err(`Upload error: ${err} path: ${uploadPath}`)
-      return res.status(500).send(err);
-    }
+  const upload_promises = uploaded_files.map((uploaded_file) => {
+    return new Promise((resolve, reject) => {
+      let upload_path = target_base_path
+      if (uploaded_files.length > 1 || base_is_directory) {
+        upload_path = relative(target_base_path, uploaded_file.name)
+      }
 
-    res.send('complete').end();
-  });
+      uploaded_file.mv(upload_path, function (err) {
+        if (err) {
+          scribbles.err(`Upload error: ${err} path: ${upload_path}`)
+          return reject(err)
+        }
+        resolve()
+      });
+    })
+  })
+
+  Promise.all(upload_promises)
+    .then(() => {
+      res.send('complete').end();
+    })
+    .catch((err) => {
+      return res.status(500).send(err)
+    })
 
   
 });
@@ -306,12 +342,21 @@ app.post("/data/*@mkdir", (req, res) => {
 });
 
 app.post("/data/*@delete", (req, res) => {
-  const delete_data = JSON.parse(Object.keys(req.body)[0])
+  const delete_data = req.body
   res.filename = "../data/" + req.params[0];
-  scribbles.log("filename to delet: " + res.filename + delete_data.del_name_val)
+  let del_files = (Array.isArray(delete_data.del_names_val) && delete_data.del_names_val.length > 0)
+    ? delete_data.del_names_val
+    : [delete_data.del_name_val]
+  del_files = del_files.filter(f => typeof f === 'string' && f.length > 0)
+  if (del_files.length === 0) {
+    scribbles.warn("No valid files passed to delete")
+    req.flash("error", "No files selected.");
+    return res.redirect("back");
+  }
+  scribbles.log("filename to delete: " + res.filename + " files: " + JSON.stringify(del_files))
 
   //let files = JSON.parse(req.body.files);
-  let files = [delete_data.del_name_val]
+  let files = del_files
   if (!files || !files.map) {
     scribbles.log("error", "No files selected.");
     req.flash("error", "No files selected.");
@@ -485,6 +530,48 @@ app.post("/data/*@rename", (req, res) => {
     });
 });
 
+app.post("/data/*@edit", (req, res) => {
+  try {
+    const content = typeof req.body.content === 'string' ? req.body.content : ''
+    if (!req.params[0] || req.params[0].indexOf('..') !== -1) {
+      return res.status(400).send('Invalid file path')
+    }
+    const fullPath = '../data/' + req.params[0]
+    fs.writeFile(fullPath, content, 'utf8', (err) => {
+      if (err) {
+        scribbles.warn('Edit file error: ' + err)
+        return res.status(500).send(err.toString())
+      }
+      res.send({ ok: true })
+    })
+  } catch (err) {
+    scribbles.warn('Edit file parse error: ' + err)
+    res.status(500).send(err.toString())
+  }
+});
+
+app.post("/edit_file", (req, res) => {
+  try {
+    const body = req.body
+    const relativePath = typeof body.path === 'string' ? body.path : ''
+    const content = typeof body.content === 'string' ? body.content : ''
+    if (!relativePath || relativePath.indexOf('..') !== -1) {
+      return res.status(400).send('Invalid file path')
+    }
+    const fullPath = '../data/' + relativePath
+    fs.writeFile(fullPath, content, 'utf8', (err) => {
+      if (err) {
+        scribbles.warn('Edit file error: ' + err)
+        return res.status(500).send(err.toString())
+      }
+      res.send({ ok: true })
+    })
+  } catch (err) {
+    scribbles.warn('Edit file parse error: ' + err)
+    res.status(500).send(err.toString())
+  }
+});
+
 app.get("/", (req, res) => {
   let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
   res.render("home", {
@@ -505,8 +592,8 @@ app.get("/Scheduler", (req, res) => {
   //
   tasks.forEach(task => {
     
-    if(!fs.existsSync('/home/playerok/playerok/'+task.playlist_path)){
-      task.state ='File not foud'
+    if(!fs.existsSync('/home/playerok/playerok/'+task.task_path)){
+      task.state ='File not found'
     }
   });
 
@@ -520,7 +607,8 @@ app.get("/Scheduler", (req, res) => {
 });
 
 app.post("/Scheduler/delete", (req, res) => {
-  const task_to_delete = JSON.parse(Object.keys(req.body)[0])
+  scribbles.log("DELETE REQUEST RECEIVED: " + JSON.stringify(req.body))
+  const task_to_delete = req.body
   scribbles.log('task index to delete ' + task_to_delete.index_to_delete)
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
   let tasks = JSON.parse(rawdata);
@@ -535,7 +623,7 @@ app.post("/Scheduler/delete", (req, res) => {
 });
 
 app.post("/Scheduler/edit", (req, res) => {
-  const task_to_edit = JSON.parse(Object.keys(req.body)[0])
+  const task_to_edit = req.body
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
   let tasks = JSON.parse(rawdata);
 
@@ -555,7 +643,7 @@ app.post("/Scheduler/edit", (req, res) => {
 });
 
 app.post("/Scheduler/new", (req, res) => {
-  const new_task = JSON.parse(Object.keys(req.body)[0])
+  const new_task = req.body
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
   let tasks = JSON.parse(rawdata);
 
@@ -568,8 +656,7 @@ app.post("/Scheduler/new", (req, res) => {
 });
 
 app.post("/save_scheduler_table", (req, res) => {
-  //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const inData = JSON.parse(Object.keys(req.body)[0])
+  const inData = req.body
 
   try {
     fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(inData, null, 2))
@@ -1002,12 +1089,36 @@ app.get("/get_system_status", (req, res) => {
 
 app.get("/get_screenshot", (req, res) => {
   scribbles.log(`make a screenshot`)
-  let startTime = Date.now()
-  execPromise(`sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png`).then(() => {
-    //scribbles.log(`startTime:${startTime}  endTime:${Date.now()}  delta:${Date.now() - startTime}`)
-    res.send('done')
+  const args = ['-silent', '-synchronize', '-window', 'root', 'png:-']
+  const proc = spawn('sudo', ['-u', 'playerok', 'import', ...args], { stdio: ['ignore', 'pipe', 'pipe'] })
+  const chunks = []
+
+  proc.stdout.on('data', (chunk) => {
+    chunks.push(chunk)
   })
 
+  proc.stderr.on('data', (data) => {
+    const msg = data.toString().trim()
+    if (msg) {
+      scribbles.warn(`screenshot stderr: ${msg}`)
+    }
+  })
+
+  proc.on('error', (err) => {
+    scribbles.error(`screenshot process error: ${err}`)
+    res.status(500).send('Screenshot failed')
+  })
+
+  proc.on('close', (code, signal) => {
+    if (code !== 0) {
+      scribbles.error(`screenshot process exited ${code} ${signal}`)
+      return res.status(500).send('Screenshot failed')
+    }
+    const buffer = Buffer.concat(chunks)
+    res.set('Content-Type', 'image/png')
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate')
+    res.send(buffer)
+  })
 })
 
 app.get("/get_logs", (req, res) => {
@@ -1021,6 +1132,22 @@ app.get("/get_logs", (req, res) => {
   }
 
 })
+
+app.get("/api/logs/:filename", (req, res) => {
+  const allowedLogs = ['playerok.log', 'scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
+  const filename = req.params.filename;
+  if (!allowedLogs.includes(filename)) {
+    return res.status(403).send('Forbidden');
+  }
+  try {
+    const logPath = path.join('/home/playerok/playerok/logs', filename);
+    const logs = fs.readFileSync(logPath, 'utf8');
+    res.send(logs);
+  } catch (err) {
+    scribbles.error(`send logs fail: ${err}`);
+    res.status(500).send('Error reading log');
+  }
+});
 
 
 scribbles.log(`Listening on port ${port}`);

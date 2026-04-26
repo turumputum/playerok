@@ -109,44 +109,59 @@ script.
     //- }
 
 
-    //____________OPEN MODAL_____________
-    $("#editTaskModal_2").on('show.bs.modal', function (event) {
-        //let button = event.relatedTarget
-        //edit_task_index = button.getAttribute('d-index')
-        trigger_topic_table.data_array = scheduler_table[edit_task_index-1].trigger_topics
-        //action_topic_table.data_array = scheduler_table[edit_task_index-1].actions
+    //____________MODAL MANAGER SETUP_____________
+    // Register modal with event handlers (one-time setup)
+    document.addEventListener('DOMContentLoaded', function() {
+        if (window.modalManager && document.getElementById('editTaskModal_2')) {
+            modalManager.registerModal('editTaskModal_2', {
+                onShow: function(event) {
+                    // Populate modal with task data
+                    if (typeof edit_task_index !== 'undefined' && edit_task_index > 0) {
+                        populateEditTaskModal();
+                    }
+                },
+                onCleanup: function(event) {
+                    // Clear data after modal closes
+                    trigger_topic_table.data_array = [];
+                }
+            });
+        }
+    });
 
-        getTopicList()
+    function populateEditTaskModal() {
+        trigger_topic_table.data_array = scheduler_table[edit_task_index-1].trigger_topics;
 
-        $("#task_name_input").val(scheduler_table[edit_task_index-1].task_name)
+        getTopicList();
 
+        $("#task_name_input").val(scheduler_table[edit_task_index-1].task_name);
+
+        // Clear and repopulate select (fixed: clear options first!)
+        modalManager.clearSelectOptions('name_input');
+        
         playlist_table.forEach(item=>{
-            $("#name_input").append($('<option>',{
-                value: item.name,
-                text : item.name
-            }))
-        })
+            const option = document.createElement('option');
+            option.value = item.name;
+            option.textContent = item.name;
+            document.getElementById('name_input').appendChild(option);
+        });
 
-        const current_playlist = playlist_table.find(x => x.path === scheduler_table[edit_task_index-1].task_path)
-        console.log(`current_playlist:${current_playlist} edit task index:${edit_task_index}`)
-        if(current_playlist!= undefined){
-            $("#name_input").val(current_playlist.name)
-            //- $("#path_input").val(scheduler_table[edit_task_index-1].task_path) 
-            //- $("#type_input").val(scheduler_table[edit_task_index-1].type)
-            $("#path_input").val(scheduler_table[edit_task_index-1].task_path) 
-            $("#type_input").val(scheduler_table[edit_task_index-1].type)
-        }else{
-            console.log(`new task!!!`)
-            $("#name_input").val(playlist_table[0].name)
-            $("#path_input").val(playlist_table[0].path)
-            $("#type_input").val(playlist_table[0].type)
+        const current_playlist = playlist_table.find(x => x.path === scheduler_table[edit_task_index-1].task_path);
+        console.log(`current_playlist:${current_playlist} edit task index:${edit_task_index}`);
+        
+        if(current_playlist != undefined){
+            $("#name_input").val(current_playlist.name);
+            $("#path_input").val(scheduler_table[edit_task_index-1].task_path); 
+            $("#type_input").val(scheduler_table[edit_task_index-1].type);
+        } else {
+            console.log(`new task!!!`);
+            $("#name_input").val(playlist_table[0].name);
+            $("#path_input").val(playlist_table[0].path);
+            $("#type_input").val(playlist_table[0].type);
         }
 
-        //console.log(`table length:${scheduler_table.length}, index:${edit_task_index}`)
-
-        if(scheduler_table.length>=edit_task_index){
-           scheduler_table[edit_task_index-1].trigger_type= 'schedule'
-        }
+          if(!scheduler_table[edit_task_index-1].trigger_type){
+              scheduler_table[edit_task_index-1].trigger_type = 'schedule';
+          }
         
 
         if(scheduler_table[edit_task_index-1].trigger_type == 'schedule'){
@@ -156,7 +171,7 @@ script.
         }
 
         //topic_table_show(action_topic_table, ['start', 'stop'], 'action_topics_list', 'A')
-    })
+    }
 
     function topic_table_show(table, event_array, available_topic_list, identify){
 
@@ -303,7 +318,7 @@ script.
             method: 'POST',
             headers: {
             'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded'
+            'Content-Type': 'application/json'
             },
             body: JSON.stringify(scheduler_table)
         }).then((res) => {

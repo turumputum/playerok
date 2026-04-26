@@ -13,20 +13,46 @@ block content
         .card.text-center.mt-4.card_shadow
             .card-header
                 ul#myNavTabs.nav.nav-tabs.card-header-tabs
-                    //li#screenshotTab.nav-item
-                    li
-                        a#screenshotTab_bt.nav-link.active(aria-current='true' data-toggle="tab") Screenshot
-                    //li#logTab.nav-item
-                    li
-                        a#logTab_bt.nav-link(data-toggle="tab") Log
-                    //li.nav-item
-                    button#refresh_btn.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh 
-                        span#refresh_spn.spinner-border.spinner-border-sm(role='status' aria-hidden='true') 
+                    li.nav-item
+                        a#screenshotTab_bt.nav-link.active(aria-current='true' data-toggle="tab" href="#screenshot") Screenshot
+                    li.nav-item
+                        a#logTab_bt.nav-link(data-toggle="tab" href="#logs") Log
+                    button#refresh_btn.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh
 
             .card-body
-                img#screenshot.card-img-top(src='meta/screen_shot.png' href=src style = "object-fit: contain;")
-                //iframe(aria-hidden='true')
-                iframe#log_box(src='logs/playerok.log' width="100%" height="500" )
+                #screenshot.tab-pane.fade.show.active
+                    img#screenshot.card-img-top(src='/get_screenshot' href=src style = "object-fit: contain;")
+                #logs.tab-pane.fade
+                    ul.nav.nav-tabs
+                        li.nav-item
+                            a.nav-link.active(data-toggle="tab" href="#scheduler-log") Scheduler
+                        li.nav-item
+                            a.nav-link(data-toggle="tab" href="#webka-log") WebKa
+                        li.nav-item
+                            a.nav-link(data-toggle="tab" href="#player-log") Player
+                        li.nav-item
+                            a.nav-link(data-toggle="tab" href="#supervisor-log") Supervisor
+                        li.nav-item
+                            a.nav-link(data-toggle="tab" href="#screen-sound-log") Screen Sound
+                        li.nav-item
+                            a.nav-link(data-toggle="tab" href="#usb-storage-log") USB Storage
+                        li.nav-item
+                            a.nav-link(data-toggle="tab" href="#uart2mqtt-log") UART2MQTT
+                    .tab-content.mt-3
+                        #scheduler-log.tab-pane.fade.show.active
+                            pre#scheduler-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                        #webka-log.tab-pane.fade
+                            pre#webka-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                        #player-log.tab-pane.fade
+                            pre#player-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                        #supervisor-log.tab-pane.fade
+                            pre#supervisor-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                        #screen-sound-log.tab-pane.fade
+                            pre#screen-sound-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                        #usb-storage-log.tab-pane.fade
+                            pre#usb-storage-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                        #uart2mqtt-log.tab-pane.fade
+                            pre#uart2mqtt-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
                 
 
     //script(src="assets/home.js")
@@ -36,41 +62,46 @@ block content
         //var screenshotTab = new bootstrap.Tab(document.querySelector('#screenshotTab'))
         //var logTab = new bootstrap.Tab(document.querySelector('#logTab'))
 
+        let logInterval;
+
         function image_update(){
             console.log( "show screenshot!" );
-            $("#log_box").hide()
+            $("#logs").hide()
             $("#screenshot").show()
-            $("#refresh_spn").show()
-            
-            fetch('/get_screenshot', {
-                method: 'GET',
-                headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
-                },
-            }).then((res) => {
-                console.log("Get screenShot OK, res: ", res)
-                $("#screenshot").attr('src','meta/screen_shot.png'+ '?' + Math.random());
-                $("#refresh_spn").hide();
-            })
+            if (logInterval) {
+                clearInterval(logInterval);
+                logInterval = null;
+            }
+            $("#screenshot").attr('src','/get_screenshot?rand=' + Math.random())
+        }
+
+        function load_logs() {
+            const logFiles = ['scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
+            const logIds = ['scheduler-log-content', 'webka-log-content', 'player-log-content', 'supervisor-log-content', 'screen-sound-log-content', 'usb-storage-log-content', 'uart2mqtt-log-content'];
+            logFiles.forEach((file, index) => {
+                fetch(`/api/logs/${file}`)
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n');
+                    const reversedLines = lines.reverse();
+                    $(`#${logIds[index]}`).html(reversedLines.join('\n'));
+                })
+                .catch(err => console.error(`Error loading ${file}:`, err));
+            });
         }
 
         function show_log(){
             console.log( "show logs!" );
             $("#screenshot").hide()
-            //$("#log_box").attr("aria-hidden","false")
-            $("#log_box").show()
+            $("#logs").show()
             $("#refresh_spn").show();
-
-            $("#log_box").attr("src", "logs/playerok.log")
+            load_logs();
             $("#refresh_spn").hide();
+            if (!logInterval) {
+                logInterval = setInterval(load_logs, 2000);
+            }
         }
     
-
-        $( document ).ready(function() {
-            console.log( "ready!" );
-            image_update()
-        });
 
         $("#myNavTabs a").click(function (evt) {
             evt.preventDefault();
@@ -88,12 +119,15 @@ block content
             image_update()
         });
 
+        // Handle inner log tabs
+        $("#logs .nav-tabs a").click(function (evt) {
+            evt.preventDefault();
+            $(this).tab('show');
+        });
+
         $("#refresh_btn").click(function() {
             if(activeTab == 'screenshot'){
                 image_update()
-                }
-            if(activeTab == 'log'){
-                show_log()
             }
         });
         

@@ -1,0 +1,63 @@
+{
+  "playlist_name": "bur",
+  "version": "1.0",
+  "actions": [],
+  "controls": [],
+  "tracks": [
+    {
+      "order_num": 1,
+      "name": "new_track",
+      "path": "data/content/bur_loop.mp4",
+      "content_group": "video",
+      "type": "simple",
+      "error": "",
+      "repeat": false,
+      "triggers": [],
+      "actions": [],
+      "network_audio": {
+        "video_start_delay_us": 0,
+        "streams": []
+      }
+    },
+    {
+      "order_num": 2,
+      "name": "new_track",
+      "path": "data/content/bur_mv.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "mbGlassPanBt/button_2",
+          "payload": "1"
+        }
+      ],
+      "actions": [],
+      "network_audio": {
+        "video_start_delay_us": 300,
+        "streams": [
+          {
+            "name": "bur_eng",
+            "audio_path": "data/content/bur_eng.mp3",
+            "codec": "pcm",
+            "multicast_host": "239.0.7.10",
+            "port": 7777,
+            "enabled": true,
+            "multicast_iface": "eth0"
+          },
+          {
+            "name": "bur_rus",
+            "audio_path": "data/content/bur_rus.mp3",
+            "codec": "pcm",
+            "multicast_host": "239.0.7.11",
+            "port": 7777,
+            "enabled": true,
+            "multicast_iface": "eth0"
+          }
+        ]
+      }
+    }
+  ]
+}

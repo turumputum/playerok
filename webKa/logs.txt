@@ -1,0 +1,61 @@
+2026-04-23T17:06:03.675 [index.js] <log> Listening on port 80
+2026-04-23T17:19:48.162 [index.js] <log> filename to delete: ../data/ files: ["actuatorGate","toilet"]
+2026-04-23T17:19:48.177 [index.js] <log> success
+2026-04-23T17:19:58.671 [index.js] <log> filename to delete: ../data/content/ files: ["00.mp4","01.mp4","02.mp4","03.mp4","IMG_3778.JPG","IMG_3786.JPG"]
+2026-04-23T17:19:58.761 [index.js] <log> success
+2026-04-23T17:20:48.350 [index.js] <log> Delete name: playlist on index: 4
+2026-04-23T17:20:48.355 [index.js] <log> Delete PLAYLIST: {
+  "index_to_delete": "4",
+  "name_to_delete": "playlist"
+} path: ../data/playlists/playlist.json
+2026-04-23T17:20:48.360 [index.js] <log> Deleted OK
+2026-04-23T17:20:53.727 [index.js] <log> Add new playlist name: bur
+2026-04-23T17:22:48.829 [index.js] <log> rename playlist name OK
+2026-04-23T17:22:52.266 [index.js] <log> DELETE REQUEST RECEIVED: {"index_to_delete":0,"name_to_delete":"new_task_1"}
+2026-04-23T17:22:52.269 [index.js] <log> task index to delete 0
+2026-04-23T17:23:06.003 [index.js] <log> scheduler-table save OK
+2026-04-23T17:23:08.843 [index.js] <log> make a screenshot
+2026-04-23T17:23:08.906 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T17:23:13.636 [index.js] <log> make a screenshot
+2026-04-23T17:23:13.673 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T17:23:16.068 [index.js] <log> make a screenshot
+2026-04-23T17:23:16.103 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T17:23:17.432 [index.js] <log> make a screenshot
+2026-04-23T17:23:17.476 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T17:23:31.118 [index.js] <log> Config save OK
+2026-04-23T17:38:49.101 [index.js] <log> rename playlist name OK
+2026-04-23T17:38:51.175 [index.js] <log> make a screenshot
+2026-04-23T17:39:11.563 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+sudo: unable to resolve host plw: Name or service not known
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T18:40:10.066 [index.js] <log> rename playlist name OK
+2026-04-23T18:40:15.775 [index.js] <log> make a screenshot
+2026-04-23T18:40:30.988 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+sudo: unable to resolve host plw: Temporary failure in name resolution
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T18:57:45.560 [index.js] <log> make a screenshot
+2026-04-23T18:57:48.591 [index.js] <log> make a screenshot
+2026-04-23T18:57:51.198 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+sudo: unable to resolve host plw: Name or service not known
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T18:57:58.792 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+sudo: unable to resolve host plw: Temporary failure in name resolution
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T19:04:15.500 [index.js] <log> make a screenshot
+2026-04-23T19:04:25.697 [index.js] <warn> Command failed: sudo -u playerok import -synchronize -window root /home/playerok/playerok/meta/screen_shot.png
+sudo: unable to resolve host plw: Name or service not known
+import-im6.q16: unable to open X server `' @ error/import.c/ImportImageCommand/346.
+
+2026-04-23T19:04:30.694 [index.js] <log> time to reboot

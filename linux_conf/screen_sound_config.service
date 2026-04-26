@@ -12,8 +12,8 @@ User=playerok
 Type=simple
 WorkingDirectory = /home/playerok/playerok/supervisor/
 ExecStart=node /home/playerok/playerok/supervisor/daemon_screen_sound_config.js
-StandardOutput=append:/home/playerok/playerok/logs/playerok.log
-StandardInput=tty-force
+StandardOutput=append:/home/playerok/playerok/logs/screen_sound_config.log
+StandardError=append:/home/playerok/playerok/logs/screen_sound_config.log
 Restart=on-failure
 
 [Install]

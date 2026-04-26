@@ -7,66 +7,98 @@
                     .input-group
                         span.input-group-text.fs-5.fw-bold Track name:
                         input#track_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
+                    .card.mt-4
+                        .card-header.text-center
+                            ul#trackTabs.nav.nav-tabs.card-header-tabs
+                                li
+                                    button#track_main_tab.nav-link.active(aria-current='true' data-toggle="tab") Main settings
+                                li
+                                    button#track_interactive_tab.nav-link(data-toggle="tab") Interactive settings
+                                li
+                                    button#track_network_tab.nav-link(data-toggle="tab") Network audio streams
                     //-------------------CARD Main settings-----------------------------
-                    card.card.card_shadow.mt-4
-                        .bg-secondary.card-img-top
-                            .h4.mx-2.mt-2 Main settings
-                        .card_body.p-2
-                            table#editSipmpleTrack.table.table-hover
-                                thead
-                                    tr  
-                                        th(scope='col' style='width:8%') Order
-                                        th(scope='col' style='width:10%') Type
-                                        th(scope='col' style='width:25%') File name
-                                        th(scope='col' ) Path
-                                        th(scope='col' style='width:5%') Repeat
-                                tbody
-                                    tr
-                                        th 
-                                            input#order_input.form-control(type='number' placeholder='' aria-label='')
-                                        th
-                                            select#type_select.form-select
-                                        th
-                                            select#name_select.form-select
-                                        th
-                                            input#path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
-                                        th 
-                                            input#bt_repeat.btn-check(type='checkbox' checked='' autocomplete='off')
-                                            label.btn.bi.bi-arrow-repeat.btn-outline-secondary.mb-2.mx-1(for='bt_repeat' style="--bs-btn-font-size: 15px; width: 60px;") 
-
-
-
-                            card.card.mt-4 
-                                .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                    .h5.mx-2.mt-2 Actions
-                                table.table#table_actions_topics.table-hover
-                                    datalist#action_topics_list
+                    #track_main_settings_tab
+                        card.card.card_shadow.mt-4
+                            .bg-secondary.card-img-top
+                                .h4.mx-2.mt-2 Main settings
+                            .card_body.p-2
+                                table#editSipmpleTrack.table.table-hover
                                     thead
-                                        tr
-                                            th(scope='col' style="width: 15%;") Event
-                                            th(scope='col') Topic
-                                            th(scope='col' style="width: 15%;") Payload
-                                            th(scope='col' style="width: 15%;") Controls
-
+                                        tr  
+                                            th(scope='col' style='width:8%') Order
+                                            th(scope='col' style='width:10%') Type
+                                            th(scope='col' style='width:25%') File name
+                                            th(scope='col' ) Path
+                                            th(scope='col' style='width:5%') Repeat
                                     tbody
+                                        tr
+                                            th 
+                                                input#order_input.form-control(type='number' placeholder='' aria-label='')
+                                            th
+                                                select#type_select.form-select
+                                            th
+                                                select#name_select.form-select
+                                            th
+                                                input#path_input.form-control(type='text' placeholder='' aria-label='' disabled='' readonly='')
+                                            th 
+                                                input#bt_repeat.btn-check(type='checkbox' checked='' autocomplete='off')
+                                                label.btn.bi.bi-arrow-repeat.btn-outline-secondary.mb-2.mx-1(for='bt_repeat' style="--bs-btn-font-size: 15px; width: 60px;") 
+
+
+
+                                card.card.mt-4 
+                                    .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                        .h5.mx-2.mt-2 Actions
+                                    table.table#table_actions_topics.table-hover
+                                        datalist#action_topics_list
+                                        thead
+                                            tr
+                                                th(scope='col' style="width: 15%;") Event
+                                                th(scope='col') Topic
+                                                th(scope='col' style="width: 15%;") Payload
+                                                th(scope='col' style="width: 15%;") Controls
+
+                                        tbody
                     //-------------------CARD Triggers and actions-----------------------------
-                    card.card.card_shadow.mt-4
-                        .bg-secondary.card-img-top
-                            .h4.mx-2.mt-2 Interactive settings
-                        .card_body.p-2
-                          
-                            card.card.h-100.mt-2
-                                .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                    .h5.mx-2.mt-2 Triggers
-                                table.table#table_triggers_topics.table-hover
-                                    datalist#trigger_topics_list
+                    #track_interactive_settings_tab(style='display: none;')
+                        card.card.card_shadow.mt-4
+                            .bg-secondary.card-img-top
+                                .h4.mx-2.mt-2 Interactive settings
+                            .card_body.p-2
+                              
+                                card.card.h-100.mt-2
+                                    .card-img-top(style='background-color: rgb(177, 177, 177);')
+                                        .h5.mx-2.mt-2 Triggers
+                                    table.table#table_triggers_topics.table-hover
+                                        datalist#trigger_topics_list
+                                        thead
+                                            tr
+                                                th(scope='col' style="width: 15%;") Event
+                                                th(scope='col') Topic
+                                                th(scope='col' style="width: 15%;") Payload
+                                                th(scope='col' style="width: 15%;") Controls
+
+                                        tbody
+
+                    #track_network_settings_tab(style='display: none;')
+                        card.card.card_shadow.mt-4
+                            .bg-secondary.card-img-top
+                                .h4.mx-2.mt-2 Network audio streams
+                            .card_body.p-2
+                                .input-group.mt-2
+                                    span.input-group-text Video delay (µs)
+                                    input#video_start_delay_us_input.form-control(type='number' min='0' step='1000' value='0')
+
+                                table.table#table_network_audio_streams.table-hover.mt-3
                                     thead
                                         tr
-                                            th(scope='col' style="width: 15%;") Event
-                                            th(scope='col') Topic
-                                            th(scope='col' style="width: 15%;") Payload
-                                            th(scope='col' style="width: 15%;") Controls
-
+                                            th(scope='col' style='width: 26%;') Audio track
+                                            th(scope='col' style='width: 10%;') Codec
+                                            th(scope='col' style='width: 20%;') Multicast host
+                                            th(scope='col' style='width: 9%;') Port
+                                            th(scope='col' style='width: 12%;') Interface
+                                            th(scope='col' style='width: 8%;') Enabled
+                                            th(scope='col' style='width: 15%;') Controls
                                     tbody
 
                             
@@ -88,13 +120,20 @@ script.
             error: "",
             repeat : $("#bt_repeat").prop('checked'),
             triggers:[],
-            actions:[]
+            actions:[],
+            network_audio: {
+                video_start_delay_us: 0,
+                streams: []
+            }
         }
 
         update_array_data(triggers_topic_table, 'T')
         track.triggers = triggers_topic_table.data_array
         update_array_data(actions_topic_table, 'A')
         track.actions = actions_topic_table.data_array
+        update_network_audio_array()
+        track.network_audio.video_start_delay_us = parseInt($('#video_start_delay_us_input').val()) || 0
+        track.network_audio.streams = network_audio_table.data_array
 
         if(track.triggers.length>0){
             track.type = 'interactive'  
@@ -132,14 +171,24 @@ script.
             }
         })
 
-        $('#editTrackModal').modal('hide')
-        $('#editPlaylistModal').modal('show')
+        if (window.modalManager) {
+            modalManager.hide('editTrackModal')
+            modalManager.show('editPlaylistModal', 200)
+        } else {
+            $('#editTrackModal').modal('hide')
+            $('#editPlaylistModal').modal('show')
+        }
         
     }
 
     function cancelEditTrack(){
-        $('#editTrackModal').modal('hide')
-        $('#editPlaylistModal').modal('show')
+        if (window.modalManager) {
+            modalManager.hide('editTrackModal')
+            modalManager.show('editPlaylistModal', 200)
+        } else {
+            $('#editTrackModal').modal('hide')
+            $('#editPlaylistModal').modal('show')
+        }
         
     }
 
@@ -152,12 +201,125 @@ script.
         DOM_table : document.getElementById('table_actions_topics').getElementsByTagName('tbody')[0],
         data_array : []
     }
+    var network_audio_table={
+        DOM_table : document.getElementById('table_network_audio_streams').getElementsByTagName('tbody')[0],
+        data_array : []
+    }
     var actionEventList = ["start", "stop"]
     var triggerEventList = ["start", "stop"]
 
     function show_interactive_card(){
 
         //console.log(current_playlist.tracks[current_track_index])
+    }
+
+    function show_track_main_tab(){
+        $('#track_main_tab').addClass('active')
+        $('#track_interactive_tab').removeClass('active')
+        $('#track_network_tab').removeClass('active')
+        $('#track_main_settings_tab').show()
+        $('#track_interactive_settings_tab').hide()
+        $('#track_network_settings_tab').hide()
+    }
+
+    function show_track_interactive_tab(){
+        $('#track_main_tab').removeClass('active')
+        $('#track_interactive_tab').addClass('active')
+        $('#track_network_tab').removeClass('active')
+        $('#track_main_settings_tab').hide()
+        $('#track_interactive_settings_tab').show()
+        $('#track_network_settings_tab').hide()
+    }
+
+    function show_track_network_tab(){
+        $('#track_main_tab').removeClass('active')
+        $('#track_interactive_tab').removeClass('active')
+        $('#track_network_tab').addClass('active')
+        $('#track_main_settings_tab').hide()
+        $('#track_interactive_settings_tab').hide()
+        $('#track_network_settings_tab').show()
+    }
+
+    function add_network_audio_stream(){
+        update_network_audio_array()
+        let audioTracks = get_available_audio_tracks()
+        let defaultTrack = audioTracks.length > 0 ? audioTracks[0] : { name: '', path: '' }
+        network_audio_table.data_array.push({
+            name: defaultTrack.name,
+            audio_path: defaultTrack.path,
+            codec: 'opus',
+            multicast_host: '239.0.7.1',
+            port: 7777,
+            multicast_iface: 'eth0',
+            enabled: true
+        })
+        network_audio_table_show()
+    }
+
+    function delete_network_audio_stream(index){
+        network_audio_table.data_array.splice(parseInt(index), 1)
+        network_audio_table_show()
+    }
+
+    function update_network_audio_array(){
+        let audioTracks = get_available_audio_tracks()
+        for (let row = 0; row < (network_audio_table.DOM_table.rows.length - 1); row++) {
+            network_audio_table.data_array[row].audio_path = $(`#NA_audio_path_${row}`).val()
+            let selectedAudio = audioTracks.find(item => item.path === network_audio_table.data_array[row].audio_path)
+            network_audio_table.data_array[row].name = selectedAudio ? selectedAudio.name : ''
+            network_audio_table.data_array[row].codec = $(`#NA_codec_${row}`).val()
+            network_audio_table.data_array[row].multicast_host = $(`#NA_host_${row}`).val()
+            network_audio_table.data_array[row].port = parseInt($(`#NA_port_${row}`).val()) || 0
+            network_audio_table.data_array[row].multicast_iface = $(`#NA_iface_${row}`).val()
+            network_audio_table.data_array[row].enabled = $(`#NA_enabled_${row}`).prop('checked')
+        }
+    }
+
+    function get_available_audio_tracks(){
+        if (!content_table || !content_table.sound || !Array.isArray(content_table.sound)) {
+            return []
+        }
+        return content_table.sound
+    }
+
+    function network_audio_table_show(){
+        let audioTracks = get_available_audio_tracks()
+        network_audio_table.DOM_table.innerHTML = ''
+        for (let index in network_audio_table.data_array) {
+            let stream = network_audio_table.data_array[index]
+            let selectedPath = stream.audio_path || ''
+            if (!selectedPath && stream.name) {
+                let audioByName = audioTracks.find(item => item.name === stream.name)
+                if (audioByName) {
+                    selectedPath = audioByName.path
+                }
+            }
+            let newRow = network_audio_table.DOM_table.insertRow(network_audio_table.DOM_table.rows.length)
+            newRow.insertCell().innerHTML = `<select id='NA_audio_path_${index}' class='form-select'></select>`
+            newRow.insertCell().innerHTML = `<select id='NA_codec_${index}' class='form-select'><option value='opus'>opus</option><option value='pcm'>pcm</option></select>`
+            newRow.insertCell().innerHTML = `<input id='NA_host_${index}' class='form-control' value='${stream.multicast_host || ''}'>`
+            newRow.insertCell().innerHTML = `<input id='NA_port_${index}' class='form-control' type='number' min='1' max='65535' value='${stream.port || 0}'>`
+            newRow.insertCell().innerHTML = `<select id='NA_iface_${index}' class='form-select'><option value='eth0'>eth0</option><option value='eth1'>eth1</option><option value='wlan0'>wlan0</option></select>`
+            newRow.insertCell().innerHTML = `<input id='NA_enabled_${index}' class='form-check-input' type='checkbox' ${stream.enabled !== false ? 'checked' : ''}>`
+            newRow.insertCell().innerHTML = `<button class='btn btn-outline-secondary btn-sm' type='button' onclick='delete_network_audio_stream(${index})'>delete</button>`
+
+            $(`#NA_audio_path_${index}`).append($('<option>', { value: '', text: '-- select audio --' }))
+            audioTracks.forEach(item => {
+                $(`#NA_audio_path_${index}`).append($('<option>', { value: item.path, text: item.name }))
+            })
+            $(`#NA_audio_path_${index}`).val(selectedPath)
+            $(`#NA_codec_${index}`).val(stream.codec || 'opus')
+            $(`#NA_iface_${index}`).val(stream.multicast_iface || 'eth0')
+        }
+
+        let addRow = network_audio_table.DOM_table.insertRow(network_audio_table.DOM_table.rows.length)
+        addRow.insertCell()
+        addRow.insertCell()
+        addRow.insertCell()
+        addRow.insertCell()
+        addRow.insertCell()
+        addRow.insertCell()
+        addRow.insertCell().innerHTML = `<button class='btn btn-outline-secondary btn-sm' type='button' onclick='add_network_audio_stream()'>add</button>`
     }
 
     function add_topic(identify){
@@ -236,6 +398,17 @@ script.
     editTrackModal.addEventListener('show.bs.modal', function (event) {
         //fetch_getTopicList()
         show_interactive_card()
+        show_track_main_tab()
+        $('#track_name_input').val('')
+        $('#order_input').val('')
+        $('#path_input').val('')
+        $('#video_start_delay_us_input').val(0)
+        $('#name_select').empty()
+        $('#type_select').empty()
+        $("#bt_repeat").prop('checked', false)
+        actions_topic_table.data_array = []
+        triggers_topic_table.data_array = []
+        network_audio_table.data_array = []
 
 
         $('#type_select').empty()
@@ -277,7 +450,11 @@ script.
             }
 
             actions_topic_table.data_array = current_playlist.tracks[current_track_index].actions
-            triggers_topic_table.data_array = current_playlist.tracks[current_track_index].triggers       
+            triggers_topic_table.data_array = current_playlist.tracks[current_track_index].triggers
+
+            let network_audio = current_playlist.tracks[current_track_index].network_audio || { video_start_delay_us: 0, streams: [] }
+            $('#video_start_delay_us_input').val(network_audio.video_start_delay_us || 0)
+            network_audio_table.data_array = JSON.parse(JSON.stringify(network_audio.streams || []))
         }else{
             //------------------------NEW TRACK-------------------------
             console.log("add new track")
@@ -294,8 +471,24 @@ script.
         }
 
         topic_table_show(actions_topic_table, actionEventList, 'action_topics_list', 'A')
-        topic_table_show(triggers_topic_table, triggerEventList, 'trigger_topics_list', 'T') 
+        topic_table_show(triggers_topic_table, triggerEventList, 'trigger_topics_list', 'T')
+        network_audio_table_show()
 
+    })
+
+    $('#track_main_tab').click(function (evt) {
+        show_track_main_tab()
+        evt.preventDefault()
+    })
+
+    $('#track_interactive_tab').click(function (evt) {
+        show_track_interactive_tab()
+        evt.preventDefault()
+    })
+
+    $('#track_network_tab').click(function (evt) {
+        show_track_network_tab()
+        evt.preventDefault()
     })
 
     $('#type_select').on("change", function(){
@@ -325,7 +518,12 @@ script.
 
     function show_delete_track_modal(index){
         current_track_index = index
-        $('#editPlaylistModal').modal('hide')
-        $('#confirmDeleteTrackModal').modal('show')
         $('#deleteTrack_name_input').val(current_playlist.tracks[current_track_index].name)
+        if (window.modalManager) {
+            modalManager.hide('editPlaylistModal')
+            modalManager.show('confirmDeleteTrackModal', 200)
+        } else {
+            $('#editPlaylistModal').modal('hide')
+            $('#confirmDeleteTrackModal').modal('show')
+        }
     }

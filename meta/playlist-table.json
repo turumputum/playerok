@@ -1,17 +1,12 @@
 [
   {
-    "path": "data/actuatorGate/script.py",
-    "name": "script",
+    "path": "data/content/options-doc.py",
+    "name": "options-doc",
     "type": "script"
   },
   {
-    "path": "data/actuatorGate/tt.js",
-    "name": "tt",
-    "type": "script"
-  },
-  {
-    "path": "data/playlists/playlist.json",
-    "name": "playlist",
+    "path": "data/playlists/bur.json",
+    "name": "bur",
     "type": "multimedia"
   }
 ]

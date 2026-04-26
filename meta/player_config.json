@@ -2,7 +2,7 @@
   "net": {
     "eth0": {
       "DHCP": 1,
-      "IP": "192.168.88.195",
+      "IP": "192.168.88.112",
       "net_mask": "255.255.255.0",
       "gateway": "192.168.88.1",
       "enable": 1,
@@ -26,7 +26,7 @@
       "enable": 1,
       "gateway": ""
     },
-    "mDNS_name": "playerok"
+    "mDNS_name": "plw"
   },
   "time": {
     "NTP": 1,
@@ -50,7 +50,7 @@
     ],
     "output_sink": "",
     "output_device": "Audio Jack",
-    "volume": 150
+    "volume": 16
   },
   "screen": {
     "screen_dev_list": [

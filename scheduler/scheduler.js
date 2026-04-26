@@ -53,7 +53,11 @@ var state = {
 function start_player(index) {
     //scribbles.log("start play")
     try {
-        state.current_task_pid = child_process(`../player/player.js`, [`${scheduler_table[index].task_path}`])
+        const playerLogStream = fs.createWriteStream('../logs/player_log.log', { flags: 'a' });
+        const playerProcess = spawn_process('node', [`../player/player.js`, `${scheduler_table[index].task_path}`]);
+        playerProcess.stdout.pipe(playerLogStream);
+        playerProcess.stderr.pipe(playerLogStream);
+        state.current_task_pid = playerProcess;
         state.player_state = 'play'
     } catch (err) {
         scribbles.log(`start player FAILED: ${err}`)

@@ -2,7 +2,7 @@ extends layout.pug
 
 //----------------------Fill main table data----------------------------
 mixin table-row(index, name, path, type, trigger, state)
-    tr  
+    tr(class=`${state === 'run' ? 'table-success' : state === 'error' ? 'table-danger' : ''}`)
         td.w-5(data-label="#")= index 
         td(data-label="Name")= name 
         td(data-label="Path")= path
@@ -12,6 +12,7 @@ mixin table-row(index, name, path, type, trigger, state)
         td(data-label="Controls")
             button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' onclick=`open_edit_task(${index})`) edit
             button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' data-bs-toggle='modal' data-bs-target='#verify_delete' d-name=name d-index=index) delete
+            button.mx-1.btn.btn-outline-info.btn-sm(type='button' onclick=`show_task_logs(this)` data-type=type) logs
 
 block content
     div(style='padding-top: 56px; ').container-xxl
@@ -51,9 +52,24 @@ block content
                 .modal-body
                     h2.name_to_delete
                 .modal-footer
-                    button.btn.btn-primary(data-bs-dismiss="modal" onclick = 'delete_task()') Delete
-                    button.btn.btn-primary(data-bs-dismiss="modal") Cancel
+                    button.btn.btn-primary(onclick = 'delete_task()') Delete
+                    button.btn.btn-primary(data-bs-dismiss='modal') Cancel
 
+
+
+    //----------------------Task Logs MODAL----------------------------
+    #task_logs_modal.modal.fade(aria-hidden='true' aria-labelledby='taskLogsModalLabel' tabindex='-1')
+        .modal-dialog.modal-xl
+            .modal-content
+                .modal-header
+                    h1#task_logs_modal_title.modal-title.fs-5 Task Logs
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                .modal-body
+                    .tab-content.mt-3
+                        #player-log-modal.tab-pane.fade.show.active
+                            pre#player-log-modal-content(style="height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
+                .modal-footer
+                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Close
 
 
     script.
@@ -74,24 +90,42 @@ block content
 
         $(document).ready(function() {
             console.log( "ready!" );
+            
+            // Register verify_delete modal with ModalManager
+            if (window.modalManager && document.getElementById('verify_delete')) {
+                modalManager.registerModal('verify_delete', {
+                    onCleanup: function(event) {
+                        // Reset delete_index when modal closes
+                        delete_index = 0;
+                    }
+                });
+            }
+            
+            // Register task_logs_modal with ModalManager
+            if (window.modalManager && document.getElementById('task_logs_modal')) {
+                modalManager.registerModal('task_logs_modal', {});
+            }
+            
             DOM_table.innerHTML = ""
             
             scheduler_table.forEach(function (task, index){
                 let newRow = DOM_table.insertRow(DOM_table.rows.length)
-                if(task.state=='warning'){
+                if(task.state=='File not found' || task.state=='error'){
                    newRow.className = 'table-danger'
-                }else if(task.state=='play'){
+                }else if(task.state=='run'){
                     newRow.className = 'table-success'
                 }
 
 
+                newRow.dataset.taskPath = task.task_path
                 newRow.insertCell().innerHTML = `<p>${index+1}</p>`
                 newRow.insertCell().innerHTML = `<p class="name">${task.task_name}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.task_path}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.type}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.trigger_type}</p>`
                 newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_edit_task(${index+1})'>edit</button>
-                                                <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_delete_modal(${index})'>delete</button>`
+                                                <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_delete_modal(${index})'>delete</button>
+                                                <button class="mx-1 mt-1 btn btn-outline-info btn-sm" type="button" onclick = 'show_task_logs(this)' data-type='${task.type}'>logs</button>`
             })
 
             let newRow = DOM_table.insertRow(DOM_table.rows.length)
@@ -109,28 +143,39 @@ block content
                 client.subscribe('scheduler/runing_scripts_list')
             })
             client.on('message', function (topic, message) {
+                // Clear all success highlights first
+                $("#task_table tr").removeClass("table-success");
+                
                 if(topic=='scheduler/current_player_task'){
-                    $("#task_table tr").each(function(index) {
-                        $row = $(this);
-                        var $tdElement = $row.find(".name");
-                        if(message == $tdElement.text()){
-                            console.log(`td element:${$tdElement.text()}`)
-                            $row.addClass("table-success")
-                        } 
-                     })
+                    const taskValue = message.toString().trim();
+                    if (taskValue && taskValue !== 'none') {
+                        $("#task_table tr").each(function(index) {
+                            $row = $(this);
+                            var $tdElement = $row.find(".name");
+                            var rowPath = $row.data('taskPath');
+                            if(taskValue == $tdElement.text() || taskValue == rowPath){
+                                console.log(`Highlighting current task: ${$tdElement.text()} (${rowPath})`);
+                                $row.addClass("table-success");
+                            }
+                        });
+                    }
                 }
 
                 if(topic=='scheduler/runing_scripts_list'){
-                    var tmpList=JSON.parse(message)
-                    console.log(`tmpList:${tmpList[0]}`)
-                    $("#task_table tr").each(function(index) {
-                        $row = $(this);
-                        var $tdElement = $row.find(".name");
-                        if(tmpList.find(element => element == $tdElement.text())){
-                            console.log(`td element:${$tdElement.text()}`)
-                            $row.addClass("table-success")
-                        } 
-                     })
+                    try {
+                        var tmpList=JSON.parse(message.toString());
+                        console.log(`Running scripts: ${JSON.stringify(tmpList)}`);
+                        $("#task_table tr").each(function(index) {
+                            $row = $(this);
+                            var $tdElement = $row.find(".name");
+                            if(tmpList.find(element => element == $tdElement.text())){
+                                console.log(`Highlighting script: ${$tdElement.text()}`);
+                                $row.addClass("table-success");
+                            }
+                        });
+                    } catch(e) {
+                        console.error('Error parsing runing_scripts_list:', e);
+                    }
                 }
             })
         
@@ -157,49 +202,120 @@ block content
             //this.setAttribute('d-index', scheduler_table.length)
 
             edit_task_index=scheduler_table.length
-            $("#editTaskModal_2").modal('show')
+            // Use ModalManager instead of jQuery modal
+            if (window.modalManager) {
+                modalManager.show('editTaskModal_2')
+            } else {
+                $("#editTaskModal_2").modal('show')
+            }
         }
 
 
         //----------------------Delete task----------------------------
-        var confirm_delete = document.getElementById('verify_delete')
         var delete_index = 0
-        confirm_delete.addEventListener('show.bs.modal', function (event) {
-            var delete_button = event.relatedTarget
-
-            var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
-
-            modal_header_task_name.innerHTML = scheduler_table[delete_index].task_name
-            //delete_index = delete_button.getAttribute('d-index')
-        })
         
         function open_delete_modal(index){
             delete_index = index;
-            $("#verify_delete.modal").modal('show')
+            // Use ModalManager instead of jQuery modal
+            if (window.modalManager) {
+                // Update task name before showing
+                window.taskToDeleteName = scheduler_table[delete_index].task_name
+                document.querySelector('.name_to_delete').textContent = window.taskToDeleteName
+                modalManager.show('verify_delete')
+            } else {
+                document.querySelector('.name_to_delete').textContent = scheduler_table[delete_index].task_name
+                $("#verify_delete").modal('show')
+            }
         }
 
         function delete_task(){
-            var modal_header_task_name = confirm_delete.querySelector('.name_to_delete')
-            var delete_button = event.relatedTarget
+            console.log("DELETE_TASK CALLED with delete_index:", delete_index)
+            var modal_header_task_name = document.querySelector('.name_to_delete')
+            console.log("Modal task name element:", modal_header_task_name)
+            console.log("Task name text:", modal_header_task_name ? modal_header_task_name.textContent : "NOT FOUND")
             var data = {
                 index_to_delete : delete_index,
-                name_to_delete: modal_header_task_name.innerHTML
+                name_to_delete: modal_header_task_name ? modal_header_task_name.textContent : ""
             }
-            console.log('Task name to delete: ' + data.index_to_delete)
+            console.log('Task to delete data:', JSON.stringify(data))
             fetch('/Scheduler/delete', {
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             }).then((res) => {
                 console.log("delete POST OK:", res)
+                if (window.modalManager) {
+                    modalManager.hide('verify_delete')
+                } else {
+                    $("#verify_delete").modal('hide')
+                }
                 window.location.reload();
                 }).catch((err) => {
-                console.log(err)
+                console.log("DELETE ERROR:", err)
                 })
         }
+
+        var logsUpdateInterval = null;
+
+        function loadTaskLogs(type) {
+            if (type === 'multimedia') {
+                fetch('/api/logs/player_log.log')
+                .then(response => response.text())
+                .then(data => {
+                    const lines = data.split('\n').filter(line => line.trim());
+                    const reversedLines = lines.reverse();
+                    $('#player-log-modal-content').text(reversedLines.join('\n'));
+                })
+                .catch(err => console.error('Error loading player log:', err));
+            } else {
+                $('#player-log-modal-content').text('Task-specific log is not available for this task type.');
+            }
+        }
+
+        function show_task_logs(button) {
+            const type = $(button).data('type');
+            console.log('show_task_logs called with type:', type);
+            
+            // Load logs immediately
+            loadTaskLogs(type);
+
+            // Show modal first
+            if (window.modalManager) {
+                modalManager.show('task_logs_modal');
+            } else {
+                $('#task_logs_modal').modal('show');
+            }
+            
+            // Activate the appropriate tab based on type (Bootstrap 5)
+            setTimeout(function() {
+                // Move focus to modal content to avoid aria-hidden warning
+                document.getElementById('task_logs_modal').focus();
+            }, 100);
+
+            // Start auto-refresh every 2 seconds
+            if (logsUpdateInterval) {
+                clearInterval(logsUpdateInterval);
+            }
+            logsUpdateInterval = setInterval(function() {
+                loadTaskLogs(type);
+            }, 2000);
+        }
+
+        // Stop auto-refresh when modal closes
+        document.addEventListener('DOMContentLoaded', function() {
+            const taskLogsModal = document.getElementById('task_logs_modal');
+            if (taskLogsModal) {
+                taskLogsModal.addEventListener('hidden.bs.modal', function () {
+                    if (logsUpdateInterval) {
+                        clearInterval(logsUpdateInterval);
+                        logsUpdateInterval = null;
+                    }
+                });
+            }
+        });
 
 
 

@@ -4,25 +4,42 @@ const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
 const process = require('process');
+const { spawn } = require('child_process');
 
 const file_tools = require("/home/playerok/playerok/meta/tools/file_tools");
 //const workerpool = require('workerpool');
 
 var playlist
 var current_track_index = 0
-var interrupted_track_index = 0
+var interrupted_track_index = -1
 var simple_track_num = 0
 var player_state = 'Idle'
 var current_volume
 var flag_mqtt_ok = 0
 var flag_first_run = 1;
 var flag_player_started = 0;
+let activeNetworkAudioProcesses = [];
+let pendingVideoStartTimer = null;
+let suppressStoppedOnce = false;  // set before loading new track, cleared in stopped handler
+let lastTriggeredTrack = -1;
+let lastTriggerTime = 0;
 
 let client
-process.stdin.resume();
+try {
+  if (process.stdin && typeof process.stdin.resume === 'function') {
+    process.stdin.resume();
+  }
+} catch (err) {
+  scribbles && scribbles.warn ? scribbles.warn(`stdin resume skipped: ${err}`) : null
+}
 
 function lastWill(){
   player_state="stop"
+  if (pendingVideoStartTimer) {
+    clearTimeout(pendingVideoStartTimer)
+    pendingVideoStartTimer = null
+  }
+  stop_network_audio_streams()
   stop_track(current_track_index)
   mpvPlayer.quit()
 
@@ -159,7 +176,7 @@ function mqtt_init() {
     setTimeout(() => {
       mpvPlayer.getProperty('duration')
       .then(function(duration){
-        console.log("Duration: ", duration);
+        scribbles.debug("Duration: ", duration);
         if(duration==undefined){
           play_track(current_track_index);
         }
@@ -217,6 +234,10 @@ function mqtt_init() {
       track.triggers.forEach(trigger => {
         if (trigger.topic == topic) {
           if ((trigger.event == 'start') && (trigger.payload ==  parseInt(message))) {
+            if (t_index == lastTriggeredTrack && Date.now() - lastTriggerTime < 1000) {
+              scribbles.log(`Ignoring duplicate trigger for track ${t_index}`)
+              return
+            }
             if(current_track_index!=t_index){
               // if(player_state!="Idle"){
               //   stop_track(current_track_index)
@@ -225,6 +246,8 @@ function mqtt_init() {
                 interrupted_track_index = current_track_index
               }
               if (play_track(t_index)) {
+                lastTriggeredTrack = t_index
+                lastTriggerTime = Date.now()
                 scribbles.log(`mqtt trigger_on Track OK, current_index: ${current_track_index} -- interupted_index:${interrupted_track_index}`)
               }
             }
@@ -357,23 +380,56 @@ function play_track(index) {
     report_actions(current_track_index, "stop")
   }
 
+  if (pendingVideoStartTimer) {
+    clearTimeout(pendingVideoStartTimer)
+    pendingVideoStartTimer = null
+  }
+  stop_network_audio_streams()
+  suppressStoppedOnce = true  // next 'stopped' event is from loading new file, suppress
+
   //stop_track(current_track_index)
-  scribbles.log(`lets play: ${playlist.tracks[index].name} -- ${playlist.tracks[index].path}  -- index:${index}`)
-  try {
-    mpvPlayer.load('/home/playerok/playerok/' + playlist.tracks[index].path);
-    if(((simple_track_num==1)&&(playlist.tracks[index].type=="simple"))||(playlist.tracks[index].repeat==true)){
-      scribbles.log(`Loop track`)
-      mpvPlayer.loop()
-    }else{
-      mpvPlayer.clearLoop()
+  const track = playlist.tracks[index]
+  scribbles.log(`lets play: ${track.name} -- ${track.path}  -- index:${index}`)
+  start_network_audio_streams(track)
+
+  const startVideo = () => {
+    try {
+      scribbles.log(`mpv load start: /home/playerok/playerok/${track.path}`)
+      mpvPlayer.load('/home/playerok/playerok/' + track.path);
+      if(((simple_track_num==1)&&(track.type=="simple"))||(track.repeat==true)){
+        scribbles.log(`Loop track`)
+        mpvPlayer.loop()
+      }else{
+        mpvPlayer.clearLoop()
+      }
+      setTimeout(() => {
+        mpvPlayer.getProperty('filename').then((filename) => {
+          scribbles.log(`mpv filename after load: ${filename}`)
+        }).catch((err) => {
+          scribbles.warn(`mpv getProperty(filename) failed: ${err}`)
+        })
+        mpvPlayer.getProperty('duration').then((duration) => {
+          scribbles.log(`mpv duration after load: ${duration}`)
+        }).catch((err) => {
+          scribbles.warn(`mpv getProperty(duration) failed: ${err}`)
+        })
+      }, 500)
+    } catch (err) {
+      scribbles.error(`Play track failed: ${track.name} Error: ${err}`)
+      return false
     }
-    
-    
-    
-    //return true
-  } catch (err) {
-    scribbles.error(`Play track failed: ${playlist.tracks[index].name} Error: ${err}`)
-    return false
+    return true
+  }
+
+  const videoDelayMs = (((track.network_audio || {}).video_start_delay_us) || 0)
+  if (videoDelayMs > 0) {
+    scribbles.log(`Delay video start by ${videoDelayMs} ms`)
+    pendingVideoStartTimer = setTimeout(() => {
+      pendingVideoStartTimer = null
+      startVideo()
+    }, videoDelayMs)
+  } else {
+    startVideo()
   }
 
   //---report actions---
@@ -387,6 +443,12 @@ function play_track(index) {
 }
 
 function stop_track(index) {
+  if (pendingVideoStartTimer) {
+    clearTimeout(pendingVideoStartTimer)
+    pendingVideoStartTimer = null
+  }
+  stop_network_audio_streams()
+
   try {
     //scribbles.debug(`let stop player`)
     mpvPlayer.stop()
@@ -403,6 +465,117 @@ function stop_track(index) {
   //scribbles.log('Stop OK')
   report_state(player_state = 'Idle')
   return true
+}
+
+function build_network_audio_pipeline_args(sourceAudioPath, streamConfig) {
+  const host = streamConfig.multicast_host
+  const port = parseInt(streamConfig.port)
+  const codec = (streamConfig.codec || 'opus').toLowerCase()
+
+  const volumeLevel = Math.max(0, ((config.sound && config.sound.volume) ? config.sound.volume : 100) / 100)
+  const args = [
+    '-e',
+    'filesrc', `location=${sourceAudioPath}`,
+    '!', 'decodebin',
+    '!', 'audioconvert',
+    '!', 'audioresample',
+    '!', 'audio/x-raw,channels=2,rate=48000',
+    '!', 'volume', `volume=${volumeLevel}`,
+    '!', 'audioconvert'
+  ]
+
+  if (codec === 'pcm') {
+    args.push('!', 'audio/x-raw,format=S16BE,channels=2,rate=48000')
+    args.push('!', 'rtpL16pay', 'pt=96')
+  } else {
+    args.push('!', 'opusenc', 'bitrate=320000', 'frame-size=20', 'bandwidth=fullband', 'bitrate-type=cbr', 'dtx=false', 'inband-fec=true')
+    args.push('!', 'rtpopuspay', 'mtu=1472')
+  }
+
+  const multicastIface = streamConfig.multicast_iface || 'eth0'
+  const ttl = Number.isFinite(parseInt(streamConfig.ttl)) ? parseInt(streamConfig.ttl) : 1
+
+  args.push(
+    '!', 'udpsink',
+    `host=${host}`,
+    `port=${port}`,
+    'sync=true',
+    'auto-multicast=true',
+    `multicast-iface=${multicastIface}`,
+    `ttl-mc=${ttl}`
+  )
+
+  return args
+}
+
+function start_network_audio_streams(track) {
+  const networkAudio = track.network_audio || {}
+  const streams = Array.isArray(networkAudio.streams) ? networkAudio.streams : []
+  if (!streams.length) {
+    return
+  }
+
+  const fullTrackPath = '/home/playerok/playerok/' + track.path
+
+  streams.forEach((streamConfig, streamIndex) => {
+    if (streamConfig.enabled === false) {
+      return
+    }
+    if (!streamConfig.multicast_host || !streamConfig.port) {
+      scribbles.warn(`Skip network audio stream with invalid host/port on track ${track.name}`)
+      return
+    }
+
+    const sourceAudioPath = streamConfig.audio_path
+      ? '/home/playerok/playerok/' + streamConfig.audio_path
+      : fullTrackPath
+
+    try {
+      const args = build_network_audio_pipeline_args(sourceAudioPath, streamConfig)
+      scribbles.log(`gst-launch-1.0 args: ${args.join(' ')}`)
+      const gstProcess = spawn('gst-launch-1.0', args, { stdio: ['ignore', 'ignore', 'pipe'] })
+      activeNetworkAudioProcesses.push(gstProcess)
+
+      gstProcess.stderr && gstProcess.stderr.on('data', (data) => {
+        scribbles.warn(`gst stderr [${track.name}/${streamIndex}]: ${data.toString().trim()}`)
+      })
+
+      gstProcess.on('exit', (code, signal) => {
+        scribbles.log(`Network audio stream exit: track=${track.name} idx=${streamIndex} code=${code} signal=${signal}`)
+      })
+
+      gstProcess.on('error', (err) => {
+        scribbles.warn(`Network audio stream error: track=${track.name} idx=${streamIndex} err=${err}`)
+      })
+
+      scribbles.log(`Network audio stream started: track=${track.name} idx=${streamIndex} codec=${streamConfig.codec} host=${streamConfig.multicast_host}:${streamConfig.port} source=${sourceAudioPath}`)
+    } catch (err) {
+      scribbles.warn(`Network audio stream start failed: track=${track.name} idx=${streamIndex} err=${err}`)
+    }
+  })
+}
+
+function stop_network_audio_streams() {
+  if (!activeNetworkAudioProcesses.length) {
+    return
+  }
+
+  activeNetworkAudioProcesses.forEach((proc) => {
+    try {
+      if (proc && !proc.killed) {
+        proc.kill('SIGTERM')
+        setTimeout(() => {
+          try {
+            if (proc && !proc.killed) {
+              proc.kill('SIGKILL')
+            }
+          } catch (_) {}
+        }, 800)
+      }
+    } catch (_) {}
+  })
+
+  activeNetworkAudioProcesses = []
 }
 
 function play_pause() {
@@ -447,27 +620,51 @@ mpvPlayer.on('stopped', function () {
   if (flag_first_run == 1) {
     flag_first_run = 0
     scribbles.log(`First run`)
-    play_track(current_track_index);
+    if (simple_track_num > 0) {
+      for (let i = 0; i < playlist.tracks.length; i++) {
+        if (playlist.tracks[i].type === 'simple') {
+          play_track(i);
+          return;
+        }
+      }
+    }
     return
   }
 
   if(player_state!="Idle"){
     report_actions(current_track_index, "stop")
   }
-  scribbles.log(`stopped event. player_sate: ${player_state}`)
-  if (simple_track_num > 0 && player_state != "stop") {
+  scribbles.log(`stopped event. player_state: ${player_state}, index: ${current_track_index}, suppress: ${suppressStoppedOnce}`)
+  const _stoppedTrack = playlist && playlist.tracks ? playlist.tracks[current_track_index] : null
+  const _stoppedType = _stoppedTrack ? _stoppedTrack.type : 'simple'
+  if (_stoppedType !== 'simple') {
+    if (interrupted_track_index >= 0 && interrupted_track_index !== current_track_index) {
+      const resumeIndex = interrupted_track_index
+      interrupted_track_index = -1
+      scribbles.log(`stopped event: non-simple track ended, resuming interrupted loop track ${resumeIndex}`)
+      play_track(resumeIndex)
+    } else {
+      scribbles.log(`stopped event: non-simple track type=${_stoppedType}, skipping auto-advance`)
+    }
+    return
+  }
+  if (suppressStoppedOnce) {
+    suppressStoppedOnce = false
+    scribbles.log(`stopped event: suppressed (track switch in progress)`)
+    return
+  }
+  if (simple_track_num > 0 && player_state !== 'stop') {
     if (shift_simple_track(+1)) {
       if (play_track(current_track_index)) {
         scribbles.log(`Prev track End, play Next track OK, index: ${current_track_index}`)
       }
     }
-
   }
 
 });
 
 mpvPlayer.on('statuschange', function(status){
-  console.log(status);
+  scribbles.debug(`mpv statuschange: ${JSON.stringify(status)}`);
 });
 
 setTimeout(() => {

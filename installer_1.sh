@@ -1,7 +1,9 @@
 #! /bin/bash
 
 echo "install is started"
-sudo apt install -y intel-media-va-driver-non-free firmware-realtek firmware-misc-nonfree firmware-iwlwifi curl openssh-server xfce4 xfce4-power-manager unclutter xdotool curl make python build-essential network-manager libudev-dev mosquitto lm-sensors mpv avahi-daemon libnss-mdns ntpdate systemd-timesyncd imagemagick beep
+sudo apt install -y intel-media-va-driver-non-free firmware-realtek firmware-misc-nonfree firmware-iwlwifi curl openssh-server xfce4 xfce4-power-manager unclutter xdotool curl make python build-essential network-manager libudev-dev mosquitto lm-sensors mpv avahi-daemon libnss-mdns ntpdate systemd-timesyncd imagemagick beep \
+  gstreamer1.0-tools gstreamer1.0-plugins-base gstreamer1.0-plugins-good gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly gstreamer1.0-libav \
+  libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
 #-  i965-va-driver-shaders i965-va-driver
 sudo apt remove -y --purge samba xfce4-panel light-locker
 

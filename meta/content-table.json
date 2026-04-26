@@ -1,23 +1,28 @@
 {
   "image": [
     {
-      "path": "data/content/horn.jpg",
-      "name": "horn"
+      "path": "data/content/11.jpg",
+      "name": "11"
     }
   ],
   "video": [
     {
-      "path": "data/content/a_1.mp4",
-      "name": "a_1"
+      "path": "data/content/bur_loop.mp4",
+      "name": "bur_loop"
     },
     {
-      "path": "data/content/a_2.mp4",
-      "name": "a_2"
-    },
-    {
-      "path": "data/content/a_3.mp4",
-      "name": "a_3"
+      "path": "data/content/bur_mv.mp4",
+      "name": "bur_mv"
     }
   ],
-  "sound": []
+  "sound": [
+    {
+      "path": "data/content/bur_eng.mp3",
+      "name": "bur_eng"
+    },
+    {
+      "path": "data/content/bur_rus.mp3",
+      "name": "bur_rus"
+    }
+  ]
 }

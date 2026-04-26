@@ -101,7 +101,10 @@ scribbles.config({
   format: '{time} [{fileName}] <{logLevel}> {message}'
 })
 //---clean log---
-fs.writeFileSync('/home/playerok/playerok/logs/playerok.log', ' ')
+const logFiles = ['playerok.log', 'scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
+logFiles.forEach(logFile => {
+  fs.writeFileSync(`/home/playerok/playerok/logs/${logFile}`, '');
+});
 scribbles.log(`Supervisor config OK`)
 
 //---continue instalation---

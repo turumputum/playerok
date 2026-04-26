@@ -9,10 +9,8 @@ User=root
 Type=simple
 WorkingDirectory = /home/playerok/playerok/supervisor/
 ExecStart=sudo node /home/playerok/playerok/supervisor/usb_storage.js
-StandardError=append:/home/playerok/playerok/logs/supervisor.log
-StandardOutput=append:/home/playerok/playerok/logs/playerok.log
-StandardInput=tty-force
-StandardError=syslog
+StandardError=append:/home/playerok/playerok/logs/usb_storage.log
+StandardOutput=append:/home/playerok/playerok/logs/usb_storage.log
 Restart=on-failure
 
 [Install]

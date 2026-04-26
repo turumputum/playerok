@@ -14,7 +14,7 @@ WorkingDirectory = /home/playerok/playerok/scheduler/
 ExecStartPre=/bin/sleep 10
 ExecStart=node /home/playerok/playerok/scheduler/scheduler.js
 StandardError=append:/home/playerok/playerok/logs/scheduler.log
-StandardOutput=append:/home/playerok/playerok/logs/playerok.log
+StandardOutput=append:/home/playerok/playerok/logs/scheduler.log
 StandardInput=tty-force
 Restart=on-failure
 
