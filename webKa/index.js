@@ -61,6 +61,7 @@ app.use('/bootstrap-icons', express.static(path.join(__dirname, 'node_modules/bo
 app.use("/assets", express.static(path.join(__dirname, "assets")));
 app.use("/icons", express.static(path.join(__dirname, "views/icons")));
 app.use("/data", express.static(path.join(__dirname, "data")));
+app.use("/docs", express.static(path.join(__dirname, "docs")));
 app.set('view engine', 'pug')
 
 var config = JSON.parse(fs.readFileSync('../meta/player_config.json'))

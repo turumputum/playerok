@@ -1,0 +1,22 @@
+
+<!doctype html><html><head><title>Influmtr API</title><link rel="stylesheet" href="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui.css"><link rel="icon" type="image/svg+xml" href="/assets/favicon.fe486f9d6c7096426b19..svg"><script src="https://unpkg.com/swagger-ui-dist@5.18.2/swagger-ui-bundle.js"></script></head><body><div id="swagger-ui"></div><script>const swag = SwaggerUIBundle({
+  url: './playerok.oas3.yaml',
+  dom_id: '#swagger-ui',
+  presets: [
+    SwaggerUIBundle.presets.apis,
+    SwaggerUIBundle.SwaggerUIStandalonePreset
+  ],
+  plugins: [
+    SwaggerUIBundle.plugins.DownloadUrl
+  ],
+  afterLoad: (sys) => console.log(sys),
+});
+
+function ges (sel) { return [...document.querySelectorAll(sel)] }
+
+setTimeout(() => {
+  ges('.model-box-control').forEach($el => $el.click())
+  setTimeout(() => ges('.property-row .model-box-control').forEach($el => $el.click()), 1e3);
+}, 1e3)
+
+</script><style>* { margin: 0; padding: 0 }</style></body></html>

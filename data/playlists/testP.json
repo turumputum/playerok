@@ -1,0 +1,187 @@
+{
+  "playlist_name": "testP",
+  "version": "1.0",
+  "actions": [],
+  "controls": [],
+  "tracks": [
+    {
+      "order_num": 1,
+      "name": "loop",
+      "path": "data/content/w3.mp4",
+      "content_group": "video",
+      "type": "simple",
+      "error": "",
+      "repeat": true,
+      "triggers": [],
+      "actions": []
+    },
+    {
+      "order_num": 2,
+      "name": "b0",
+      "path": "data/content/a_1.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/button_0",
+          "payload": "1"
+        }
+      ],
+      "actions": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/led_0",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "buttonUnit/led_0",
+          "payload": "0"
+        }
+      ]
+    },
+    {
+      "order_num": 3,
+      "name": "b1",
+      "path": "data/content/a_2.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/button_1",
+          "payload": "1"
+        }
+      ],
+      "actions": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/led_1",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "buttonUnit/led_1",
+          "payload": "0"
+        }
+      ]
+    },
+    {
+      "order_num": 4,
+      "name": "b2",
+      "path": "data/content/a_3.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/button_2",
+          "payload": "1"
+        }
+      ],
+      "actions": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/led_2",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "buttonUnit/led_2",
+          "payload": "0"
+        }
+      ]
+    },
+    {
+      "order_num": 5,
+      "name": "b3",
+      "path": "data/content/a_4.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/button_3",
+          "payload": "1"
+        }
+      ],
+      "actions": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/led_3",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "buttonUnit/led_3",
+          "payload": "0"
+        }
+      ]
+    },
+    {
+      "order_num": 6,
+      "name": "b4",
+      "path": "data/content/w1.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/button_4",
+          "payload": "1"
+        }
+      ],
+      "actions": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/led_4",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "buttonUnit/led_4",
+          "payload": "0"
+        }
+      ]
+    },
+    {
+      "order_num": 7,
+      "name": "b5",
+      "path": "data/content/w2.mp4",
+      "content_group": "video",
+      "type": "interactive",
+      "error": "",
+      "repeat": false,
+      "triggers": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/button_5",
+          "payload": "1"
+        }
+      ],
+      "actions": [
+        {
+          "event": "start",
+          "topic": "buttonUnit/led_5",
+          "payload": "1"
+        },
+        {
+          "event": "stop",
+          "topic": "buttonUnit/led_5",
+          "payload": "0"
+        }
+      ]
+    }
+  ]
+}

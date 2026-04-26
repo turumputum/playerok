@@ -53,24 +53,27 @@ async function set_net_config() {
     process.exit(1);
   }
   
-  await execPromise(`sudo nmcli general hostname ${config.net.mDNS_name}`)
-
+  //await execPromise(`sudo nmcli general hostname ${config.net.mDNS_name}`)
+  await execPromise(`sudo hostnamectl set-hostname ${config.net.mDNS_name}`)
+  
   const ifMassE = ['eth0', 'eth1', 'wlan0'];
   for (let iface of ifMassE) {
     //console.log(tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface))
-    await execPromise(`sudo nmcli connection delete ${iface}`)
-    await execPromise(`sudo nmcli con mod ${iface} ipv6.method "disabled"`)
-    if(!tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface)){
-      scribbles.log(`Conn: ${iface} not fount, creating...`)
-      if((iface=='eth0')||(iface=='eth1')){
-        tryExecSync(`nmcli con add type ethernet con-name ${iface} ifname ${iface}`)
-      }else{
-        tryExecSync(`nmcli con add type wifi con-name ${iface} ifname ${iface} ssid ${config.net.wlan0.SSID}`)
+    //
+    //
+    // if(!tryExecSync(`nmcli dev show ${iface} | grep WIRED-PROPERTIES.CARRIER: | grep on `)){
+    //   scribbles.log(`Conn: ${iface} cable is connected, lets reconfig`)
+      await execPromise(`sudo nmcli connection delete ${iface}`)
+      if(!tryExecSync(`nmcli -f NAME con show | grep ${iface}`).toString().includes(iface)){
+        scribbles.log(`Conn: ${iface} not found, creating...`)
+        if((iface=='eth0')||(iface=='eth1')){
+          tryExecSync(`nmcli con add type ethernet con-name ${iface} ifname ${iface}`)
+        }else{
+          tryExecSync(`nmcli con add type wifi con-name ${iface} ifname ${iface} ssid ${config.net.wlan0.SSID}`)
+        }
       }
-    }
-
-    if (config.net[iface].enable == 1) {
-      await execPromise(`nmcli con mod ${iface} ifname ${iface}`)
+      await execPromise(`sudo nmcli con mod ${iface} ipv6.method "disabled"`)
+      //await execPromise(`nmcli con mod ${iface} ifname ${iface}`)
       await execPromise(`nmcli con mod ${iface} connection.autoconnect yes`)
       await execPromise(`nmcli con mod ${iface} connection.mdns 2`)
       //await execPromise(`nmcli con mod ${iface} ipv4.mdns 2`)
@@ -79,13 +82,17 @@ async function set_net_config() {
         await execPromise(`sudo dhclient`)
       } else if (config.net[iface].DHCP == 0) {
         await execPromise(`nmcli con mod ${iface} ipv4.addresses ${config.net[iface].IP}/${netmask2CIDR(config.net[iface].net_mask)}`)
+        await execPromise(`nmcli con mod ${iface} ipv4.method manual`)
         await execPromise(`nmcli con mod ${iface} ipv4.gateway ${config.net[iface].gateway}`)
         await execPromise(`nmcli con mod ${iface} ipv4.dns ${config.net[iface].DNS}`)
       }
-      execPromise(`nmcli con up ${iface}`)
-    } else {
-      execPromise(`nmcli con down ${iface}`)
-    }
+
+      if (config.net[iface].enable == 1) {
+        execPromise(`nmcli con up ${iface}`)
+      } else {
+        execPromise(`nmcli con down ${iface}`)
+      }
+    //}
   }
   if (config.net.wlan0.enable == 1) {
     await execPromise(`nmcli con mod wlan0 wifi.ssid ${config.net.wlan0.SSID}`)
