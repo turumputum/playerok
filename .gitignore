@@ -4,6 +4,13 @@
 *.mp2
 data/content/*
 
+# Device-local runtime state (regenerated on each device)
+meta/content-table.json
+meta/player_config.json
+meta/playlist-table.json
+meta/scheduler-table.json
+meta/screen_shot.png
+
 # Logs
 logs
 *.log
