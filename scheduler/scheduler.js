@@ -6,6 +6,7 @@ const mqtt = require("mqtt");
 var watch = require('node-watch')
 const child_process = require('child_process').fork;
 const spawn_process = require('child_process').spawn;
+const spawnSync = require('child_process').spawnSync;
 
 var started_task_list=[]
 var scheduler_table
@@ -50,30 +51,62 @@ var state = {
     current_player_task_index: -1,
 }
 
-function start_player(index) {
-    //scribbles.log("start play")
+function reap_orphan_mpv() {
     try {
+        spawnSync('pkill', ['-9', '-f', 'mpv.*node-mpv.sock'])
+        spawnSync('pkill', ['-9', '-f', 'player/player.js'])
+    } catch (err) {
+        scribbles.warn(`reap_orphan_mpv failed: ${err}`)
+    }
+}
+
+function start_player(index) {
+    try {
+        reap_orphan_mpv()
         const playerLogStream = fs.createWriteStream('../logs/player_log.log', { flags: 'a' });
         const playerProcess = spawn_process('node', [`../player/player.js`, `${scheduler_table[index].task_path}`]);
         playerProcess.stdout.pipe(playerLogStream);
         playerProcess.stderr.pipe(playerLogStream);
         state.current_task_pid = playerProcess;
         state.player_state = 'play'
+
+        playerProcess.once('exit', (code, signal) => {
+            scribbles.warn(`player exited code=${code} signal=${signal} pid=${playerProcess.pid}`)
+            if (state.player_state == 'play' && state.current_task_pid === playerProcess) {
+                scribbles.warn(`player exited unexpectedly, respawning in 1s for index=${index}`)
+                state.player_state = 'stop'
+                setTimeout(() => {
+                    if (scheduler_table[index] && scheduler_table[index].state == 'run') {
+                        start_player(index)
+                    }
+                }, 1000)
+            }
+        })
     } catch (err) {
         scribbles.log(`start player FAILED: ${err}`)
     }
-
 }
 
 function stop_player() {
-    //scribbles.log("stop play")
     try {
-        scribbles.log(`stop player:` + state.current_task_pid.kill('SIGTERM'))
+        const proc = state.current_task_pid
         state.player_state = 'stop'
+        if (!proc || !proc.pid) {
+            scribbles.warn(`stop player: no pid`)
+            return
+        }
+        const pid = proc.pid
+        const result = proc.kill('SIGTERM')
+        scribbles.log(`stop player SIGTERM:${result} pid=${pid}`)
+        try { spawnSync('pkill', ['-TERM', '-P', String(pid)]) } catch (e) {}
+        setTimeout(() => {
+            try { proc.kill('SIGKILL') } catch (e) {}
+            try { spawnSync('pkill', ['-9', '-P', String(pid)]) } catch (e) {}
+            reap_orphan_mpv()
+        }, 1500)
     } catch (err) {
         scribbles.log(`stop player FAILED: ${err}`)
     }
-
 }
 
 let table_watcher = watch('../meta/scheduler-table.json', { recursive: false });
@@ -263,14 +296,31 @@ function start_task(index) {
     if (scheduler_table[index].trigger_type == "schedule") {
         let millis_to_stop = get_millis_before_event(scheduler_table[index].schedule.day_of_week, scheduler_table[index].schedule.end_time.split(':')[0], scheduler_table[index].schedule.end_time.split(':')[1])
         scheduler_table[index]['timer'] = setTimeout(function () {
-            stop_task(index)
+            stop_task(index, false)
         }, millis_to_stop)
         scribbles.log(`Start timer to stop ${millis_to_stop} for:${scheduler_table[index].task_name}`)
     }
 
     //state.shedule_timer = setTimeout(stop_player(index),10000)
 }
-function stop_task(index) {
+
+const CONTINUOUS_GAP_THRESHOLD_MS = 90000
+
+function stop_task(index, force) {
+    if (force === undefined) force = true
+
+    if (!force && scheduler_table[index].trigger_type == "schedule") {
+        let millis_to_start = get_millis_before_event(scheduler_table[index].schedule.day_of_week, scheduler_table[index].schedule.start_time.split(':')[0], scheduler_table[index].schedule.start_time.split(':')[1])
+        if (millis_to_start > 0 && millis_to_start < CONTINUOUS_GAP_THRESHOLD_MS) {
+            let millis_to_next_stop = get_millis_before_event(scheduler_table[index].schedule.day_of_week, scheduler_table[index].schedule.end_time.split(':')[0], scheduler_table[index].schedule.end_time.split(':')[1])
+            scheduler_table[index]['timer'] = setTimeout(function () {
+                stop_task(index, false)
+            }, millis_to_next_stop)
+            scribbles.log(`Skip stop ${scheduler_table[index].task_name}: next start in ${millis_to_start}ms (continuous schedule), reschedule stop in ${millis_to_next_stop}ms`)
+            return
+        }
+    }
+
     scribbles.log(`Task will be stoped: ${scheduler_table[index].task_name}`)
 
     if (scheduler_table[index].type == "multimedia") {

@@ -17,11 +17,13 @@ block content
                         a#screenshotTab_bt.nav-link.active(aria-current='true' data-toggle="tab" href="#screenshot") Screenshot
                     li.nav-item
                         a#logTab_bt.nav-link(data-toggle="tab" href="#logs") Log
+                    li.nav-item
+                        a#mqttTab_bt.nav-link(data-toggle="tab" href="#mqtt") MQTT
                     button#refresh_btn.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh
 
             .card-body
                 #screenshot.tab-pane.fade.show.active
-                    img#screenshot.card-img-top(src='/get_screenshot' href=src style = "object-fit: contain;")
+                    img#screenshot_img.card-img-top(src='/get_screenshot' style = "object-fit: contain;")
                 #logs.tab-pane.fade
                     ul.nav.nav-tabs
                         li.nav-item
@@ -53,7 +55,21 @@ block content
                             pre#usb-storage-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
                         #uart2mqtt-log.tab-pane.fade
                             pre#uart2mqtt-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
-                
+                #mqtt.tab-pane.fade
+                    .row.g-2.mb-2
+                        .col-md-4
+                            input#mqtt-publish-topic.form-control(type="text" placeholder="topic")
+                        .col-md-6
+                            input#mqtt-publish-payload.form-control(type="text" placeholder="payload")
+                        .col-md-2.d-flex.gap-2
+                            button#mqtt-publish-btn.btn.btn-primary.flex-grow-1(type="button") Publish
+                            button#mqtt-clear-btn.btn.btn-secondary(type="button" title="Clear")
+                                i.bi.bi-trash
+                    .d-flex.align-items-center.mb-2
+                        span#mqtt-status.badge.bg-secondary disconnected
+                        span.text-muted.ms-2(style="font-size: 0.85em;") subscribed to #
+                    pre#mqtt-console-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left; background: #1e1e1e; color: #e0e0e0; padding: 10px; margin: 0;")
+
 
     //script(src="assets/home.js")
     script.
@@ -67,12 +83,31 @@ block content
         function image_update(){
             console.log( "show screenshot!" );
             $("#logs").hide()
+            $("#mqtt").hide()
             $("#screenshot").show()
             if (logInterval) {
                 clearInterval(logInterval);
                 logInterval = null;
             }
-            $("#screenshot").attr('src','/get_screenshot?rand=' + Math.random())
+            $("#screenshot_img").attr('src','/get_screenshot?rand=' + Math.random())
+        }
+
+        function insertLogGapSeparators(lines, thresholdMs) {
+            const tsRegex = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})/;
+            const result = [];
+            let prevTs = null;
+            for (const line of lines) {
+                const match = line.match(tsRegex);
+                if (match) {
+                    const ts = Date.parse(match[1]);
+                    if (prevTs !== null && ts - prevTs > thresholdMs) {
+                        result.push('');
+                    }
+                    prevTs = ts;
+                }
+                result.push(line);
+            }
+            return result;
         }
 
         function load_logs() {
@@ -83,8 +118,8 @@ block content
                 .then(response => response.text())
                 .then(data => {
                     const lines = data.split('\n');
-                    const reversedLines = lines.reverse();
-                    $(`#${logIds[index]}`).html(reversedLines.join('\n'));
+                    const withGaps = insertLogGapSeparators(lines, 2000);
+                    $(`#${logIds[index]}`).html(withGaps.reverse().join('\n'));
                 })
                 .catch(err => console.error(`Error loading ${file}:`, err));
             });
@@ -93,6 +128,7 @@ block content
         function show_log(){
             console.log( "show logs!" );
             $("#screenshot").hide()
+            $("#mqtt").hide()
             $("#logs").show()
             $("#refresh_spn").show();
             load_logs();
@@ -100,6 +136,100 @@ block content
             if (!logInterval) {
                 logInterval = setInterval(load_logs, 2000);
             }
+        }
+
+        let mqttConsoleClient = null;
+        let mqttConsoleLastTs = null;
+        const MQTT_CONSOLE_MAX_LINES = 2000;
+
+        function mqttFormatTime(ms) {
+            const d = new Date(ms);
+            const pad = (n, l) => String(n).padStart(l || 2, '0');
+            return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}.${pad(d.getMilliseconds(), 3)}`;
+        }
+
+        function mqttAppendLine(line, ts) {
+            const node = document.getElementById('mqtt-console-content');
+            if (!node) return;
+            const wasAtTop = node.scrollTop < 50;
+            const hasContent = node.textContent.length > 0;
+            let suffix = hasContent ? '\n' : '';
+            if (ts !== undefined && mqttConsoleLastTs !== null && ts - mqttConsoleLastTs > 2000) {
+                suffix += '\n';
+            }
+            if (ts !== undefined) mqttConsoleLastTs = ts;
+            node.textContent = line + suffix + node.textContent;
+            const lines = node.textContent.split('\n');
+            if (lines.length > MQTT_CONSOLE_MAX_LINES) {
+                node.textContent = lines.slice(0, MQTT_CONSOLE_MAX_LINES).join('\n');
+            }
+            if (wasAtTop) node.scrollTop = 0;
+        }
+
+        function mqttSetStatus(text, cls) {
+            $('#mqtt-status').removeClass('bg-secondary bg-success bg-danger bg-warning').addClass(cls).text(text);
+        }
+
+        function resolveMqttHost() {
+            if (/^\d+\.\d+\.\d+\.\d+$/.test(location.hostname)) return location.hostname;
+            const ip = (config && config.net && (
+                (config.net.eth0 && config.net.eth0.IP) ||
+                (config.net.wlan0 && config.net.wlan0.IP)
+            ));
+            return ip || location.hostname;
+        }
+
+        function initMqttConsole() {
+            if (mqttConsoleClient) return;
+            const url = `ws://${resolveMqttHost()}:1890/mqtt`;
+            mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- connecting to ${url} --`);
+            mqttSetStatus('connecting', 'bg-warning');
+            mqttConsoleClient = mqtt.connect(url);
+            mqttConsoleClient.on('connect', function () {
+                mqttSetStatus('connected', 'bg-success');
+                mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- connected, subscribing to # --`, Date.now());
+                mqttConsoleClient.subscribe('#', function (err) {
+                    if (err) mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- subscribe error: ${err.message} --`, Date.now());
+                });
+            });
+            mqttConsoleClient.on('reconnect', function () {
+                mqttSetStatus('reconnecting', 'bg-warning');
+            });
+            mqttConsoleClient.on('close', function () {
+                mqttSetStatus('disconnected', 'bg-secondary');
+            });
+            mqttConsoleClient.on('error', function (err) {
+                mqttSetStatus('error', 'bg-danger');
+                mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- error: ${err.message} --`, Date.now());
+            });
+            mqttConsoleClient.on('message', function (topic, message) {
+                const now = Date.now();
+                mqttAppendLine(`[${mqttFormatTime(now)}] ${topic} ${message.toString()}`, now);
+            });
+        }
+
+        function mqttPublish() {
+            const topic = $('#mqtt-publish-topic').val().trim();
+            const payload = $('#mqtt-publish-payload').val();
+            if (!topic) return;
+            if (!mqttConsoleClient || !mqttConsoleClient.connected) {
+                mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- not connected, cannot publish --`, Date.now());
+                return;
+            }
+            mqttConsoleClient.publish(topic, payload);
+            const now = Date.now();
+            mqttAppendLine(`[${mqttFormatTime(now)}] >> ${topic} ${payload}`, now);
+        }
+
+        function show_mqtt(){
+            $("#screenshot").hide()
+            $("#logs").hide()
+            $("#mqtt").show()
+            if (logInterval) {
+                clearInterval(logInterval);
+                logInterval = null;
+            }
+            initMqttConsole();
         }
     
 
@@ -114,9 +244,23 @@ block content
             show_log()
         });
 
-        $("#screenshotTab_bt").click(function() { 
+        $("#screenshotTab_bt").click(function() {
             activeTab = 'screenshot'
             image_update()
+        });
+
+        $("#mqttTab_bt").click(function() {
+            activeTab = 'mqtt'
+            show_mqtt()
+        });
+
+        $("#mqtt-publish-btn").click(mqttPublish);
+        $("#mqtt-publish-topic, #mqtt-publish-payload").on('keydown', function(e) {
+            if (e.key === 'Enter') mqttPublish();
+        });
+        $("#mqtt-clear-btn").click(function() {
+            document.getElementById('mqtt-console-content').textContent = '';
+            mqttConsoleLastTs = null;
         });
 
         // Handle inner log tabs

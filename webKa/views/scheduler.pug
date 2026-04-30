@@ -260,14 +260,32 @@ block content
 
         var logsUpdateInterval = null;
 
+        function insertLogGapSeparators(lines, thresholdMs) {
+            const tsRegex = /^(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3})/;
+            const result = [];
+            let prevTs = null;
+            for (const line of lines) {
+                const match = line.match(tsRegex);
+                if (match) {
+                    const ts = Date.parse(match[1]);
+                    if (prevTs !== null && ts - prevTs > thresholdMs) {
+                        result.push('');
+                    }
+                    prevTs = ts;
+                }
+                result.push(line);
+            }
+            return result;
+        }
+
         function loadTaskLogs(type) {
             if (type === 'multimedia') {
                 fetch('/api/logs/player_log.log')
                 .then(response => response.text())
                 .then(data => {
                     const lines = data.split('\n').filter(line => line.trim());
-                    const reversedLines = lines.reverse();
-                    $('#player-log-modal-content').text(reversedLines.join('\n'));
+                    const withGaps = insertLogGapSeparators(lines, 2000);
+                    $('#player-log-modal-content').text(withGaps.reverse().join('\n'));
                 })
                 .catch(err => console.error('Error loading player log:', err));
             } else {

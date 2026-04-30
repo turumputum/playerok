@@ -42,7 +42,7 @@
             "name": "bur_eng",
             "audio_path": "data/content/bur_eng.mp3",
             "codec": "pcm",
-            "multicast_host": "239.0.7.10",
+            "multicast_host": "239.0.7.11",
             "port": 7777,
             "enabled": true,
             "multicast_iface": "eth0"
@@ -51,7 +51,7 @@
             "name": "bur_rus",
             "audio_path": "data/content/bur_rus.mp3",
             "codec": "pcm",
-            "multicast_host": "239.0.7.11",
+            "multicast_host": "239.0.7.10",
             "port": 7777,
             "enabled": true,
             "multicast_iface": "eth0"
