@@ -2,10 +2,10 @@
     .modal-dialog.modal-xl.modal-fullscreen-xl-down
         .modal-content
             .modal-header(style='background-color: rgb(177, 220, 226);')
-                h4 Edit playlist
+                h4 Редактировать плейлист
             .modal-body
                 .input-group.px-4
-                    span.input-group-text.fs-5.fw-bold Playlist name:
+                    span.input-group-text.fs-5.fw-bold Имя плейлиста:
                     input#playlist_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
                         
                 .card.m-4.card_shadow
@@ -14,68 +14,66 @@
                         .card-header.text-center
                             ul#triggerTabs.nav.nav-tabs.card-header-tabs
                                 li
-                                    button#content_tab.nav-link.active(aria-current='true' data-toggle="tab") Content
+                                    button#content_tab.nav-link.active(aria-current='true' data-toggle="tab") Контент
                                 li
-                                    button#advanced_tab.nav-link(data-toggle="tab") Advanced 
+                                    button#advanced_tab.nav-link(data-toggle="tab") Дополнительно
                         .card-body            
                             
                             card#simple_content_card.card.mt-4
                                 .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                    .h4.mx-2.mt-2 Looped tracks
+                                    .h4.mx-2.mt-2 Зацикленные треки
                                 .card_body.p-2
                                     table#simpleContTable.table.table-hover
                                         thead
                                             tr
                                                 th(scope='col' style='width:3%') #
-                                                th(scope='col' style='width:20%') Name
-                                                th(scope='col' style='width:62%') Path
-                                                th(scope='col' style='width:15%') Controls
+                                                th(scope='col' style='width:73%') Путь
+                                                th(scope='col' style='width:24%') Действия
                                         tbody
-                            
+
                             card#interactive_content_card.card.mt-4
                                 .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                    .h4.mx-2.mt-2 Triggered tracks
+                                    .h4.mx-2.mt-2 Треки по триггеру
                                 .card_body.p-2
                                     table#interactiveContTable.table.table-hover
                                         thead
                                             tr
                                                 th(scope='col' style='width:3%') #
-                                                th(scope='col' style='width:20%') Name
-                                                th(scope='col' style='width:62%') Path
-                                                th(scope='col' style='width:15%') Controls
+                                                th(scope='col' style='width:73%') Путь
+                                                th(scope='col' style='width:24%') Действия
                                         tbody
 
                             card#actions_card.card.mt-4(style='display: none;')
                                 .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                    .h4.mx-2.mt-2 Actions
+                                    .h4.mx-2.mt-2 Реакции на события
                                 .card_body.p-2
                                     table#playlistActionsTable.table.table-hover
                                         datalist#action_topics_list
                                         thead
                                             tr
-                                                th(scope='col' style="width: 15%;") Event
-                                                th(scope='col') Topic
-                                                th(scope='col' style="width: 15%;") Payload
-                                                th(scope='col' style="width: 15%;") Controls
+                                                th(scope='col' style="width: 15%;") Событие
+                                                th(scope='col') Топик
+                                                th(scope='col' style="width: 15%;") Сообщение
+                                                th(scope='col' style="width: 15%;") Действия
                                         tbody
 
                             card#controls_card.card.mt-4(style='display: none;')
                                 .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                    .h4.mx-2.mt-2 Controls
+                                    .h4.mx-2.mt-2 Входящие команды
                                 .card_body.p-2
                                     table#playlistControlsTable.table.table-hover
                                         datalist#trigger_topics_list
                                         thead
                                             tr
-                                                th(scope='col' style="width: 15%;") Event
-                                                th(scope='col') Topic
-                                                th(scope='col' style="width: 15%;") Payload
-                                                th(scope='col' style="width: 15%;") Controls
+                                                th(scope='col' style="width: 15%;") Команда
+                                                th(scope='col') Топик
+                                                th(scope='col' style="width: 15%;") Сообщение
+                                                th(scope='col' style="width: 15%;") Действия
                                         tbody
                 
             .modal-footer
-                button.btn.btn-secondary(onclick = 'save_edit_playlist()') Save
-                button.btn.btn-secondary(onclick = 'cancel_edit_playlist()') Cancel
+                button.btn.btn-secondary(onclick = 'save_edit_playlist()') Сохранить
+                button.btn.btn-secondary(onclick = 'cancel_edit_playlist()') Отмена
 
 script.
 
@@ -99,21 +97,19 @@ script.
             //console.log("Find track: ", track)
             if (track.type == 'simple') {
                 var newRow = tableSC.insertRow(tableSC.rows.length)
-                var order_cell = newRow.insertCell().innerHTML = track.order_num
-                var name_cell = newRow.insertCell().innerHTML = track.name
-                var path_cell = newRow.insertCell().innerHTML = track.path
-                const controls = newRow.insertCell().innerHTML = `
-                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('${index}', 'edit')">edit</button>
-                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "show_delete_track_modal(${index})">delete</button>
+                newRow.insertCell().innerHTML = track.order_num
+                newRow.insertCell().innerHTML = track.path
+                newRow.insertCell().innerHTML = `
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('${index}', 'edit')">изменить</button>
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "show_delete_track_modal(${index})">удалить</button>
                         `
             } else if (track.type == 'interactive') {
                 var newRow = tableIC.insertRow(tableIC.rows.length)
-                var id_cell = newRow.insertCell().innerHTML = track.order_num
-                var name_cell = newRow.insertCell().innerHTML = track.name
-                var path_cell = newRow.insertCell().innerHTML = track.path
-                const controls = newRow.insertCell().innerHTML = `
-                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('${index}', 'edit')">edit</button>
-                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "show_delete_track_modal(${index})">delete</button>
+                newRow.insertCell().innerHTML = track.order_num
+                newRow.insertCell().innerHTML = track.path
+                newRow.insertCell().innerHTML = `
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('${index}', 'edit')">изменить</button>
+                        <button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "show_delete_track_modal(${index})">удалить</button>
                         `
             }
         }
@@ -125,14 +121,12 @@ script.
         var newRow = tableSC.insertRow(-1)
         newRow.insertCell()
         newRow.insertCell()
-        newRow.insertCell()
-        var addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">добавить</button>`
 
         newRow = tableIC.insertRow(tableIC.rows.length)
         newRow.insertCell()
         newRow.insertCell()
-        newRow.insertCell()
-        addCell = newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">add</button>`
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "open_edit_track_modal('')">добавить</button>`
     }
     //-------- End Content tab group ---------------------------
 
@@ -169,13 +163,13 @@ script.
             newRow.insertCell().innerHTML = `<input id='${identify}_payload_${topic_index}' class="form-control"></input>`
             $(`#${identify}_payload_${topic_index}`).val(topic.payload)
 
-            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic_for_p('${identify}','${topic_index}')">delete</button>`
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic_for_p('${identify}','${topic_index}')">удалить</button>`
         }
         newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
         newRow.insertCell()
         newRow.insertCell()
         newRow.insertCell()
-        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic_for_p('${identify}')">add</button>`
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic_for_p('${identify}')">добавить</button>`
     }
 
     function show_advanced_tab(){

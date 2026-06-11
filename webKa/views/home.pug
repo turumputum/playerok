@@ -14,18 +14,18 @@ block content
             .card-header
                 ul#myNavTabs.nav.nav-tabs.card-header-tabs
                     li.nav-item
-                        a#screenshotTab_bt.nav-link.active(aria-current='true' data-toggle="tab" href="#screenshot") Screenshot
+                        a#screenshotTab_bt.nav-link.active(aria-current='true' data-toggle="tab" href="#screenshot") Скриншот
                     li.nav-item
-                        a#logTab_bt.nav-link(data-toggle="tab" href="#logs") Log
+                        a#logTab_bt.nav-link(data-toggle="tab" href="#logs") Логи
                     li.nav-item
                         a#mqttTab_bt.nav-link(data-toggle="tab" href="#mqtt") MQTT
-                    button#refresh_btn.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Refresh
+                    button#refresh_btn.btn.btn-secondary.m-2(type='button' class="position-absolute top-0 end-0") Обновить
 
             .card-body
                 #screenshot.tab-pane.fade.show.active
                     img#screenshot_img.card-img-top(src='/get_screenshot' style = "object-fit: contain;")
                 #logs.tab-pane.fade
-                    ul.nav.nav-tabs
+                    ul#log-nav-tabs.nav.nav-tabs
                         li.nav-item
                             a.nav-link.active(data-toggle="tab" href="#scheduler-log") Scheduler
                         li.nav-item
@@ -40,7 +40,7 @@ block content
                             a.nav-link(data-toggle="tab" href="#usb-storage-log") USB Storage
                         li.nav-item
                             a.nav-link(data-toggle="tab" href="#uart2mqtt-log") UART2MQTT
-                    .tab-content.mt-3
+                    .tab-content.mt-3#log-tab-content
                         #scheduler-log.tab-pane.fade.show.active
                             pre#scheduler-log-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
                         #webka-log.tab-pane.fade
@@ -58,16 +58,16 @@ block content
                 #mqtt.tab-pane.fade
                     .row.g-2.mb-2
                         .col-md-4
-                            input#mqtt-publish-topic.form-control(type="text" placeholder="topic")
+                            input#mqtt-publish-topic.form-control(type="text" placeholder="топик")
                         .col-md-6
-                            input#mqtt-publish-payload.form-control(type="text" placeholder="payload")
+                            input#mqtt-publish-payload.form-control(type="text" placeholder="сообщение")
                         .col-md-2.d-flex.gap-2
-                            button#mqtt-publish-btn.btn.btn-primary.flex-grow-1(type="button") Publish
-                            button#mqtt-clear-btn.btn.btn-secondary(type="button" title="Clear")
+                            button#mqtt-publish-btn.btn.btn-primary.flex-grow-1(type="button") Отправить
+                            button#mqtt-clear-btn.btn.btn-secondary(type="button" title="Очистить")
                                 i.bi.bi-trash
                     .d-flex.align-items-center.mb-2
-                        span#mqtt-status.badge.bg-secondary disconnected
-                        span.text-muted.ms-2(style="font-size: 0.85em;") subscribed to #
+                        span#mqtt-status.badge.bg-secondary нет связи
+                        span.text-muted.ms-2(style="font-size: 0.85em;") подписка на #
                     pre#mqtt-console-content(style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left; background: #1e1e1e; color: #e0e0e0; padding: 10px; margin: 0;")
 
 
@@ -110,19 +110,84 @@ block content
             return result;
         }
 
+        // Returns true if the user currently has a non-empty text selection
+        // anchored inside `el` (or one of its descendants). Used to skip the
+        // periodic log refresh while the user is highlighting text to copy —
+        // otherwise the 2 s tick wipes the selection.
+        function hasSelectionInside(el) {
+            const sel = window.getSelection && window.getSelection();
+            if (!sel || sel.rangeCount === 0 || sel.isCollapsed) return false;
+            for (let i = 0; i < sel.rangeCount; i++) {
+                const r = sel.getRangeAt(i);
+                if (el.contains(r.commonAncestorContainer)) return true;
+            }
+            return false;
+        }
+
+        // Map of "filename → DOM id" for log <pre> blocks. Built once for the
+        // static set, then extended on the fly with per-script log files
+        // discovered via /api/logs.
+        const staticLogMap = {
+            'scheduler.log': 'scheduler-log-content',
+            'webKa.log': 'webka-log-content',
+            'player_log.log': 'player-log-content',
+            'supervisor.log': 'supervisor-log-content',
+            'screen_sound_config.log': 'screen-sound-log-content',
+            'usb_storage.log': 'usb-storage-log-content',
+            'uart2mqtt.log': 'uart2mqtt-log-content',
+        };
+        const knownScriptLogs = new Set();
+
+        function scriptLogPaneId(filename) {
+            return 'log-pane-' + filename.replace(/[^A-Za-z0-9_-]/g, '-');
+        }
+        function scriptLogContentId(filename) {
+            return 'log-content-' + filename.replace(/[^A-Za-z0-9_-]/g, '-');
+        }
+
+        function ensureScriptLogTab(filename) {
+            if (knownScriptLogs.has(filename)) return;
+            knownScriptLogs.add(filename);
+            const paneId = scriptLogPaneId(filename);
+            const contentId = scriptLogContentId(filename);
+            // Strip "script_" prefix and ".log" suffix to get a friendlier label
+            const label = filename.replace(/^script_/, '').replace(/\.log$/, '');
+            $('#log-nav-tabs').append(
+                '<li class="nav-item"><a class="nav-link" data-toggle="tab" href="#' + paneId + '">Script: ' + label + '</a></li>'
+            );
+            $('#log-tab-content').append(
+                '<div id="' + paneId + '" class="tab-pane fade"><pre id="' + contentId + '" style="height: 500px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;"></pre></div>'
+            );
+        }
+
+        function refreshLogTo(file, elementId) {
+            const node = document.getElementById(elementId);
+            if (node && hasSelectionInside(node)) return;
+            fetch('/api/logs/' + encodeURIComponent(file))
+            .then(response => response.text())
+            .then(data => {
+                const target = document.getElementById(elementId);
+                if (!target || hasSelectionInside(target)) return;
+                const lines = data.split('\n');
+                const withGaps = insertLogGapSeparators(lines, 2000);
+                target.textContent = withGaps.reverse().join('\n');
+            })
+            .catch(err => console.error('Error loading ' + file + ':', err));
+        }
+
         function load_logs() {
-            const logFiles = ['scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
-            const logIds = ['scheduler-log-content', 'webka-log-content', 'player-log-content', 'supervisor-log-content', 'screen-sound-log-content', 'usb-storage-log-content', 'uart2mqtt-log-content'];
-            logFiles.forEach((file, index) => {
-                fetch(`/api/logs/${file}`)
-                .then(response => response.text())
-                .then(data => {
-                    const lines = data.split('\n');
-                    const withGaps = insertLogGapSeparators(lines, 2000);
-                    $(`#${logIds[index]}`).html(withGaps.reverse().join('\n'));
-                })
-                .catch(err => console.error(`Error loading ${file}:`, err));
-            });
+            for (const [file, id] of Object.entries(staticLogMap)) {
+                refreshLogTo(file, id);
+            }
+            fetch('/api/logs')
+            .then(r => r.json())
+            .then(list => {
+                const scripts = (list && list.scripts) || [];
+                // Pre-create static <pre> blocks if any go missing (defensive)
+                for (const f of scripts) ensureScriptLogTab(f);
+                for (const f of scripts) refreshLogTo(f, scriptLogContentId(f));
+            })
+            .catch(err => console.error('Error listing logs:', err));
         }
 
         function show_log(){
@@ -183,23 +248,23 @@ block content
             if (mqttConsoleClient) return;
             const url = `ws://${resolveMqttHost()}:1890/mqtt`;
             mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- connecting to ${url} --`);
-            mqttSetStatus('connecting', 'bg-warning');
-            mqttConsoleClient = mqtt.connect(url);
+            mqttSetStatus('подключение', 'bg-warning');
+            mqttConsoleClient = mqtt.connect(url, { username: config.security.admin_login, password: config.security.admin_pass });
             mqttConsoleClient.on('connect', function () {
-                mqttSetStatus('connected', 'bg-success');
+                mqttSetStatus('подключено', 'bg-success');
                 mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- connected, subscribing to # --`, Date.now());
                 mqttConsoleClient.subscribe('#', function (err) {
                     if (err) mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- subscribe error: ${err.message} --`, Date.now());
                 });
             });
             mqttConsoleClient.on('reconnect', function () {
-                mqttSetStatus('reconnecting', 'bg-warning');
+                mqttSetStatus('переподключение', 'bg-warning');
             });
             mqttConsoleClient.on('close', function () {
-                mqttSetStatus('disconnected', 'bg-secondary');
+                mqttSetStatus('нет связи', 'bg-secondary');
             });
             mqttConsoleClient.on('error', function (err) {
-                mqttSetStatus('error', 'bg-danger');
+                mqttSetStatus('ошибка', 'bg-danger');
                 mqttAppendLine(`[${mqttFormatTime(Date.now())}] -- error: ${err.message} --`, Date.now());
             });
             mqttConsoleClient.on('message', function (topic, message) {

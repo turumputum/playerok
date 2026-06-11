@@ -3,6 +3,7 @@ const { exec } = require('child_process');
 const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
+const { mqttAuthOpts } = require('/home/playerok/playerok/meta/mqtt_auth.js');
 var watch = require('node-watch')
 const child_process = require('child_process').fork;
 const spawn_process = require('child_process').spawn;
@@ -53,8 +54,9 @@ var state = {
 
 function reap_orphan_mpv() {
     try {
-        spawnSync('pkill', ['-9', '-f', 'mpv.*node-mpv.sock'])
+        spawnSync('pkill', ['-9', '-f', 'mpv.*playerok-mpv\\.sock'])
         spawnSync('pkill', ['-9', '-f', 'player/player.js'])
+        spawnSync('pkill', ['-9', '-f', 'player/audio_worker.py'])
     } catch (err) {
         scribbles.warn(`reap_orphan_mpv failed: ${err}`)
     }
@@ -69,6 +71,7 @@ function start_player(index) {
         playerProcess.stderr.pipe(playerLogStream);
         state.current_task_pid = playerProcess;
         state.player_state = 'play'
+        state.last_start_time = Date.now()
 
         playerProcess.once('exit', (code, signal) => {
             scribbles.warn(`player exited code=${code} signal=${signal} pid=${playerProcess.pid}`)
@@ -109,13 +112,43 @@ function stop_player() {
     }
 }
 
+// scheduler_init() tears down all tasks, killing mpv + audio_worker, and
+// rebuilds the state from disk. Each invocation costs ~1-2s of black screen.
+// Triggers (MQTT `scheduler/restart`, file watchers, manual UI saves) can
+// fire many times in a row — e.g. an attacker on LAN publishing the topic at
+// 50 Hz, or chokidar emitting 30 events for one large multi-file save.
+// Coalesce them with a trailing-edge debounce so closely-spaced requests
+// collapse into a single rebuild.
+const INIT_MIN_INTERVAL_MS = 2000
+let _initDebounceTimer = null
+let _initLastRunTs = 0
+function scheduledInit(reason) {
+    const now = Date.now()
+    if (_initDebounceTimer) {
+        return  // a rebuild is already queued; this trigger is absorbed into it
+    }
+    const sinceLast = now - _initLastRunTs
+    if (sinceLast >= INIT_MIN_INTERVAL_MS) {
+        _initLastRunTs = now
+        scribbles.log(`scheduler_init (${reason})`)
+        scheduler_init()
+        return
+    }
+    const delay = INIT_MIN_INTERVAL_MS - sinceLast
+    scribbles.log(`scheduler_init debounced ${delay}ms (${reason})`)
+    _initDebounceTimer = setTimeout(() => {
+        _initDebounceTimer = null
+        _initLastRunTs = Date.now()
+        scheduler_init()
+    }, delay)
+}
+
 let table_watcher = watch('../meta/scheduler-table.json', { recursive: false });
 table_watcher.on('change', function (evt, name) {
     try {
         stopAllTask()
         scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
-        scheduler_init()
-        //scribbles.error(`scheduler-table read ok : ${JSON.stringify(scheduler_table,null,2)}`)
+        scheduledInit('table change')
     } catch (err) {
         scribbles.error(`: ${err}`)
         process.exit(1);
@@ -125,8 +158,7 @@ table_watcher.on('change', function (evt, name) {
 let playlist_watcher = watch('../data', { recursive: false });
 playlist_watcher.on('change', function (evt, name) {
     try {
-        scribbles.log('Reset playlist on playlist update')
-        scheduler_init()
+        scheduledInit('playlist change')
     } catch (err) {
         scribbles.error(`: ${err}`)
         process.exit(1);
@@ -149,7 +181,7 @@ function mqtt_sub(topic) {
 }
 
 
-const client = mqtt.connect('mqtt://127.0.0.1:1883')
+const client = mqtt.connect('mqtt://127.0.0.1:1883', mqttAuthOpts())
 client.on('connect', function () {
     scribbles.log("mqtt brocker connected!");
     mqtt_sub('scheduler/restart')
@@ -163,8 +195,7 @@ client.on('message', function (topic, message) {
     scribbles.log('Incoming message')
 
     if ((topic == 'scheduler/restart') && (message == '1')) {
-        scribbles.log('Reset playlist on MQTT command')
-        scheduler_init()
+        scheduledInit('mqtt scheduler/restart')
     } else {
         //scheduler_table.forEach(task => {
         for (index in scheduler_table) {
@@ -268,23 +299,91 @@ function start_task(index) {
 
 
     } else if (scheduler_table[index].type == "script") {
-        scribbles.log(`start script:${scheduler_table[index].task_path}`)
+        const task = scheduler_table[index]
+        const relPath = task.task_path
+        const absPath = path.resolve(__dirname, '..', relPath)
+        const ext = path.extname(relPath)
+        const taskName = task.task_name || path.basename(relPath)
+        const safeName = String(taskName).replace(/[^A-Za-z0-9._-]+/g, '_')
+        scribbles.log(`start script: name="${taskName}" path="${relPath}" resolved="${absPath}"`)
 
-        if (path.extname(scheduler_table[index].task_path) == ".js") {
-            scheduler_table[index]['state']="run"
-            scheduler_table[index]['pid']=child_process(`../${scheduler_table[index].task_path}`)
-
-        }else if(path.extname(scheduler_table[index].task_path) == ".py") {
-            scheduler_table[index]['state']="run"
-            scheduler_table[index]['pid']=spawn_process('python3', [`../${scheduler_table[index].task_path}`])
-
+        if (!fs.existsSync(absPath)) {
+            scribbles.error(`SCRIPT MISSING: name="${taskName}" path="${relPath}" resolved="${absPath}" — file does not exist on disk. Aborting start.`)
+            task.state = "stop"
+            return
         }
+        if (ext !== ".js" && ext !== ".py") {
+            scribbles.error(`SCRIPT UNSUPPORTED EXTENSION: name="${taskName}" path="${relPath}" ext="${ext}" — only .js and .py are supported. Aborting start.`)
+            task.state = "stop"
+            return
+        }
+
+        let scriptProcess
+        let scriptLogStream
+        try {
+            scriptLogStream = fs.createWriteStream(`../logs/script_${safeName}.log`, { flags: 'a' })
+            scriptLogStream.write(`\n===== ${new Date().toISOString()} start script "${taskName}" (${absPath}) =====\n`)
+        } catch (err) {
+            scribbles.warn(`script "${taskName}": cannot open per-script log: ${err}`)
+        }
+
+        try {
+            if (ext === ".js") {
+                scriptProcess = spawn_process('node', [absPath], { stdio: ['ignore', 'pipe', 'pipe'] })
+            } else {
+                scriptProcess = spawn_process('python3', ['-u', absPath], { stdio: ['ignore', 'pipe', 'pipe'] })
+            }
+        } catch (err) {
+            scribbles.error(`SCRIPT SPAWN FAILED: name="${taskName}" path="${relPath}" err=${err}`)
+            task.state = "stop"
+            if (scriptLogStream) { try { scriptLogStream.end() } catch (_) {} }
+            return
+        }
+
+        task.state = "run"
+        task.pid = scriptProcess
+        scribbles.log(`script "${taskName}" spawned pid=${scriptProcess.pid}`)
+
+        if (scriptLogStream) {
+            scriptProcess.stdout.pipe(scriptLogStream)
+            scriptProcess.stderr.pipe(scriptLogStream)
+        }
+
+        // Mirror first stderr chunks into scheduler.log so failures stand out
+        // immediately without having to open the per-script log.
+        let stderrBuf = ''
+        scriptProcess.stderr.on('data', (chunk) => {
+            stderrBuf += chunk.toString()
+            const lines = stderrBuf.split('\n')
+            stderrBuf = lines.pop()
+            for (const line of lines) {
+                if (line.trim()) scribbles.warn(`script "${taskName}" stderr: ${line}`)
+            }
+        })
+
+        scriptProcess.on('error', (err) => {
+            scribbles.error(`SCRIPT ERROR: name="${taskName}" err=${err}`)
+        })
+
+        scriptProcess.on('exit', (code, signal) => {
+            const msg = `script "${taskName}" exited code=${code} signal=${signal} pid=${scriptProcess.pid}`
+            if (code === 0 || signal === 'SIGTERM' || signal === 'SIGKILL') {
+                scribbles.log(msg)
+            } else {
+                scribbles.error(`SCRIPT CRASHED: ${msg} — check logs/script_${safeName}.log for details`)
+            }
+            if (scriptLogStream) { try { scriptLogStream.end() } catch (_) {} }
+            if (task.pid === scriptProcess) {
+                task.state = "stop"
+                delete task.pid
+            }
+        })
 
         var taskList = []
         for (var tIndex in scheduler_table) {
-            task = scheduler_table[tIndex]
-            if (task.hasOwnProperty('state')) {
-                if (task.state == "run") {
+            const t = scheduler_table[tIndex]
+            if (t.hasOwnProperty('state')) {
+                if (t.state == "run") {
                     taskList.push(scheduler_table[tIndex].task_name)
                 }
             }
@@ -441,4 +540,91 @@ function scheduler_init() {
 }
 
 
+// ===================== Health checks =====================
+
+const HEALTH_CHECK_INTERVAL_MS = 30000
+const HEALTH_GRACE_AFTER_START_MS = 8000
+const HEALTH_SUMMARY_INTERVAL_MS = 300000
+let lastHealthIssues = ''
+let lastHealthSummaryAt = 0
+
+function pgrep_lines(args) {
+    try {
+        const r = spawnSync('pgrep', args)
+        if (r.status === 0) {
+            return r.stdout.toString().trim().split('\n').filter(Boolean).map(Number)
+        }
+    } catch (e) {}
+    return []
+}
+
+function checkPlayerHealth() {
+    try {
+        if (state.player_state !== 'play' || !state.current_task_pid) return
+        if (state.last_start_time && Date.now() - state.last_start_time < HEALTH_GRACE_AFTER_START_MS) return
+
+        const proc = state.current_task_pid
+        const pid = proc.pid
+        let playerAlive = false
+        try { process.kill(pid, 0); playerAlive = true } catch (e) {}
+
+        const mpvChildren = playerAlive ? pgrep_lines(['-P', String(pid), 'mpv']) : []
+        const workerChildren = playerAlive ? pgrep_lines(['-P', String(pid), '-f', 'audio_worker.py']) : []
+        const allMpv = pgrep_lines(['-f', 'mpv.*playerok-mpv\\.sock'])
+        const allWorkers = pgrep_lines(['-f', 'player/audio_worker.py'])
+        const orphanMpv = allMpv.filter(p => !mpvChildren.includes(p))
+        const orphanWorkers = allWorkers.filter(p => !workerChildren.includes(p))
+
+        const issues = []
+        if (!playerAlive) issues.push('player.js dead')
+        if (playerAlive && mpvChildren.length === 0) issues.push('mpv child missing')
+        if (mpvChildren.length > 1) issues.push(`mpv multi (${mpvChildren.length})`)
+        if (orphanMpv.length > 0) issues.push(`orphan mpv (${orphanMpv.join(',')})`)
+        if (orphanWorkers.length > 0) issues.push(`orphan audio_worker (${orphanWorkers.length})`)
+
+        const summary = `task=${state.current_player_task_index} player_pid=${pid} alive=${playerAlive} mpv=${mpvChildren.join(',') || 'none'} workers=${workerChildren.length} orphans_mpv=${orphanMpv.length} orphans_worker=${orphanWorkers.length}`
+
+        if (issues.length > 0) {
+            scribbles.warn(`[health] ${issues.join('; ')} | ${summary}`)
+            lastHealthIssues = issues.join('; ')
+
+            if ((orphanMpv.length > 0 || orphanWorkers.length > 0) && playerAlive && mpvChildren.length > 0) {
+                scribbles.warn(`[health] reaping orphans without restart (mpv=${orphanMpv.length} workers=${orphanWorkers.length})`)
+                for (const o of orphanMpv) {
+                    try { process.kill(o, 'SIGKILL') } catch (e) {}
+                }
+                for (const o of orphanWorkers) {
+                    try { process.kill(o, 'SIGKILL') } catch (e) {}
+                }
+            }
+
+            if (!playerAlive || (playerAlive && mpvChildren.length === 0)) {
+                const idx = state.current_player_task_index
+                if (idx !== undefined && idx >= 0 && scheduler_table[idx] && scheduler_table[idx].state === 'run') {
+                    scribbles.warn(`[health] auto-recovery: restart player for task index=${idx}`)
+                    state.player_state = 'stop'
+                    stop_player()
+                    setTimeout(() => {
+                        if (scheduler_table[idx] && scheduler_table[idx].state === 'run') {
+                            start_player(idx)
+                        }
+                    }, 2500)
+                }
+            }
+        } else {
+            if (lastHealthIssues) {
+                scribbles.log(`[health] recovered | ${summary}`)
+                lastHealthIssues = ''
+                lastHealthSummaryAt = Date.now()
+            } else if (Date.now() - lastHealthSummaryAt > HEALTH_SUMMARY_INTERVAL_MS) {
+                scribbles.log(`[health] OK | ${summary}`)
+                lastHealthSummaryAt = Date.now()
+            }
+        }
+    } catch (err) {
+        scribbles.error(`[health] check error: ${err && err.stack ? err.stack : err}`)
+    }
+}
+
+setInterval(checkPlayerHealth, HEALTH_CHECK_INTERVAL_MS)
 

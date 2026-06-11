@@ -7,8 +7,8 @@ mixin table-row(index, name, path)
         td(data-label="Name")= name 
         td(data-label="Path")= path
         td(data-label="Controls")
-            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' onclick=`edit_playlist_modal('${path}')`) edit
-            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' data-bs-toggle='modal' data-bs-target='#verify_delete' d-name=name d-index=index) delete
+            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' onclick=`edit_playlist_modal('${path}')`) изменить
+            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' data-bs-toggle='modal' data-bs-target='#verify_delete' d-name=name d-index=index) удалить
 
 
 block content
@@ -19,15 +19,15 @@ block content
     div(style='padding-top: 56px; ').container-xxl
         card.card.card_shadow.h-100.mt-4
             .bg-secondary.card-img-top
-                .h4.mx-2.mt-2 Available playlists
+                .h4.mx-2.mt-2 Доступные плейлисты
             .card_body.p-2
                 table.table.table-hover
                     thead
                         tr
                             th(scope='col' style='width:3%') #
-                            th(scope='col' style='width:20%') Name
-                            th(scope='col' style='width:62%') Path
-                            th(scope='col' style='width:15%') Control
+                            th(scope='col' style='width:20%') Имя
+                            th(scope='col' style='width:62%') Путь
+                            th(scope='col' style='width:15%') Действия
                     tbody
                         each playlist, index in playlist_table
                             //- var pt_ind = playlist_table.findIndex(o => o.id_md5 == task.id_md5)
@@ -38,7 +38,7 @@ block content
                         tr
                             td(colspan='3')
                             td(data-label="Controls") 
-                                button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' data-bs-toggle='modal' data-bs-target='#newPlaylistModal') add
+                                button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' data-bs-toggle='modal' data-bs-target='#newPlaylistModal') добавить
 
     //----------------------Edit playlist MODAL----------------------------
     include modals/editPlaylist_modal.pug
@@ -52,40 +52,40 @@ block content
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4.editTrackModalTitle New playlist:
+                    h4.editTrackModalTitle Новый плейлист:
                 .modal-body
                     .input-group
-                        span.input-group-text.fs-5.fw-bold Playlist name:
+                        span.input-group-text.fs-5.fw-bold Имя плейлиста:
                         input#newPlaylist_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
                 .modal-footer
-                    button.btn.btn-secondary(onclick = 'newPlaylist()') Create
-                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = '') Cancel
+                    button.btn.btn-secondary(onclick = 'newPlaylist()') Создать
+                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = '') Отмена
     
     #confirmDeleteTrackModal.modal.modal-xl.modal-fullscreen-xl-down.fade(tabindex='-1' aria-labelledby='newPlaylistModal' aria-hidden='true' data-bs-backdrop="static")
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4.editTrackModalTitle Delete track:
+                    h4.editTrackModalTitle Удалить трек:
                 .modal-body
                     .input-group
-                        span.input-group-text.fs-5.fw-bold Track name:
+                        span.input-group-text.fs-5.fw-bold Имя трека:
                         input#deleteTrack_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)' disabled='' readonly='')
                 .modal-footer
-                    button.btn.btn-secondary(onclick = 'delete_track()') Confirm
-                    button.btn.btn-secondary(onclick = 'cancel_delete_track()') Cancel
+                    button.btn.btn-secondary(onclick = 'delete_track()') Подтвердить
+                    button.btn.btn-secondary(onclick = 'cancel_delete_track()') Отмена
 
     //----------------------Confirm delete MODAL----------------------------
     #verify_delete.modal.fade(aria-hidden='true' aria-labelledby='verify_deleteModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header
-                    h1#verify_delete.modal-title.fs-5 Confirm delete
-                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                    h1#verify_delete.modal-title.fs-5 Подтвердите удаление
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
                 .modal-body
                     h2.name_to_delete
                 .modal-footer
-                    button.btn.btn-primary(data-bs-dismiss="modal" onclick = 'delete_playlist()') Delete
-                    button.btn.btn-primary(data-bs-dismiss="modal") Cancel
+                    button.btn.btn-primary(data-bs-dismiss="modal" onclick = 'delete_playlist()') Удалить
+                    button.btn.btn-primary(data-bs-dismiss="modal") Отмена
 
 
     //script(src="assets/editor.js")
@@ -166,7 +166,7 @@ block content
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             }).then((res) => {
@@ -186,12 +186,18 @@ block content
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(outData)
-            }).then((res) => {
-                console.log("Playlist POST OK, res: ", res)
-                
+            }).then(async (res) => {
+                if (!res.ok) {
+                    const body = await res.json().catch(() => ({}))
+                    const msg = body.message || `Не удалось сохранить плейлист (HTTP ${res.status})`
+                    console.warn("Playlist POST failed:", body)
+                    alert(msg)
+                    throw new Error(msg)
+                }
+                console.log("Playlist POST OK")
                 }).catch((err) => {
                 console.log(err)
             })
@@ -233,7 +239,7 @@ block content
                 method: 'GET',
                 headers: {
                     'Accept': 'application/json',
-                    'Content-Type': 'application/x-www-form-urlencoded'
+                    'Content-Type': 'application/json'
                 }
             }).then((res) => res.json()
             ).then((dat) => {
@@ -248,7 +254,7 @@ block content
 
         function getTopicList(){
             let brokerAddress = `ws://${location.host}:1890/mqtt`
-            client = mqtt.connect(brokerAddress)
+            client = mqtt.connect(brokerAddress, { username: config.security.admin_login, password: config.security.admin_pass })
             
             client.on('connect', function () {
                 console.log("mqtt brocker connected!");

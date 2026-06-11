@@ -3,6 +3,21 @@
 <head>
     block title
     <meta charset="utf-8" />
+    meta(name="csrf-token" content=csrfToken)
+    script.
+        // Helper for state-changing actions (reboot, power_off, ...).
+        // POSTs to `url` with the session CSRF token after user confirms.
+        window.confirmAndPost = function(url, msg) {
+            if (!confirm(msg || ('POST ' + url + '?'))) return
+            const tokenEl = document.querySelector('meta[name="csrf-token"]')
+            const token = tokenEl ? tokenEl.getAttribute('content') : ''
+            fetch(url, {
+                method: 'POST',
+                headers: { 'X-CSRF-Token': token, 'Content-Type': 'application/json' }
+            }).then(r => {
+                if (!r.ok) alert('Request failed: ' + r.status)
+            }).catch(err => alert('Network error: ' + err))
+        }
 
     link(link rel="icon" type="image/x-icon" href="/icons/favicon.ico")
 

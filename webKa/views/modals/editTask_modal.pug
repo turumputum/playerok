@@ -2,22 +2,22 @@
     .modal-dialog.modal-xl
         .modal-content
             .modal-header
-                h5#editTaskModalLabel.modal-title Edit task
-                button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                h5#editTaskModalLabel.modal-title Редактировать задачу
+                button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
             .modal-body
                 .input-group
-                    span.input-group-text.fs-5.fw-bold Task name:
+                    span.input-group-text.fs-5.fw-bold Имя задачи:
                     input#task_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
 
                 card.card.card_shadow.h-100.mt-4
                     .bg-secondary.card-img-top
-                        .h4.mx-2.mt-2 Playlist
+                        .h4.mx-2.mt-2 Плейлист
                     table.table
                         thead
                             tr
-                                th(scope='col') Name
-                                th(scope='col') Path
-                                th(scope='col') Type
+                                th(scope='col') Имя
+                                th(scope='col') Путь
+                                th(scope='col') Тип
 
                         tbody
                             tr  
@@ -30,20 +30,20 @@
 
                 .card.mt-4.card_shadow
                     .bg-secondary.card-img-top
-                        .h4.mx-2.mt-2 Triggers
+                        .h4.mx-2.mt-2 Триггеры
                     .card-header.text-center
                         ul#triggerTabs.nav.nav-tabs.card-header-tabs
                             li
-                                button#schedule_tab.nav-link.active(aria-current='true' data-toggle="tab") Schedule
+                                button#schedule_tab.nav-link.active(aria-current='true' data-toggle="tab") Расписание
                             li
-                                button#topic_trigger_tab.nav-link(data-toggle="tab") Topic 
+                                button#topic_trigger_tab.nav-link(data-toggle="tab") Топик
                     .card-body
                         table.table#table_playlist_schedule
                             thead
                                 tr
-                                    th(scope='col') Start time
-                                    th(scope='col') End time
-                                    th(scope='col') Week days
+                                    th(scope='col') Время начала
+                                    th(scope='col') Время окончания
+                                    th(scope='col') Дни недели
                             tbody
                                 tr
                                     td(data-label="Start time" style="width: 25%;")
@@ -52,28 +52,28 @@
                                         input#e_time_input.form-control(type='time' placeholder='' aria-label='')
                                     td#weekdays(data-label="Week days")
                                         input#mon_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='mon_day' style="--bs-btn-font-size: 15px; width: 60px;") Mon
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='mon_day' style="--bs-btn-font-size: 15px; width: 60px;") Пн
                                         input#tue_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='tue_day' style="--bs-btn-font-size: 15px; width: 60px;") Tue
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='tue_day' style="--bs-btn-font-size: 15px; width: 60px;") Вт
                                         input#wen_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='wen_day' style="--bs-btn-font-size: 15px; width: 60px;") Wen
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='wen_day' style="--bs-btn-font-size: 15px; width: 60px;") Ср
                                         input#thu_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='thu_day' style="--bs-btn-font-size: 15px; width: 60px;") Thu
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='thu_day' style="--bs-btn-font-size: 15px; width: 60px;") Чт
                                         input#fri_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='fri_day' style="--bs-btn-font-size: 15px; width: 60px;") Fri
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='fri_day' style="--bs-btn-font-size: 15px; width: 60px;") Пт
                                         input#sat_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='sat_day' style="--bs-btn-font-size: 15px; width: 60px;") Sat 
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='sat_day' style="--bs-btn-font-size: 15px; width: 60px;") Сб
                                         input#sun_day.btn-check(type='checkbox' checked='' autocomplete='off')
-                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='sun_day' style="--bs-btn-font-size: 15px; width: 60px;") Sun
+                                        label.btn.btn-outline-secondary.mb-2.mx-1(for='sun_day' style="--bs-btn-font-size: 15px; width: 60px;") Вс
 
                         table.table#table_trigger_topics.table-hover( aria-hidden='true')
                             datalist#trigger_topics_list
                             thead
                                 tr
-                                    th(scope='col') Event
-                                    th(scope='col') Topic
-                                    th(scope='col' style="width: 15%;") Payload
-                                    th(scope='col' style="width: 15%;") Controls
+                                    th(scope='col') Событие
+                                    th(scope='col') Топик
+                                    th(scope='col' style="width: 15%;") Сообщение
+                                    th(scope='col' style="width: 15%;") Действия
                             tbody
                                 tr
 
@@ -92,8 +92,8 @@
                 //-         tbody
 
             .modal-footer
-                button.btn.btn-secondary(onclick = 'save_task()') Save
-                button.btn.btn-secondary(onclick = 'cancel_edit_task()') Cancel
+                button.btn.btn-secondary(onclick = 'save_task()') Сохранить
+                button.btn.btn-secondary(onclick = 'cancel_edit_task()') Отмена
 
 
 script.
@@ -194,13 +194,13 @@ script.
             newRow.insertCell().innerHTML = `<input id='${identify}_payload_${topic_index}' class="form-control"></input>`
             $(`#${identify}_payload_${topic_index}`).val(topic.payload)
 
-            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic('${identify}','${topic_index}')">delete</button>`
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic('${identify}','${topic_index}')">удалить</button>`
         }
         newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
         newRow.insertCell()
         newRow.insertCell()
         newRow.insertCell()
-        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic('${identify}')">add</button>`
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic('${identify}')">добавить</button>`
     }
 
     function show_schedule(task_index){
@@ -391,8 +391,8 @@ script.
 
     function getTopicList(){
             let brokerAddress = `ws://${location.host}:1890/mqtt`
-            client = mqtt.connect(brokerAddress)
-            
+            client = mqtt.connect(brokerAddress, !{JSON.stringify({ username: config.security.admin_login, password: config.security.admin_pass })})
+
             client.on('connect', function () {
                 console.log("mqtt brocker connected!");
                 client.subscribe('clients/#')

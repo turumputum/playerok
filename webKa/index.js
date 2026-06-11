@@ -49,8 +49,8 @@ const app = express();
 const http = app.listen(port);
 
 app.set("views", path.join(__dirname, "views"));
-app.use('/meta', express.static('/home/playerok/playerok/meta'))
-app.use('/logs', express.static('/home/playerok/playerok/logs'))
+// '/meta' and '/logs' are no longer served statically — they contain secrets (wifi/admin passwords).
+// Use /save_config / /get_logs / /api/logs/:filename instead; these go through redactSecrets().
 app.use('/css', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/css')))
 app.use('/js', express.static(path.join(__dirname, 'node_modules/bootstrap/dist/js')))
 app.use('/jquery', express.static(path.join(__dirname, 'node_modules/jquery/dist')))
@@ -86,38 +86,268 @@ scribbles.config({
 })
 
 
-app.get('/reboot', function (req, res) {
-  scribbles.log("time to reboot")
-  execPromise('sudo reboot now')
-  return res.redirect('/');
-});
-
-app.get('/power_off', function (req, res) {
-  execPromise('sudo poweroff')
-  return res.redirect('/');
-});
-
+// requireCsrfToken / /reboot / /power_off are defined further down, AFTER the
+// session+csrfToken middleware is mounted — otherwise req.session would be
+// undefined when those handlers run and every POST would return 403.
 
 
 
 
 //----------------CONFIG------------------------------
 
+// Load (or create on first start) a per-device session secret. Stored at
+// meta/.session_key with mode 0600. Setting SESSION_KEY in the environment
+// overrides the file (useful for tests).
+function loadOrCreateSessionSecret() {
+  const SESSION_KEY_PATH = '/home/playerok/playerok/meta/.session_key'
+  try {
+    const existing = fs.readFileSync(SESSION_KEY_PATH, 'utf8').trim()
+    if (existing.length >= 32) return existing
+    scribbles.warn(`session_key file too short, regenerating`)
+  } catch (e) {
+    // doesn't exist or unreadable — fall through to generate
+  }
+  const fresh = require('crypto').randomBytes(64).toString('hex')
+  try {
+    fs.writeFileSync(SESSION_KEY_PATH, fresh, { mode: 0o600 })
+    scribbles.log(`Generated new session secret at ${SESSION_KEY_PATH}`)
+  } catch (e) {
+    scribbles.error(`Failed to persist session secret (${e.message}); using in-memory secret — sessions will not survive restart`)
+  }
+  return fresh
+}
+
 app.use(
   session({
-    secret: process.env.SESSION_KEY || "meowmeow",
+    secret: process.env.SESSION_KEY || loadOrCreateSessionSecret(),
     resave: false,
-    saveUninitialized: false,
+    saveUninitialized: true,  // need session created on first GET so we can stash csrfToken
   })
 );
+
+// Per-session CSRF token. Required by POST /reboot, /power_off (and any
+// future state-changing endpoint that calls requireCsrfToken). The token is
+// exposed to Pug templates as `csrfToken` for inlining into a <meta> tag.
+const _crypto = require('crypto')
+app.use((req, res, next) => {
+  if (req.session && !req.session.csrfToken) {
+    req.session.csrfToken = _crypto.randomBytes(32).toString('hex')
+  }
+  res.locals.csrfToken = (req.session && req.session.csrfToken) || ''
+  next()
+})
+
+// /reboot and /power_off are dangerous state-changing actions:
+//   1. moved from GET to POST (a stray <img src=...> can no longer trigger them)
+//   2. require a session-bound CSRF token header (X-CSRF-Token)
+// Mounted here, AFTER session+csrfToken middleware, so req.session is populated.
+function requireCsrfToken(req, res) {
+  const expected = req.session && req.session.csrfToken
+  const got = req.headers['x-csrf-token']
+  if (!expected || !got || expected !== got) {
+    scribbles.warn(`CSRF token missing/mismatch on ${req.method} ${req.path} (expected=${expected ? 'set' : 'missing'}, got=${got ? 'set' : 'missing'})`)
+    res.status(403).json({ error: 'csrf_token_invalid' })
+    return false
+  }
+  return true
+}
+
+app.post('/reboot', function (req, res) {
+  if (!requireCsrfToken(req, res)) return
+  scribbles.log("time to reboot")
+  execPromise('sudo reboot now')
+  return res.json({ ok: true })
+});
+
+app.post('/power_off', function (req, res) {
+  if (!requireCsrfToken(req, res)) return
+  scribbles.log("time to power off")
+  execPromise('sudo poweroff')
+  return res.json({ ok: true })
+});
+
 app.use(flash());
 app.use(fileUpload());
 app.use(
   bodyParser.urlencoded({
     extended: false,
+    limit: '10mb',
   })
 );
-app.use(bodyParser.json());
+// Drop __proto__/constructor keys at parse time so a JSON body cannot pollute
+// Object.prototype (sanitizing later via Object.keys is too late — those keys
+// land on the prototype chain, not as own enumerable properties).
+app.use(bodyParser.json({
+  limit: '10mb',
+  reviver: (key, value) => (key === '__proto__' || key === 'constructor') ? undefined : value
+}));
+
+
+// Recursively strip __proto__ keys so saved JSON, when re-parsed by consumers,
+// cannot pollute Object.prototype. We don't drop 'constructor'/'prototype' —
+// those are legitimate field names a future schema might use.
+function sanitizeJsonObject(obj) {
+  if (obj === null || typeof obj !== 'object') return obj
+  if (Array.isArray(obj)) return obj.map(sanitizeJsonObject)
+  const out = {}
+  for (const k of Object.keys(obj)) {
+    if (k === '__proto__') continue
+    out[k] = sanitizeJsonObject(obj[k])
+  }
+  return out
+}
+
+// Write JSON to disk atomically: stage in a sibling tmp file, then rename.
+// Crash mid-write leaves the existing file intact. webka runs as root but
+// every consumer (scheduler, player.js) runs as playerok; if we left the
+// file root-owned with mode 0600 they'd get EACCES on the next read. So:
+//   - default mode 0644 (these tables/playlists are not secrets);
+//   - pass { mode: 0o600 } explicitly for files holding secrets (player_config.json);
+//   - when running as root, inherit the directory's uid/gid so the file
+//     belongs to playerok regardless of who wrote it.
+function atomicWriteJsonSync(filePath, data, options = {}) {
+  const dir = path.dirname(filePath)
+  const tmp = path.join(dir, `.${path.basename(filePath)}.tmp.${process.pid}.${Date.now()}`)
+  const payload = typeof data === 'string' ? data : JSON.stringify(data, null, 2)
+  const mode = typeof options.mode === 'number' ? options.mode : 0o644
+  fs.writeFileSync(tmp, payload, { mode })
+  fs.renameSync(tmp, filePath)
+  try {
+    if (typeof process.geteuid === 'function' && process.geteuid() === 0) {
+      const st = fs.statSync(dir)
+      fs.chownSync(filePath, st.uid, st.gid)
+      fs.chmodSync(filePath, mode)
+    }
+  } catch (e) {
+    scribbles.warn(`atomicWriteJsonSync chown/chmod fallback failed for ${filePath}: ${e}`)
+  }
+}
+
+// Minimal shape checks — reject obviously broken structures so subscripts
+// (set_net_config, set_security_config, ...) don't crash on missing fields.
+// Each returns null on success, or { error, message } on failure.
+function validateConfigShape(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return { error: 'invalid_config', message: 'config must be a JSON object' }
+  }
+  const requiredSections = ['net', 'sound', 'screen', 'security', 'log', 'time']
+  for (const k of requiredSections) {
+    if (obj[k] != null && (typeof obj[k] !== 'object' || Array.isArray(obj[k]))) {
+      return { error: 'invalid_config', message: `config.${k} must be an object` }
+    }
+  }
+  return null
+}
+
+function validateSchedulerTable(arr) {
+  if (!Array.isArray(arr)) {
+    return { error: 'invalid_scheduler_table', message: 'scheduler table must be an array' }
+  }
+  for (let i = 0; i < arr.length; i++) {
+    const t = arr[i]
+    if (!t || typeof t !== 'object' || Array.isArray(t)) {
+      return { error: 'invalid_scheduler_table', message: `task[${i}] must be an object` }
+    }
+    // task_name and task_path/path are the fields scheduler/player read; keep loose
+    if (t.task_name != null && typeof t.task_name !== 'string') {
+      return { error: 'invalid_scheduler_table', message: `task[${i}].task_name must be a string` }
+    }
+    if (t.task_path != null && typeof t.task_path !== 'string') {
+      return { error: 'invalid_scheduler_table', message: `task[${i}].task_path must be a string` }
+    }
+    if (t.path != null && typeof t.path !== 'string') {
+      return { error: 'invalid_scheduler_table', message: `task[${i}].path must be a string` }
+    }
+  }
+  return null
+}
+
+function validatePlaylistShape(obj) {
+  if (!obj || typeof obj !== 'object' || Array.isArray(obj)) {
+    return { error: 'invalid_playlist', message: 'playlist must be an object' }
+  }
+  if (obj.playlist_name != null && typeof obj.playlist_name !== 'string') {
+    return { error: 'invalid_playlist', message: 'playlist.playlist_name must be a string' }
+  }
+  if (obj.tracks != null) {
+    if (!Array.isArray(obj.tracks)) {
+      return { error: 'invalid_playlist', message: 'playlist.tracks must be an array' }
+    }
+    for (let i = 0; i < obj.tracks.length; i++) {
+      if (!obj.tracks[i] || typeof obj.tracks[i] !== 'object') {
+        return { error: 'invalid_playlist', message: `playlist.tracks[${i}] must be an object` }
+      }
+    }
+  }
+  return null
+}
+
+function redactSecrets(text) {
+  if (text == null) return ''
+  if (typeof text !== 'string') text = String(text)
+  return text
+    .replace(/"(password|admin_pass|psk|secret|token|api_key|wifi_password|wlan_password)"\s*:\s*"[^"]*"/gi, '"$1":"[REDACTED]"')
+    .replace(/wifi-sec\.psk\s+\S+/gi, 'wifi-sec.psk [REDACTED]')
+    .replace(/yes\s+\S+\s*\|\s*passwd/gi, 'yes [REDACTED] | passwd')
+    .replace(/\bpassword\s*=\s*\S+/gi, 'password=[REDACTED]')
+    .replace(/\bpsk\s*=\s*\S+/gi, 'psk=[REDACTED]')
+}
+
+function getSecurityWarnings() {
+  const warnings = []
+  let cfg = null
+  try { cfg = JSON.parse(fs.readFileSync('../meta/player_config.json')) } catch {}
+
+  if (!cfg || !cfg.security || cfg.security.auth != 1) {
+    warnings.push({
+      id: 'auth_disabled',
+      level: 'danger',
+      title: 'Аутентификация выключена',
+      message: 'Веб-интерфейс открыт без логина — любой хост в локальной сети может управлять устройством, менять конфигурацию и удалять файлы. Включите в Settings → Security.'
+    })
+  }
+  if (cfg && cfg.security && (cfg.security.admin_pass === 'playerok' || !cfg.security.admin_pass)) {
+    warnings.push({
+      id: 'default_password',
+      level: 'warning',
+      title: 'Пароль admin не изменён',
+      message: 'Используется пароль по умолчанию. Смените в Settings → Security.'
+    })
+  }
+
+  let mqttHasAuth = false
+  try {
+    const confs = ['/etc/mosquitto/mosquitto.conf']
+    try {
+      for (const f of fs.readdirSync('/etc/mosquitto/conf.d')) {
+        if (f.endsWith('.conf')) confs.push('/etc/mosquitto/conf.d/' + f)
+      }
+    } catch {}
+    for (const p of confs) {
+      try {
+        const txt = fs.readFileSync(p, 'utf8')
+        if (/^\s*password_file\s/m.test(txt) || /^\s*allow_anonymous\s+false/m.test(txt)) {
+          mqttHasAuth = true
+          break
+        }
+      } catch {}
+    }
+  } catch {}
+  if (!mqttHasAuth) {
+    warnings.push({
+      id: 'mqtt_no_auth',
+      level: 'warning',
+      title: 'MQTT-брокер без пароля',
+      message: 'Mosquitto принимает анонимные подключения. Желательно ограничить брокер локальным интерфейсом и добавить пароль.'
+    })
+  }
+  return warnings
+}
+
+app.use((req, res, next) => {
+  res.locals.security_warnings = getSecurityWarnings()
+  next()
+})
 
 
 function relative(...paths) {
@@ -128,6 +358,32 @@ function relative(...paths) {
   //   throw new Error("Failed to resolve path outside of the working directory");
   // }
   return finalPath;
+}
+
+// Path containment helpers: every file-touching endpoint must use these to
+// reject ../ traversal, absolute paths escaping data/, and symlink-style tricks.
+const DATA_ROOT = path.resolve(__dirname, '..', 'data')
+const PLAYLISTS_ROOT = path.resolve(DATA_ROOT, 'playlists')
+
+function safeDataPath(...segments) {
+  const cleaned = segments
+    .filter(s => s != null)
+    .map(s => String(s).replace(/^\/+/, ''))  // strip leading '/' so resolve treats every segment as relative to DATA_ROOT
+  if (cleaned.some(s => s.indexOf('\0') !== -1)) return null
+  const joined = path.resolve(DATA_ROOT, ...cleaned)
+  if (joined !== DATA_ROOT && !joined.startsWith(DATA_ROOT + path.sep)) return null
+  return joined
+}
+
+function safePlaylistPath(userPath) {
+  if (typeof userPath !== 'string' || !userPath.length) return null
+  let s = userPath.replace(/^\.{1,2}\//, '')
+  if (s.startsWith('data/')) s = s.slice(5)
+  if (s.startsWith('playlists/')) s = s.slice('playlists/'.length)
+  if (s.indexOf('\0') !== -1) return null
+  const joined = path.resolve(PLAYLISTS_ROOT, s)
+  if (!joined.startsWith(PLAYLISTS_ROOT + path.sep)) return null
+  return joined
 }
 function flashify(req, obj) {
   let error = req.flash("error");
@@ -149,33 +405,48 @@ function flashify(req, obj) {
 }
 
 app.use((req, res, next) => {
-  if (req.method === "GET") {
+  if (req.method === "GET" || req.method === "HEAD" || req.method === "OPTIONS") {
     return next();
   }
   let sourceHost = null;
-  if (req.headers.origin) {
-    sourceHost = new URL(req.headers.origin).host;
-  } else if (req.headers.referer) {
-    sourceHost = new URL(req.headers.referer).host;
+  try {
+    if (req.headers.origin) {
+      sourceHost = new URL(req.headers.origin).host;
+    } else if (req.headers.referer) {
+      sourceHost = new URL(req.headers.referer).host;
+    }
+  } catch (e) {
+    sourceHost = null
   }
-  if (sourceHost !== req.headers.host) {
-    throw new Error(
-      "Origin or Referer header does not match or is missing. Request has been blocked to prevent CSRF"
-    );
+  if (sourceHost !== null && sourceHost !== req.headers.host) {
+    // Origin/Referer present but cross-origin — reject with 403 instead of
+    // throwing (which used to escape async stacks and crash the request).
+    scribbles.warn(`CSRF: Origin/Referer ${sourceHost} != Host ${req.headers.host}`)
+    return res.status(403).json({ error: 'csrf_origin_mismatch' })
   }
+  // sourceHost === null (no Origin/Referer): allow — many CLI clients (curl,
+  // node scripts) don't send these. Endpoints that need stricter protection
+  // require an explicit CSRF token via requireCsrfToken().
   next();
 });
 
 
 app.all("/data*", (req, res, next) => {
 
-  res.filename = '../data' + req.params[0];
-  //scribbles.log("all filename: " + res.filename)
+  const sub = req.params[0] || ''
+  const safe = safeDataPath(sub)
+  if (!safe) {
+    scribbles.warn(`data path rejected — escapes data root: ${sub}`)
+    res.stats = { error: new Error('invalid_path') }
+    res.filename = '../data' + sub
+    res.absPath = null
+    return next()
+  }
+  res.filename = '../data' + sub;  // preserve old format for UI breadcrumb
+  res.absPath = safe;               // absolute, safe path for fs ops
 
   let fileExists = new Promise((resolve, reject) => {
-    // check if file exists
-    //fs.stat(relative(res.filename), (err, stats) => {
-    fs.stat(res.filename, (err, stats) => {
+    fs.stat(safe, (err, stats) => {
       if (err) {
         return reject(err);
       }
@@ -197,16 +468,22 @@ app.all("/data*", (req, res, next) => {
 app.post("/data/*@move", (req, res) => {
   const move_data = req.body
   scribbles.log("Move request body: " + JSON.stringify(move_data))
-  
-  // Validate destination path
+
   if (!move_data.new_path_val || typeof move_data.new_path_val !== 'string' || move_data.new_path_val.length === 0) {
     scribbles.warn("Invalid destination path for move: " + JSON.stringify(move_data))
     req.flash("error", "No destination folder selected.");
     return res.redirect("back");
   }
-  
-  // new_path_val is already in format ../data/123, don't add another ../
-  res.filename = "../data/" + req.params[0]
+
+  const sub = req.params[0] || ''
+  const sourceBase = safeDataPath(sub)
+  const destBase = safeDataPath(move_data.new_path_val)
+  if (!sourceBase || !destBase) {
+    scribbles.warn(`move rejected — invalid path sub=${sub} dest=${move_data.new_path_val}`)
+    req.flash("error", "Invalid path.")
+    return res.redirect("back")
+  }
+
   let files_to_move = (Array.isArray(move_data.file_names) && move_data.file_names.length > 0)
     ? move_data.file_names
     : [move_data.file_name]
@@ -216,10 +493,25 @@ app.post("/data/*@move", (req, res) => {
     req.flash("error", "No files selected for move.");
     return res.redirect("back");
   }
-  scribbles.log("lets move: " + JSON.stringify(files_to_move) + " from " + res.filename + "  to  " + move_data.new_path_val)
+
+  let movePairs
+  try {
+    movePairs = files_to_move.map(f => {
+      const src = safeDataPath(sub, f)
+      const dst = safeDataPath(move_data.new_path_val, f)
+      if (!src || !dst) throw new Error(`invalid_path:${f}`)
+      return { name: f, src, dst }
+    })
+  } catch (e) {
+    scribbles.warn(`move rejected — ${e.message}`)
+    req.flash("error", "Invalid file name.")
+    return res.redirect("back")
+  }
+
+  scribbles.log("lets move: " + JSON.stringify(files_to_move) + " from " + sourceBase + "  to  " + destBase)
 
   new Promise((resolve, reject) => {
-    fs.access(relative(res.filename), fs.constants.W_OK, (err) => {
+    fs.access(sourceBase, fs.constants.W_OK, (err) => {
       if (err) {
         return reject(err);
       }
@@ -227,18 +519,14 @@ app.post("/data/*@move", (req, res) => {
     });
   })
     .then(() => {
-      let move_promises = files_to_move.map((file_name) => {
+      let move_promises = movePairs.map(({ src, dst }) => {
         return new Promise((resolve, reject) => {
-          fs.rename(
-            relative(res.filename, file_name),
-            relative(move_data.new_path_val, file_name),
-            (err) => {
-              if (err) {
-                return reject(err);
-              }
-              resolve();
+          fs.rename(src, dst, (err) => {
+            if (err) {
+              return reject(err);
             }
-          );
+            resolve();
+          });
         });
       })
 
@@ -263,26 +551,32 @@ app.post("/data/*@move", (req, res) => {
 
 
 app.post('/data/*@upload', function (req, res) {
-  let file_path = req.url.replace("@upload", '')
+  // req.params[0] is automatically URL-decoded by Express (so spaces in filenames
+  // arrive as spaces, not %20). Avoid req.url because that's still percent-encoded.
+  const sub = req.params[0] || ''
+  const base_is_directory = sub.endsWith('/') || sub.length === 0
 
   if (!req.files || Object.keys(req.files).length === 0) {
     return res.status(400).send('No files were uploaded.');
   }
 
   const uploaded_files = Array.isArray(req.files.file) ? req.files.file : [req.files.file]
-  const target_base_path = '../' + file_path
-  const base_is_directory = file_path.endsWith('/')
 
   const upload_promises = uploaded_files.map((uploaded_file) => {
     return new Promise((resolve, reject) => {
-      let upload_path = target_base_path
+      let upload_path
       if (uploaded_files.length > 1 || base_is_directory) {
-        upload_path = relative(target_base_path, uploaded_file.name)
+        upload_path = safeDataPath(sub, uploaded_file.name)
+      } else {
+        upload_path = safeDataPath(sub)
       }
-
+      if (!upload_path) {
+        scribbles.warn(`Upload rejected — path escapes data root: sub=${sub} name=${uploaded_file.name}`)
+        return reject(new Error('invalid_path'))
+      }
       uploaded_file.mv(upload_path, function (err) {
         if (err) {
-          scribbles.err(`Upload error: ${err} path: ${upload_path}`)
+          scribbles.warn(`Upload error: ${err} path: ${upload_path}`)
           return reject(err)
         }
         resolve()
@@ -295,56 +589,50 @@ app.post('/data/*@upload', function (req, res) {
       res.send('complete').end();
     })
     .catch((err) => {
-      return res.status(500).send(err)
+      if (err && err.message === 'invalid_path') return res.status(400).send('invalid path')
+      return res.status(500).send(String(err))
     })
 
-  
+
 });
 
 app.post("/data/*@mkdir", (req, res) => {
-  res.filename = "../data/" + req.params[0];
+  const sub = req.params[0] || ''
+  let folder = (req.body && req.body.folder_name) || ''
 
-  //let folder = req.body.folder;
-  let folder = JSON.parse(Object.keys(req.body)[0]).folder_name
-
-  scribbles.log("lets make directory " + res.filename + folder)
   if (!folder || folder.length < 1) {
     return res.status(400).end();
   }
 
-  let fileExists = new Promise((resolve, reject) => {
-    // Check if file exists
-    fs.stat(relative(res.filename, folder), (err, stats) => {
-      if (err) {
-        return reject(err);
-      }
-      return resolve(stats);
-    });
-  });
+  const target = safeDataPath(sub, folder)
+  if (!target) {
+    scribbles.warn(`mkdir rejected — escapes data root: sub=${sub} folder=${folder}`)
+    req.flash("error", "Invalid folder path.")
+    return res.redirect("back")
+  }
+  scribbles.log("lets make directory " + target)
 
-  fileExists
-    .then((stats) => {
+  fs.stat(target, (statErr, stats) => {
+    if (!statErr) {
       scribbles.log("Folder exists, cannot overwrite. ")
       req.flash("error", "Folder exists, cannot overwrite. ");
+      return res.redirect("back");
+    }
+    fs.mkdir(target, (err) => {
+      if (err) {
+        scribbles.warn(err);
+        req.flash("error", err.toString());
+        return res.redirect("back");
+      }
+      req.flash("success", "Folder created. ");
       res.redirect("back");
-    })
-    .catch((err) => {
-      fs.mkdir(relative(res.filename, folder), (err) => {
-        if (err) {
-          scribbles.warn(err);
-          req.flash("error", err.toString());
-          res.redirect("back");
-          return;
-        }
-        req.flash("success", "Folder created. ");
-        res.redirect("back");
-      });
     });
+  });
 });
 
 app.post("/data/*@delete", (req, res) => {
   const delete_data = req.body
-  res.filename = "../data/" + req.params[0];
+  const sub = req.params[0] || ''
   let del_files = (Array.isArray(delete_data.del_names_val) && delete_data.del_names_val.length > 0)
     ? delete_data.del_names_val
     : [delete_data.del_name_val]
@@ -354,25 +642,30 @@ app.post("/data/*@delete", (req, res) => {
     req.flash("error", "No files selected.");
     return res.redirect("back");
   }
-  scribbles.log("filename to delete: " + res.filename + " files: " + JSON.stringify(del_files))
 
-  //let files = JSON.parse(req.body.files);
-  let files = del_files
-  if (!files || !files.map) {
-    scribbles.log("error", "No files selected.");
-    req.flash("error", "No files selected.");
-    res.redirect("back");
-    return; // res.status(400).end();
+  let resolved
+  try {
+    resolved = del_files.map(f => {
+      const p = safeDataPath(sub, f)
+      if (!p) throw new Error(`invalid_path:${f}`)
+      return { name: f, path: p }
+    })
+  } catch (e) {
+    scribbles.warn(`delete rejected — ${e.message}`)
+    req.flash("error", "Invalid file path.")
+    return res.redirect("back")
   }
+  scribbles.log("delete sub=" + sub + " files=" + JSON.stringify(del_files))
 
-  let promises = files.map((f) => {
+  let promises = resolved.map((f) => {
     return new Promise((resolve, reject) => {
-      fs.stat(relative(res.filename, f), (err, stats) => {
+      fs.stat(f.path, (err, stats) => {
         if (err) {
           return reject(err);
         }
         resolve({
-          name: f,
+          name: f.name,
+          path: f.path,
           isdirectory: stats.isDirectory(),
           isfile: stats.isFile(),
         });
@@ -397,7 +690,7 @@ app.post("/data/*@delete", (req, res) => {
             op = fs.unlink;
           }
           if (op) {
-            op(relative(res.filename, f.name), (err) => {
+            op(f.path, (err) => {
               if (err) {
                 scribbles.log("del failed");
                 return reject(err);
@@ -426,8 +719,8 @@ app.post("/data/*@delete", (req, res) => {
     });
 });
 
-app.get("/*@download", (req, res) => {
-  res.filename = req.params[0];
+app.get("/data/*@download", (req, res) => {
+  const sub = req.params[0] || ''
 
   let files = null;
   try {
@@ -436,17 +729,33 @@ app.get("/*@download", (req, res) => {
   if (!files || !files.map) {
     req.flash("error", "No files selected.");
     res.redirect("back");
-    return; // res.status(400).end();
+    return;
   }
 
-  let promises = files.map((f) => {
+  let resolved
+  try {
+    resolved = files.map(f => {
+      const p = safeDataPath(sub, f)
+      if (!p) throw new Error(`invalid_path:${f}`)
+      return { name: f, path: p }
+    })
+  } catch (e) {
+    scribbles.warn(`download rejected — ${e.message}`)
+    return res.status(400).send('invalid path')
+  }
+
+  let promises = resolved.map((f) => {
     return new Promise((resolve, reject) => {
-      fs.stat(relative(res.filename, f), (err, stats) => {
+      fs.lstat(f.path, (err, stats) => {
         if (err) {
           return reject(err);
         }
+        if (stats.isSymbolicLink()) {
+          return reject(new Error(`symlink_refused:${f.name}`));
+        }
         resolve({
-          name: f,
+          name: f.name,
+          path: f.path,
           isdirectory: stats.isDirectory(),
           isfile: stats.isFile(),
         });
@@ -466,12 +775,12 @@ app.get("/*@download", (req, res) => {
       files
         .filter((f) => f.isfile)
         .forEach((f) => {
-          zip.file(relative(res.filename, f.name), { name: f.name });
+          zip.file(f.path, { name: f.name });
         });
       files
         .filter((f) => f.isdirectory)
         .forEach((f) => {
-          zip.directory(relative(res.filename, f.name), f.name);
+          zip.directory(f.path, f.name);
         });
 
       res.attachment("Archive.zip");
@@ -487,13 +796,21 @@ app.get("/*@download", (req, res) => {
 });
 
 app.post("/data/*@rename", (req, res) => {
-  const rename_data = JSON.parse(Object.keys(req.body)[0])
-  //res.filename = req.params[0];
+  const rename_data = req.body || {}
+  const sub = req.params[0] || ''
   scribbles.log("lets rename: " + rename_data.old_name_val + "  to  " + rename_data.new_name_val)
-  scribbles.log("filename: " + res.filename)
-  res.filename = "../data/" + req.params[0];
+
+  const base = safeDataPath(sub)
+  const oldPath = safeDataPath(sub, rename_data.old_name_val)
+  const newPath = safeDataPath(sub, rename_data.new_name_val)
+  if (!base || !oldPath || !newPath) {
+    scribbles.warn(`rename rejected — invalid path sub=${sub}`)
+    req.flash("error", "Invalid file path.")
+    return res.redirect("back")
+  }
+
   new Promise((resolve, reject) => {
-    fs.access(relative(res.filename), fs.constants.W_OK, (err) => {
+    fs.access(base, fs.constants.W_OK, (err) => {
       if (err) {
         return reject(err);
       }
@@ -502,16 +819,12 @@ app.post("/data/*@rename", (req, res) => {
   })
     .then(() => {
       new Promise((resolve, reject) => {
-        fs.rename(
-          relative(res.filename, rename_data.old_name_val),
-          relative(res.filename, rename_data.new_name_val),
-          (err) => {
-            if (err) {
-              return reject(err);
-            }
-            resolve();
+        fs.rename(oldPath, newPath, (err) => {
+          if (err) {
+            return reject(err);
           }
-        );
+          resolve();
+        });
       })
         .then(() => {
           scribbles.log("rename ok")
@@ -534,10 +847,11 @@ app.post("/data/*@rename", (req, res) => {
 app.post("/data/*@edit", (req, res) => {
   try {
     const content = typeof req.body.content === 'string' ? req.body.content : ''
-    if (!req.params[0] || req.params[0].indexOf('..') !== -1) {
+    const fullPath = safeDataPath(req.params[0])
+    if (!fullPath) {
+      scribbles.warn(`edit rejected — invalid path: ${req.params[0]}`)
       return res.status(400).send('Invalid file path')
     }
-    const fullPath = '../data/' + req.params[0]
     fs.writeFile(fullPath, content, 'utf8', (err) => {
       if (err) {
         scribbles.warn('Edit file error: ' + err)
@@ -556,10 +870,11 @@ app.post("/edit_file", (req, res) => {
     const body = req.body
     const relativePath = typeof body.path === 'string' ? body.path : ''
     const content = typeof body.content === 'string' ? body.content : ''
-    if (!relativePath || relativePath.indexOf('..') !== -1) {
+    const fullPath = safeDataPath(relativePath)
+    if (!fullPath) {
+      scribbles.warn(`edit_file rejected — invalid path: ${relativePath}`)
       return res.status(400).send('Invalid file path')
     }
-    const fullPath = '../data/' + relativePath
     fs.writeFile(fullPath, content, 'utf8', (err) => {
       if (err) {
         scribbles.warn('Edit file error: ' + err)
@@ -608,7 +923,7 @@ app.get("/Scheduler", (req, res) => {
 });
 
 app.post("/Scheduler/delete", (req, res) => {
-  scribbles.log("DELETE REQUEST RECEIVED: " + JSON.stringify(req.body))
+  scribbles.log("DELETE REQUEST RECEIVED: " + redactSecrets(JSON.stringify(req.body)))
   const task_to_delete = req.body
   scribbles.log('task index to delete ' + task_to_delete.index_to_delete)
   let rawdata = fs.readFileSync('../meta/scheduler-table.json');
@@ -618,7 +933,7 @@ app.post("/Scheduler/delete", (req, res) => {
   //scribbles.log(`name to delete:${task_to_delete.name_to_delete} index:${index}`)
   tasks.splice(index, 1)
   //scribbles.log(tasks)
-  fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(tasks, null, 2))
+  atomicWriteJsonSync('../meta/scheduler-table.json', tasks)
 
   return res.end('done')
 });
@@ -638,7 +953,7 @@ app.post("/Scheduler/edit", (req, res) => {
   tasks[(task_to_edit.index - 1)].day_of_week = task_to_edit.day_of_week
 
   let data = JSON.stringify(tasks, null, 2)
-  fs.writeFileSync('../meta/scheduler-table.json', data)
+  atomicWriteJsonSync('../meta/scheduler-table.json', data)
 
   return res.end('done')
 });
@@ -651,19 +966,24 @@ app.post("/Scheduler/new", (req, res) => {
   tasks.push(new_task)
 
   let data = JSON.stringify(tasks, null, 2)
-  fs.writeFileSync('../meta/scheduler-table.json', data)
+  atomicWriteJsonSync('../meta/scheduler-table.json', data)
 
   return res.end('done')
 });
 
 app.post("/save_scheduler_table", (req, res) => {
-  const inData = req.body
-
+  const sanitized = sanitizeJsonObject(req.body)
+  const err = validateSchedulerTable(sanitized)
+  if (err) {
+    scribbles.warn(`save_scheduler_table rejected: ${err.message}`)
+    return res.status(400).json(err)
+  }
   try {
-    fs.writeFileSync('../meta/scheduler-table.json', JSON.stringify(inData, null, 2))
+    atomicWriteJsonSync('../meta/scheduler-table.json', sanitized)
     scribbles.log(`scheduler-table save OK`)
   } catch (err) {
     scribbles.warn(`Write scheduler-table error: ${err}`)
+    return res.status(500).json({ error: 'write_failed', message: err.message })
   }
 
   return res.end('done')
@@ -690,11 +1010,10 @@ app.get("/data*", (req, res) => {
     }
 
     let readDir = new Promise((resolve, reject) => {
-      fs.readdir(relative(res.filename), (err, filenames) => {
+      fs.readdir(res.absPath, (err, filenames) => {
         if (err) {
           return reject(err);
         }
-        //scribbles.log(filenames);
         return resolve(filenames);
       });
     });
@@ -704,7 +1023,8 @@ app.get("/data*", (req, res) => {
         const promises = filenames.map(
           (f) =>
             new Promise((resolve, reject) => {
-              fs.stat(relative(res.filename, f), (err, stats) => {
+              const childAbs = path.join(res.absPath, f)
+              fs.stat(childAbs, (err, stats) => {
                 if (err) {
                   scribbles.warn(err);
                   return resolve({
@@ -713,7 +1033,7 @@ app.get("/data*", (req, res) => {
                   });
                 }
                 let type = file_tools.check_type(f, stats)
-                let size = (type == 'dir') ? (fastFolderSizeSync(res.filename + f)) : stats.size
+                let size = (type == 'dir') ? (fastFolderSizeSync(childAbs)) : stats.size
                 //scribbles.log(`For:${res.filename+f} type:${type} size:${size}`)
                 resolve({
                   name: f,
@@ -773,7 +1093,7 @@ app.get("/data*", (req, res) => {
         );
       });
   } else if (res.stats.isFile()) {
-    res.sendFile(relative(res.filename), {
+    res.sendFile(res.absPath, {
       headers: {
         "Content-Security-Policy":
           "default-src 'self'; script-src 'none'; sandbox",
@@ -799,24 +1119,82 @@ app.get("/Editor", (req, res) => {
 });
 
 app.get("/get_playlist*", (req, res) => {
-  //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const path = '../' + req.url.split('?').slice(-1)[0]
-  //scribbles.log("GET PATH PLAYLIST: "+ path)
-  let playlist = JSON.parse(fs.readFileSync(path))
-  let content_table = JSON.parse(fs.readFileSync('../meta/content-table.json'))
-  //scribbles.log ("get playlist name: " + JSON.stringify(playlist.playlist_name))
-  res.send({
-    playlist: playlist,
-    content_table: content_table
-  })
+  const raw = req.url.split('?').slice(-1)[0]
+  let decoded
+  try { decoded = decodeURIComponent(raw) } catch { decoded = raw }
+  const playlistPath = safePlaylistPath(decoded)
+  if (!playlistPath) {
+    scribbles.warn(`get_playlist rejected — invalid path: ${decoded}`)
+    return res.status(400).json({ error: 'invalid_playlist_path' })
+  }
+  try {
+    let playlist = JSON.parse(fs.readFileSync(playlistPath))
+    let content_table = JSON.parse(fs.readFileSync('../meta/content-table.json'))
+    res.send({
+      playlist: playlist,
+      content_table: content_table
+    })
+  } catch (err) {
+    scribbles.warn(`get_playlist read error: ${err}`)
+    return res.status(404).json({ error: 'not_found' })
+  }
 });
 
+function validatePlaylistMulticastCollisions(playlist) {
+  const seen = new Map()
+  if (!playlist || !Array.isArray(playlist.tracks)) return null
+  for (let ti = 0; ti < playlist.tracks.length; ti++) {
+    const t = playlist.tracks[ti]
+    const ns = (t.network_audio && Array.isArray(t.network_audio.streams)) ? t.network_audio.streams : []
+    for (let si = 0; si < ns.length; si++) {
+      const s = ns[si]
+      if (s.enabled === false) continue
+      if (!s.multicast_host || !s.port) continue
+      const key = `${s.multicast_host}:${s.port}`
+      const prev = seen.get(key)
+      if (prev) {
+        return {
+          conflict: key,
+          first: { track_index: prev.ti, track_name: prev.tn, stream_index: prev.si, stream_name: prev.sn },
+          second: { track_index: ti, track_name: t.name, stream_index: si, stream_name: s.name }
+        }
+      }
+      seen.set(key, { ti, tn: t.name, si, sn: s.name })
+    }
+  }
+  return null
+}
+
 app.post("/save_playlist*", (req, res) => {
-  //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const inData = JSON.parse(Object.keys(req.body)[0])
-  var path = '../' + inData.path
+  const inData = sanitizeJsonObject(req.body || {})
   const playlist = inData.playlist
-  // const path = req.url.split('?').slice(-1)[0]
+
+  let targetPath = safePlaylistPath(inData.path)
+  if (!targetPath) {
+    scribbles.warn(`save_playlist rejected — invalid path: ${inData.path}`)
+    return res.status(400).json({ error: 'invalid_playlist_path' })
+  }
+
+  const shapeErr = validatePlaylistShape(playlist)
+  if (shapeErr) {
+    scribbles.warn(`save_playlist rejected: ${shapeErr.message}`)
+    return res.status(400).json(shapeErr)
+  }
+
+  // also validate the new name (used to rename file below) — must not contain path separators
+  if (typeof playlist.playlist_name !== 'string' || !playlist.playlist_name.length ||
+      /[\/\\\0]/.test(playlist.playlist_name) || playlist.playlist_name.startsWith('.')) {
+    scribbles.warn(`save_playlist rejected — invalid playlist_name: ${playlist.playlist_name}`)
+    return res.status(400).json({ error: 'invalid_playlist_name' })
+  }
+
+  const collision = validatePlaylistMulticastCollisions(playlist)
+  if (collision) {
+    const msg = `Multicast collision on ${collision.conflict}: track "${collision.first.track_name}" stream "${collision.first.stream_name}" vs track "${collision.second.track_name}" stream "${collision.second.stream_name}"`
+    scribbles.warn(`save_playlist rejected: ${msg}`)
+    return res.status(400).json({ error: 'multicast_collision', message: msg, detail: collision })
+  }
+
   let scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
   let playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
   let playlistIndex = playlist_table.findIndex(s => s.path == inData.path)
@@ -831,8 +1209,8 @@ app.post("/save_playlist*", (req, res) => {
   } else {
 
     if (inData.path.split('/').slice(-1) != playlist.playlist_name) {
-      if (fs.existsSync(path)) {
-        fs.unlink(path, (err => {
+      if (fs.existsSync(targetPath)) {
+        fs.unlink(targetPath, (err => {
           if (err) scribbles.log(err);
         }))
       }
@@ -846,47 +1224,54 @@ app.post("/save_playlist*", (req, res) => {
 
       playlist_table[playlistIndex].path = new_path
       playlist_table[playlistIndex].name = playlist.playlist_name
-      path = '../' + playlist_table[playlistIndex].path
+      const renamed = safePlaylistPath(new_path)
+      if (!renamed) {
+        scribbles.warn(`save_playlist rename rejected — invalid new_path: ${new_path}`)
+        return res.status(400).json({ error: 'invalid_playlist_path' })
+      }
+      targetPath = renamed
       scribbles.log(`rename playlist name OK`)
     }
   }
 
-  fs.writeFileSync(('../meta/scheduler-table.json'), JSON.stringify(scheduler_table, null, 2))
-  fs.writeFileSync(('../meta/playlist-table.json'), JSON.stringify(playlist_table, null, 2))
+  atomicWriteJsonSync('../meta/scheduler-table.json', scheduler_table)
+  atomicWriteJsonSync('../meta/playlist-table.json', playlist_table)
 
-  //scribbles.log("Save PLAYLIST:"+ JSON.stringify(inData,null,2)+" path: "+path)
-  fs.writeFileSync((path), JSON.stringify(playlist, null, 2))
+  atomicWriteJsonSync(targetPath, playlist)
 
   return res.end('done')
 });
 
 app.post("/delete_playlist*", (req, res) => {
-  //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const inData = JSON.parse(Object.keys(req.body)[0])
+  const inData = req.body || {}
 
   scribbles.log(`Delete name: ${inData.name_to_delete} on index: ${inData.index_to_delete}`)
-  // const path = req.url.split('?').slice(-1)[0]
-
 
   let playlist_table = JSON.parse(fs.readFileSync('../meta/playlist-table.json'))
 
-  const path = '../' + playlist_table[inData.index_to_delete - 1].path
+  const idx = parseInt(inData.index_to_delete, 10) - 1
+  if (!Number.isInteger(idx) || idx < 0 || idx >= playlist_table.length) {
+    scribbles.warn(`delete_playlist rejected — out of range index: ${inData.index_to_delete}`)
+    return res.status(400).json({ error: 'invalid_index' })
+  }
+
+  const entryPath = playlist_table[idx] && playlist_table[idx].path
+  const targetPath = safePlaylistPath(entryPath)
+  if (!targetPath) {
+    scribbles.warn(`delete_playlist rejected — invalid stored path: ${entryPath}`)
+    return res.status(400).json({ error: 'invalid_playlist_path' })
+  }
 
   let scheduler_table = JSON.parse(fs.readFileSync('../meta/scheduler-table.json'))
-  //scribbles.log(`before------------------- \n${JSON.stringify(scheduler_table,null,2)}`);
-  scheduler_table = scheduler_table.filter(task => task.path != playlist_table[inData.index_to_delete - 1].path)
-  //scribbles.log(`after------------------- \n${JSON.stringify(scheduler_table,null,2)}`);
-  fs.writeFileSync(('../meta/scheduler-table.json'), JSON.stringify(scheduler_table, null, 2))
+  scheduler_table = scheduler_table.filter(task => task.path != entryPath)
+  atomicWriteJsonSync('../meta/scheduler-table.json', scheduler_table)
 
-  playlist_table.splice(inData.index_to_delete - 1, 1)
-  fs.writeFileSync(('../meta/playlist-table.json'), JSON.stringify(playlist_table, null, 2))
+  playlist_table.splice(idx, 1)
+  atomicWriteJsonSync('../meta/playlist-table.json', playlist_table)
 
-
-
-  scribbles.log("Delete PLAYLIST: " + JSON.stringify(inData, null, 2) + " path: " + path)
-  //fs.writeFileSync((path), JSON.stringify(playlist,null,2))
-  if (fs.existsSync(path)) {
-    fs.unlink(path, (err => {
+  scribbles.log("Delete PLAYLIST: " + JSON.stringify(inData, null, 2) + " path: " + targetPath)
+  if (fs.existsSync(targetPath)) {
+    fs.unlink(targetPath, (err => {
       if (err) scribbles.log(err);
       else {
         scribbles.log("Deleted OK");
@@ -912,34 +1297,47 @@ app.get("/Settings", (req, res) => {
     execPromise(`sudo -u playerok xrandr -display :0.0`)
 
   ]).then(responses => {
-    let net_info = {};
-    //console.log(config.net['eth0'].DHCP)
-
     let netAddrs = JSON.parse(responses[0])
-    //console.log(`netAddr:${responses[0]}`)
     let netRoutes = JSON.parse(responses[1])
     let screen_dev_list = xrandrParse(responses[2])
     const ifMass = ['eth0', 'eth1', 'wlan0'];
+
+    // Pre-initialize every interface so the settings template always sees a
+    // defined net_info[iface]. A missing wlan0 (no Wi-Fi hardware, or radio
+    // fully down so it never appears in `ip a`) used to leave net_info.wlan0
+    // undefined and crash the client-side Wi-Fi indicator.
+    let net_info = {};
+    for (const iface of ifMass) {
+      net_info[iface] = { carrier: 0, IP: '', net_mask: '', gateway: '', DNS: '' }
+    }
+
+    // Signal strength (0-100) of the currently-associated Wi-Fi AP, or 0 when
+    // not connected. Must not throw: the previous `nmcli ... | grep yes` made
+    // execSync raise (grep exit 1) whenever no Wi-Fi was active, which aborted
+    // the whole net_info build for wlan0.
+    const wifiSignal = () => {
+      try {
+        const out = execSync(`nmcli -t -f ACTIVE,SIGNAL dev wifi`).toString()
+        for (const line of out.split('\n')) {
+          const [active, signal] = line.split(':')
+          if (active === 'yes') return parseInt(signal) || 0
+        }
+      } catch (e) { /* no radio / no scan results */ }
+      return 0
+    }
 
     for (let dev of netAddrs) {
       for (let iface of ifMass) {
         try {
           if (dev.ifname == iface) {
-            net_info[iface] = {}
             if (iface == 'eth0' || iface == 'eth1') {
-              net_info[iface]["carrier"] = execSync(`head /sys/class/net/${iface}/carrier`).toString().replace("\n", '')
+              net_info[iface]["carrier"] = parseInt(execSync(`head /sys/class/net/${iface}/carrier`).toString()) || 0
             } else {
-              if (dev.operstate == 'UP') {
-                net_info[iface]["carrier"] = parseInt(execSync(`nmcli -f ACTIVE,SIGNAL dev wifi list | grep yes`).toString().replace("yes", ''))
-              } else {
-                net_info[iface]["carrier"] = 0
-              }
+              net_info[iface]["carrier"] = (dev.operstate == 'UP') ? wifiSignal() : 0
             }
 
-            //(config.net[iface].DHCP == 1) &&
-            if ((dev.operstate == 'UP')) {
+            if (dev.operstate == 'UP' && dev.addr_info && dev.addr_info[0]) {
               net_info[iface]["IP"] = dev.addr_info[0].local
-              //net_info[iface]['IP'] = dev.addr_info[0].local
               let block = new Netmask(`${dev.addr_info[0].local}/${dev.addr_info[0].prefixlen}`)
               net_info[iface]['net_mask'] = block.mask
               for (let route of netRoutes) {
@@ -948,9 +1346,13 @@ app.get("/Settings", (req, res) => {
                   break
                 }
               }
-              if(config.net[iface].DHCP == 1){
-                net_info[iface]['DNS'] = execSync(`nmcli device show ${iface} | grep IP4.DNS`).toString().split(":")[1].replace(/ /g, '').replace("\n", '')
-              }else{
+              if (config.net[iface].DHCP == 1) {
+                try {
+                  net_info[iface]['DNS'] = execSync(`nmcli device show ${iface} | grep IP4.DNS`).toString().split(":")[1].replace(/ /g, '').replace("\n", '')
+                } catch (e) {
+                  net_info[iface]['DNS'] = config.net[iface].DNS
+                }
+              } else {
                 net_info[iface]['DNS'] = config.net[iface].DNS
               }
             } else if (config.net[iface].DHCP == 0) {
@@ -958,11 +1360,6 @@ app.get("/Settings", (req, res) => {
               net_info[iface]['net_mask'] = config.net[iface].net_mask
               net_info[iface]['gateway'] = config.net[iface].gateway
               net_info[iface]['DNS'] = config.net[iface].DNS
-            } else {
-              net_info[iface]["IP"] = ''
-              net_info[iface]['net_mask'] = ''
-              net_info[iface]['gateway'] = ''
-              net_info[iface]['DNS'] = ''
             }
           }
         } catch (err) {
@@ -986,14 +1383,31 @@ app.get("/Settings", (req, res) => {
 })
 
 app.post("/save_config", (req, res) => {
-  //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const inData = JSON.parse(Object.keys(req.body)[0])
+  const sanitized = sanitizeJsonObject(req.body || {})
+
+  const shapeErr = validateConfigShape(sanitized)
+  if (shapeErr) {
+    scribbles.warn(`save_config rejected: ${shapeErr.message}`)
+    return res.status(400).json(shapeErr)
+  }
+
+  const newName = sanitized && sanitized.net && sanitized.net.mDNS_name
+  if (newName !== undefined) {
+    if (typeof newName !== 'string' || !/^[a-z0-9][a-z0-9-]{0,62}$/.test(newName)) {
+      scribbles.warn(`save_config rejected: invalid mDNS_name ${JSON.stringify(newName)}`)
+      return res.status(400).json({
+        error: 'invalid_mdns_name',
+        message: 'Device name must be 1-63 chars, lowercase letters/digits/hyphens, start with letter or digit'
+      })
+    }
+  }
 
   try {
-    fs.writeFileSync('../meta/player_config.json', JSON.stringify(inData, null, 2))
+    atomicWriteJsonSync('../meta/player_config.json', sanitized, { mode: 0o600 })
     scribbles.log(`Config save OK`)
   } catch (err) {
     scribbles.warn(`Write config error: ${err}`)
+    return res.status(500).json({ error: 'write_failed', message: err.message })
   }
 
   return res.end('done')
@@ -1021,28 +1435,36 @@ app.get("/get_date", (req, res) => {
   })
 });
 
-async function setTimeout(date, time) {
-  await exec(`sudo timedatectl set-ntp false`)
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
+const TIME_RE = /^\d{2}:\d{2}(?::\d{2})?$/
 
-  await exec(`date -s '${date} ${time}'`, (error, stdout, stderr) => {
-    if (error) {
-      scribbles.warn(error)
-    }
-    scribbles.log(`Set time: '${date} ${time}' resault ${stdout}`)
+async function setSystemTime(date, time) {
+  const { execFile } = require('child_process')
+  return new Promise((resolve) => {
+    execFile('sudo', ['timedatectl', 'set-ntp', 'false'], () => {
+      execFile('sudo', ['date', '-s', `${date} ${time}`], (error, stdout) => {
+        if (error) scribbles.warn(`set time failed: ${error.message}`)
+        else scribbles.log(`Set time: '${date} ${time}' result ${stdout}`)
+        resolve()
+      })
+    })
   })
 }
 
 app.post("/set_time", (req, res) => {
-  //const playlist = JSON.parse(Object.keys(req.body)[0])
-  const inData = JSON.parse(Object.keys(req.body)[0])
+  const inData = req.body || {}
   scribbles.log(`input time: ${inData.time} date: ${inData.date}`)
 
-  setTimeout(inData.date, inData.time)
+  if (!DATE_RE.test(inData.date || '') || !TIME_RE.test(inData.time || '')) {
+    scribbles.warn(`/set_time rejected — invalid date/time: ${JSON.stringify(inData)}`)
+    return res.status(400).json({ error: 'invalid_datetime', message: 'date must be YYYY-MM-DD, time HH:MM[:SS]' })
+  }
+  setSystemTime(inData.date, inData.time)
 
   try {
     let config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
     config.time.NTP = '0'
-    fs.writeFileSync('../meta/player_config.json', JSON.stringify(config, null, 2))
+    atomicWriteJsonSync('../meta/player_config.json', config, { mode: 0o600 })
   } catch (err) {
     scribbles.warn(`Write ntp config error: ${err}`)
   }
@@ -1125,8 +1547,8 @@ app.get("/get_screenshot", (req, res) => {
 app.get("/get_logs", (req, res) => {
 
   try {
-    let logs = fs.readFileSync('/home/playerok/playerok/logs/playerok.log')
-    res.send(logs)
+    let logs = fs.readFileSync('/home/playerok/playerok/logs/playerok.log', 'utf8')
+    res.send(redactSecrets(logs))
     scribbles.log(`send logs ok`)
   } catch {
     scribbles.error(`send logs fail`)
@@ -1134,17 +1556,34 @@ app.get("/get_logs", (req, res) => {
 
 })
 
+const STATIC_LOG_FILES = ['playerok.log', 'scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
+const SCRIPT_LOG_RE = /^script_[A-Za-z0-9._-]+\.log$/;
+
+app.get("/api/logs", (req, res) => {
+  try {
+    const entries = fs.readdirSync('/home/playerok/playerok/logs');
+    const scriptLogs = entries.filter(n => SCRIPT_LOG_RE.test(n)).sort();
+    res.json({ static: STATIC_LOG_FILES, scripts: scriptLogs });
+  } catch (err) {
+    scribbles.error(`list logs fail: ${err}`);
+    res.status(500).json({ error: 'list_failed' });
+  }
+});
+
 app.get("/api/logs/:filename", (req, res) => {
-  const allowedLogs = ['playerok.log', 'scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
   const filename = req.params.filename;
-  if (!allowedLogs.includes(filename)) {
+  if (!STATIC_LOG_FILES.includes(filename) && !SCRIPT_LOG_RE.test(filename)) {
     return res.status(403).send('Forbidden');
   }
   try {
     const logPath = path.join('/home/playerok/playerok/logs', filename);
     const logs = fs.readFileSync(logPath, 'utf8');
-    res.send(logs);
+    res.send(redactSecrets(logs));
   } catch (err) {
+    // Per-script logs only exist after the script has run at least once; for
+    // a never-launched task return 200 + empty body so the UI shows "no
+    // entries yet" instead of a confusing 500.
+    if (err && err.code === 'ENOENT') return res.status(200).send('');
     scribbles.error(`send logs fail: ${err}`);
     res.status(500).send('Error reading log');
   }

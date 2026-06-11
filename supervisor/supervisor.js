@@ -69,20 +69,52 @@ function execPromise(cmd) {
   })
 }
 
+// One-shot flag file: create this path to authorize the next merge of a USB
+// player_config.json into the main config. Without it, USB imports are blocked
+// — without this gate, anyone with physical access could overwrite Wi-Fi
+// credentials, admin password, mDNS hostname, etc. just by inserting a stick.
+const USB_IMPORT_FLAG = '/home/playerok/playerok/meta/flag_allow_usb_import'
+
+// Parse JSON while dropping __proto__/constructor keys (prototype pollution).
+function safeJsonParse(text) {
+  return JSON.parse(text, (k, v) => (k === '__proto__' || k === 'constructor') ? undefined : v)
+}
+
 function merge_config(path) {
+  if (!fs.existsSync(USB_IMPORT_FLAG)) {
+    scribbles.warn(`USB config import blocked — create ${USB_IMPORT_FLAG} to authorize one merge`)
+    return
+  }
   try {
-    let main_config = JSON.parse(fs.readFileSync('../meta/player_config.json'))
-    let new_config = JSON.parse(fs.readFileSync(path))
+    let main_config = safeJsonParse(fs.readFileSync('../meta/player_config.json', 'utf8'))
+    let new_config = safeJsonParse(fs.readFileSync(path, 'utf8'))
+
+    if (!new_config || typeof new_config !== 'object' || Array.isArray(new_config)) {
+      scribbles.warn(`merge config rejected — not a JSON object`)
+      return
+    }
 
     for (const property_1 in new_config) {
-      for (const property_2 in new_config[property_1]) {
-        main_config[property_1][property_2] = new_config[property_1][property_2]
+      const section = new_config[property_1]
+      // Only allow merging into already-known top-level sections (net/sound/screen/...)
+      // and only object-typed sections. Skip __proto__ etc just in case.
+      if (property_1 === '__proto__' || property_1 === 'constructor') continue
+      if (!(property_1 in main_config)) continue
+      if (!section || typeof section !== 'object' || Array.isArray(section)) continue
+      if (!main_config[property_1] || typeof main_config[property_1] !== 'object') continue
+
+      for (const property_2 in section) {
+        if (property_2 === '__proto__' || property_2 === 'constructor') continue
+        main_config[property_1][property_2] = section[property_2]
         scribbles.log(`set ${property_2} in group ${property_1}`)
       }
     }
 
     fs.writeFileSync(('../meta/player_config.json'), JSON.stringify(main_config, null, 2))
     fs.unlinkSync(path)
+    // Consume the authorization flag — next USB insert needs a fresh one
+    try { fs.unlinkSync(USB_IMPORT_FLAG) } catch {}
+    scribbles.log(`USB config merge OK — authorization flag consumed`)
     set_config()
 
   } catch (err) {

@@ -1,4 +1,4 @@
-const { spawnSync, exec } = require('child_process');
+const { spawnSync, exec, execFile } = require('child_process');
 const scribbles = require('scribbles');
 const fs = require("fs");
 
@@ -7,36 +7,51 @@ function execPromise(cmd) {
     return new Promise((resolve, reject) => {
         exec(`${cmd}`, (error, stdout, stderr) => {
             if ((error) || (stderr)) {
-                //scribbles.warn(error)
                 reject(error + stderr)
             }
-            //scribbles.log(`sudo exec: ${cmd} resault ${stdout}`)
             resolve(stdout ? stdout : stderr);
         })
     })
 }
 
+function execFilePromise(file, args) {
+    return new Promise((resolve, reject) => {
+        execFile(file, args, (error, stdout, stderr) => {
+            if (error) return reject(error)
+            resolve(stdout || stderr)
+        })
+    })
+}
+
 async function set_time_config() {
-    
+
 
     scribbles.log(`NTP state:${config.time.NTP}`)
     if (config.time.NTP == '1') {
         try {
-            await execPromise(`timedatectl set-ntp yes`)
-            await execPromise(`timedatectl set-timezone Etc/GMT${parseInt(config.time.time_zone) * -1}`)
-            scribbles.log("Set NTP true OK, time zone: " + parseInt(config.time.time_zone) * -1)
+            await execFilePromise('timedatectl', ['set-ntp', 'yes'])
+            // time_zone comes from config — coerce to integer in valid IANA Etc/GMT range
+            const tzRaw = config.time.time_zone
+            const tz = Number.parseInt(tzRaw, 10)
+            if (!Number.isInteger(tz) || tz < -14 || tz > 14) {
+                scribbles.warn(`Invalid time_zone ${JSON.stringify(tzRaw)} — skipping timezone change`)
+            } else {
+                // Etc/GMT sign is inverted vs UTC offset (Etc/GMT-3 == UTC+3)
+                await execFilePromise('timedatectl', ['set-timezone', `Etc/GMT${tz * -1}`])
+                scribbles.log("Set NTP true OK, time zone: " + (tz * -1))
+            }
         } catch(err) {
             scribbles.log(`Set NTP false:${err}`)
         }
     } else if (config.time.NTP == '0') {
         try {
-            await execPromise(`timedatectl set-ntp false`)
+            await execFilePromise('timedatectl', ['set-ntp', 'false'])
             scribbles.log("Set NTP false OK")
         } catch {
         }
     }
 
-    execPromise('reboot')
+    execFilePromise('reboot', [])
 }
 
 try {

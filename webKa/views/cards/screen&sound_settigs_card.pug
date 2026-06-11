@@ -1,6 +1,6 @@
 card.card(style='width: 620px;').card_shadow.h-100 
     .card-body
-        h5.card-title Screen and sound settings
+        h5.card-title Настройки экрана и звука
         p.card-text
     ul.list-group.list-group-flush(style='transform: translate(0px, -18px);')
         li.list-group-item 
@@ -8,26 +8,26 @@ card.card(style='width: 620px;').card_shadow.h-100
                 .col
                     .row.mb-2
                         .input-group
-                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Screen output
+                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Экран
                             input#inputGroup_screen_dev.form-control(type='text' disabled)
                     .row.mb-2
                         .input-group
-                            label.input-group-text( style='width:8em;') Resolution
-                            select#inputResolution.form-select 
+                            label.input-group-text( style='width:8em;') Разрешение
+                            select#inputResolution.form-select
 
                     .row.mb-10
                         .input-group
-                            label.input-group-text( style='width:8em;') Orientation
+                            label.input-group-text( style='width:8em;') Ориентация
                             select#orientationSelectForm.form-select
-                                option(value='normal') normal  
-                                option(value='left') left
-                                option(value='right') right
-                                option(value='inverted') inverted
+                                option(value='normal') обычная
+                                option(value='left') влево
+                                option(value='right') вправо
+                                option(value='inverted') перевёрнутая
                     .row.mb-2
                 .col
                     .row.mb-2
                         .input-group
-                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Sound output
+                            label.input-group-text(for='inputGroupSelect01' style='width:8em;') Звук
                             select#inputGroup_sound_dev.form-select 
                                 each audio_dev, index in config.sound.sound_dev_list
                                     option(value=audio_dev)= audio_dev
@@ -36,7 +36,7 @@ card.card(style='width: 620px;').card_shadow.h-100
                             
                     .row.mb-2
                         .col-5
-                            span.input-group-text(style='width:8em;') System volume
+                            span.input-group-text(style='width:8em;') Громкость
                         .col-7 
                             input#volumeRange.form-range(type='range' min="0" max="150" style='transform: translate(15px, 7px); width: 130px;')
 
@@ -44,7 +44,7 @@ card.card(style='width: 620px;').card_shadow.h-100
     .card-body(style='transform: translate(0px, 20px);')
         .row
             .col-8
-                button#save_ss_config_btn.btn.btn-outline-secondary(type='button' onclick='save_ss_settings()') Save
+                button#save_ss_config_btn.btn.btn-outline-secondary(type='button' onclick='save_ss_settings()') Сохранить
             //- .col
             //-     button#save_ss_config_btn.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' onclick='save_ss_settings()') Set backgound
 

@@ -4,11 +4,11 @@
     .card-body
         .row
             .col
-                h5.card-title Network settings
+                h5.card-title Сетевые настройки
                 p.card-text
-            .col 
+            .col
                 .input-group.mb-1
-                    span#basic-addon1.input-group-text(style='width:8em;') Device name
+                    span#basic-addon1.input-group-text(style='width:8em;') Имя устройства
                     input#mDNS.form-control(type='text' placeholder= config.net.mDNS_name aria-label='mdnsName' aria-describedby='basic-addon1')
 
         //| Some quick example text to build on the card title and make up the bulk of the card&apos;s content.
@@ -21,22 +21,22 @@
                         .col-6
                             span.input-group-text(style='width:7em;') Ethernet 0
                         .col(style='transform: translate(-15px, 2px);')                    
-                            input#eth0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                            input#eth0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
                         .col 
                             i#eth0_carrier.bi.bi-ethernet(style="font-size: 25px;")
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
                         .col(style='transform: translate(-15px, 2px);')                     
-                            input#eth0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                            input#eth0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') IP adress
+                        span#basic-addon1.input-group-text(style='width:7em;') IP-адрес
                         input#eth0_ip_adress.form-control(type='text')
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Net mask
+                        span#basic-addon1.input-group-text(style='width:7em;') Маска сети
                         input#eth0_net_mask.form-control(type='text')
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Gateway
+                        span#basic-addon1.input-group-text(style='width:7em;') Шлюз
                         input#eth0_gateway.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') DNS
@@ -49,22 +49,22 @@
                         .col-6
                             span.input-group-text(style='width:7em;') Ethernet 1
                         .col(style='transform: translate(-15px, 2px);')                      
-                            input#eth1_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                            input#eth1_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
                         .col 
                             i#eth1_carrier.bi.bi-ethernet(style="font-size: 25px;" disabled=true)
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
                         .col(style='transform: translate(-15px, 2px);')                     
-                            input#eth1_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                            input#eth1_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') IP adress
+                        span#basic-addon1.input-group-text(style='width:7em;') IP-адрес
                         input#eth1_ip_adress.form-control(type='text')
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Net mask
+                        span#basic-addon1.input-group-text(style='width:7em;') Маска сети
                         input#eth1_net_mask.form-control(type='text')
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Gateway
+                        span#basic-addon1.input-group-text(style='width:7em;') Шлюз
                         input#eth1_gateway.form-control(type='text')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') DNS
@@ -77,7 +77,7 @@
                         .col-6
                             span.input-group-text(style='width:7em;') Wi-Fi
                         .col(style='transform: translate(-15px, 2px);')                     
-                            input#wlan0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                            input#wlan0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
                         .col
                             i#wifi_sig_high.bi.bi-wifi(style="font-size: 25px;" disabled=true)
                             i#wifi_sig_mid.bi.bi-wifi-2(style="font-size: 25px;" disabled=true)
@@ -87,41 +87,41 @@
                         span#basic-addon1.input-group-text(style='width:7em;') SSID
                         input#wlan0_SSID.form-control(type='text' placeholder=config.net.wlan0.SSID)
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Password
+                        span#basic-addon1.input-group-text(style='width:7em;') Пароль
                         input#wlan0_password.form-control(type='password' placeholder= "")
                     
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
                         .col(style='transform: translate(-15px, 2px);')                    
-                            input#wlan0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off') 
+                            input#wlan0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') IP adress
+                        span#basic-addon1.input-group-text(style='width:7em;') IP-адрес
                         input#wlan0_ip_adress.form-control(type='text' aria-label='IP_adress' aria-describedby='basic-addon1')
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Net mask
+                        span#basic-addon1.input-group-text(style='width:7em;') Маска сети
                         input#wlan0_net_mask.form-control(type='text' aria-label='Net_mask' aria-describedby='basic-addon1')
                     .input-group.mb-2
-                        span#basic-addon1.input-group-text(style='width:7em;') Gateway
+                        span#basic-addon1.input-group-text(style='width:7em;') Шлюз
                         input#wlan0_gateway.form-control(type='text' aria-label='Gateway' aria-describedby='basic-addon1')
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') DNS
                         input#wlan0_dns.form-control(type='text' aria-label='Gateway' aria-describedby='basic-addon1') 
     
     .card-body
-        button#saveNet.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' onclick = 'save_net_settings()') Save
+        button#saveNet.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' onclick = 'save_net_settings()') Сохранить
 
     #confirm_save_net_config_modal.modal.modal-m.fade(tabindex='-1' aria-labelledby='confirm_save_net_config_modal' aria-hidden='true' data-bs-backdrop="static")
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4.confirm_save_net_config_modal_title Save network config
+                    h4.confirm_save_net_config_modal_title Сохранить сетевые настройки
                 .modal-body
-                    h4 Device will be rebooted! 
- 
+                    h4 Устройство будет перезагружено!
+
                 .modal-footer
-                    button.btn.btn-secondary(onclick = 'save_net_config()') Ok
-                    button.btn.btn-secondary(onclick = 'cancel_net_config()') Cancel
+                    button.btn.btn-secondary(onclick = 'save_net_config()') Ок
+                    button.btn.btn-secondary(onclick = 'cancel_net_config()') Отмена
 
 script.
     
@@ -204,22 +204,26 @@ script.
         $('#wlan0_gateway').val(net_info.wlan0.gateway)
         $('#wlan0_dns').val(net_info.wlan0.DNS)  
 
+        // Wi-Fi connection / signal indicator. net_info.wlan0 may be absent
+        // (no radio) — guard against undefined. carrier is the active AP signal
+        // strength 0-100, or 0 when not associated.
         $('#wifi_sig_high').hide()
         $('#wifi_sig_mid').hide()
         $('#wifi_sig_low').hide()
         $('#wifi_sig_none').hide()
-        if(net_info.wlan0.carrier>35){
-           $('#wifi_sig_high').show()
-           $('#wifi_sig_high').css({"color":"green"})
-        }else if((net_info.wlan0.carrier<35)&&(net_info.wlan0.carrier>15)){
-            $('#wifi_sig_mid').show()
-            $('#wifi_sig_mid').css({"color":"orange"})
-        }else if((net_info.wlan0.carrier<15)&&(net_info.wlan0.carrier!=0)){
-            $('#wifi_sig_low').show()
-            $('#wifi_sig_low').css({"color":"red"})
-        }else if((net_info.wlan0.carrier<35)&&(net_info.wlan0.carrier>15)){
-            $('#wifi_sig_none').show()
-            $('#wifi_sig_none').css({"color":"grey"})
+        var wifi_sig = parseInt((net_info.wlan0 || {}).carrier) || 0
+        if(config.net.wlan0.enable != 1){
+            // Radio disabled — show the "off" icon in grey.
+            $('#wifi_sig_none').show().css({"color":"grey"})
+        }else if(wifi_sig <= 0){
+            // Enabled but not connected — "off" icon in red.
+            $('#wifi_sig_none').show().css({"color":"red"})
+        }else if(wifi_sig > 60){
+            $('#wifi_sig_high').show().css({"color":"green"})
+        }else if(wifi_sig > 30){
+            $('#wifi_sig_mid').show().css({"color":"orange"})
+        }else{
+            $('#wifi_sig_low').show().css({"color":"red"})
         }
 
 
@@ -270,7 +274,12 @@ script.
     })
 
     function save_net_settings(){
-        config.net.mDNS_name = $('#mDNS').val()
+        const mdnsName = $('#mDNS').val()
+        if (!/^[a-z0-9][a-z0-9-]{0,62}$/.test(mdnsName)) {
+            alert('Имя устройства: 1–63 символа — строчные латинские буквы, цифры, дефисы; начинаться с буквы или цифры')
+            return
+        }
+        config.net.mDNS_name = mdnsName
 
         config.net.eth0.enable = +$('#eth0_enable_toggle').prop('checked')
         config.net.eth0.DHCP = +$('#eth0_DHCP_enable_toggle').prop('checked')

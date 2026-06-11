@@ -27,27 +27,27 @@ mixin table-row(file_name, file_type, file_size)
                 a(href='./' + file_name) #{file_name}
         td(data-label="size")
             - var tSize = (Math.ceil((file_size/(1024*1024))*10))/10
-            | #{tSize} MB
+            | #{tSize} МБ
         td(data-label="controls")
             .dropdown
                 button.btn.btn-sm.btn-light.dropdown-toggle(type='button' data-bs-toggle='dropdown' aria-expanded='false')
                     i.mx-1.bi.bi-three-dots
                 ul.dropdown-menu
                     li
-                        a.dropdown-item(href='#' data-action='preview-file' data-file-name=file_name data-file-type=file_type) Preview
+                        a.dropdown-item(href='#' data-action='preview-file' data-file-name=file_name data-file-type=file_type) Просмотр
                     if file_type == 'script' || file_type == 'json'
                         li
-                            a.dropdown-item(href='#' data-action='edit-file' data-file-name=file_name) Edit
+                            a.dropdown-item(href='#' data-action='edit-file' data-file-name=file_name) Редактировать
                     li
-                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' d-name=file_name) Move
+                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' d-name=file_name) Переместить
                     li
-                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#renameModal' d-name=file_name ) Rename
+                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#renameModal' d-name=file_name ) Переименовать
                         //onclick=`open_rename_modal( '${file_name}' )`
                     li
-                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#deleteModal' d-name=file_name )  Delete
+                        a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#deleteModal' d-name=file_name )  Удалить
                     li
                         - tmpPath = '#{path}'+'#{file_name}'
-                        a.dropdown-item(href=file_name download=file_name) Download
+                        a.dropdown-item(href=file_name download=file_name) Скачать
 
 
 block content
@@ -64,21 +64,21 @@ block content
                                 if (dir != '')
                                     - tmpPath = block.repeat(dirs.length - 2 - index)
                                     a(class="breadcrumb"  href=tmpPath)  #{dir}/
-                    .col-1.d-flex.justify-content-center.align-items-center
+                    .col-1.d-flex.justify-content-center.align-items-center.me-5
                         .dropdown
                             button.btn.btn-secondary.dropdown-toggle(type='button' data-bs-toggle='dropdown' aria-expanded='false') 
-                                | Tools
+                                | Инструменты
                             ul.dropdown-menu
                                 li
-                                    a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#uploadModal' ) Upload
+                                    a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#uploadModal' ) Загрузить
                                 li
-                                    a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#mkdirModal' ) Make directory
+                                    a.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#mkdirModal' ) Создать папку
                                 li
                                     hr.dropdown-divider
                                 li
-                                    a#bulk_move_btn.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' disabled) Move selected
+                                    a#bulk_move_btn.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#moveModal' disabled) Переместить выбранные
                                 li
-                                    a#bulk_delete_btn.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#deleteModal' disabled) Delete selected
+                                    a#bulk_delete_btn.dropdown-item(type='button' data-bs-toggle='modal' data-bs-target='#deleteModal' disabled) Удалить выбранные
                                 //li
                                     //a.dropdown-item(href='#' disabled) Remove selected
                                 //li
@@ -91,10 +91,10 @@ block content
                         tr
                             th(scope='col' style="width: 20px;")
                                 input#select_all.form-check-input(type='checkbox')
-                            th(scope='col' style="width: 40px;") Type
-                            th(scope='col') Name
-                            th(scope='col' style="width: 10%;") Size
-                            th(scope='col' style="width: 5%;") Controls
+                            th(scope='col' style="width: 40px;") Тип
+                            th(scope='col') Имя
+                            th(scope='col' style="width: 10%;") Размер
+                            th(scope='col' style="width: 5%;") Действия
                     tbody
                         each file in files ? files : []
                             +table-row(file.name, file.type, file.size)
@@ -111,8 +111,8 @@ block content
             .modal-dialog.modal-dialog-centered
                 .modal-content
                     .modal-header.bg-light
-                        h5.modal-title Upload a file
-                        button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                        h5.modal-title Загрузить файл
+                        button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
                     .modal-body
                         input(type='hidden' name='hidenName' value='0')
                         input#upload_file.form-control(type='file' name='file' multiple)
@@ -123,8 +123,8 @@ block content
 
                     .modal-footer.bg-light
                         //button#conf_btn.btn.btn-secondary( onclick = 'fetch_upload()') Confirm
-                        button#conf_btn.btn.btn-secondary( onclick = 'xhr_upload()') Confirm
-                        button.btn.btn-secondary(type='reset' data-bs-dismiss='modal') Cancel
+                        button#conf_btn.btn.btn-secondary( onclick = 'xhr_upload()') Подтвердить
+                        button.btn.btn-secondary(type='reset' data-bs-dismiss='modal') Отмена
                         //button.btn.btn-primary(type='submit') Upload
 
     
@@ -134,77 +134,77 @@ block content
             .modal-content
                 .modal-header
                     .hstack 
-                        h4 Move selected:  &nbsp
+                        h4 Переместить выбранные:  &nbsp
                         h4.m_file-name(style='color: rgb(106, 143, 148)')
                 .modal-body
-                    h5 Select folder
+                    h5 Выберите папку
                     #tree
                 .modal-footer
-                    button#confirm_btn.btn.btn-secondary(data-bs-dismiss="modal" disabled="true" onclick = 'fetch_move()') Confirm
-                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+                    button#confirm_btn.btn.btn-secondary(data-bs-dismiss="modal" disabled="true" onclick = 'fetch_move()') Подтвердить
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Отмена
    
     #renameModal.modal.fade(aria-hidden='true' aria-labelledby='renameModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header
                     .hstack 
-                        h4 Rename:&nbsp 
+                        h4 Переименовать:&nbsp
                         h4.old-name
                 .modal-body
                     .input-group
-                        span.input-group-text New name
+                        span.input-group-text Новое имя
                         input.new_name.form-control(type="text" )
                 .modal-footer
-                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_rename()') Confirm
-                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_rename()') Подтвердить
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Отмена
 
     #mkdirModal.modal.fade(aria-hidden='true' aria-labelledby='mkdirModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header
                     .hstack 
-                        h4 Make folder
+                        h4 Создать папку
                 .modal-body
                     .input-group
-                        span.input-group-text Folder name
+                        span.input-group-text Имя папки
                         input#mkdir_name.form-control(type="text" )
                 .modal-footer
-                    button#mkdir_confirm.btn.btn-secondary(data-bs-dismiss="modal" disabled="true" onclick = 'fetch_mkdir()') Confirm
-                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+                    button#mkdir_confirm.btn.btn-secondary(data-bs-dismiss="modal" disabled="true" onclick = 'fetch_mkdir()') Подтвердить
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Отмена
 
     #deleteModal.modal.fade(aria-hidden='true' aria-labelledby='deleteModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header
                     .hstack 
-                        h4 Confirm delete selected:  &nbsp
+                        h4 Подтвердите удаление:  &nbsp
                         h4.file-name(style='color: rgb(106, 143, 148)')
                 .modal-footer
-                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_delete()') Ok
-                    button.btn.btn-secondary(data-bs-dismiss="modal") Cancel
+                    button.btn.btn-secondary(data-bs-dismiss="modal" onclick = 'fetch_delete()') Ок
+                    button.btn.btn-secondary(data-bs-dismiss="modal") Отмена
 
     #previewModal.modal.fade(aria-hidden='true' aria-labelledby='previewModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered.modal-xl
             .modal-content
                 .modal-header
-                    h4#previewModalTitle.modal-title Preview
-                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                    h4#previewModalTitle.modal-title Просмотр
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
                 .modal-body
                     #previewBody
                 .modal-footer
-                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Close
+                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Закрыть
 
     #editModal.modal.fade(aria-hidden='true' aria-labelledby='editModalLabel' tabindex='-1')
         .modal-dialog.modal-dialog-centered.modal-xl
             .modal-content
                 .modal-header
-                    h4.modal-title Edit file
-                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                    h4.modal-title Редактировать файл
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
                 .modal-body
                     textarea#edit_file_content.form-control(style='min-height: 50vh; font-family: monospace; white-space: pre; overflow:auto;')
                 .modal-footer
-                    button.btn.btn-secondary(type='button' onclick='saveEditFile()') Save
-                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Close
+                    button.btn.btn-secondary(type='button' onclick='saveEditFile()') Сохранить
+                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Закрыть
 
     script.
         let config = !{JSON.stringify(config)}
@@ -284,7 +284,7 @@ block content
             const files = document.getElementById('upload_file').files
             const count = files ? files.length : 0
             if(count > 0){
-                $('#upload_files_info').text(`Selected files: ${count}`)
+                $('#upload_files_info').text(`Выбрано файлов: ${count}`)
                 $('#conf_btn').attr('disabled',  false)
             } else {
                 $('#upload_files_info').text('')
@@ -396,7 +396,7 @@ block content
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             }).then((res) => {
@@ -418,13 +418,13 @@ block content
             const file_name = move_button ? move_button.getAttribute('d-name') : null
             move_targets = file_name ? [file_name] : getSelectedFiles()
             if(move_targets.length === 0){
-                m_file_name_p.innerHTML = 'No files selected'
+                m_file_name_p.innerHTML = 'Файлы не выбраны'
                 return
             }
             if(move_targets.length === 1){
                 m_file_name_p.innerHTML = move_targets[0]
             }else{
-                m_file_name_p.innerHTML = `${move_targets.length} files`
+                m_file_name_p.innerHTML = `${move_targets.length} файлов`
             }
             console.log("open move modal for files: " + JSON.stringify(move_targets))
         })
@@ -474,12 +474,12 @@ block content
         
         function fetch_move(){
             if(!selected_destination || !selected_destination_path){
-                alert('Please select destination folder')
+                alert('Выберите папку назначения')
                 return
             }
             let new_path_val = selected_destination_path
             if(move_targets.length === 0){
-                alert('No files selected')
+                alert('Файлы не выбраны')
                 return
             }
             console.log("fetch move: " + JSON.stringify(move_targets) + "  to  " + new_path_val) 
@@ -532,7 +532,7 @@ block content
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(data)
             }).then((res) => {
@@ -553,13 +553,13 @@ block content
             const file_name = del_button ? del_button.getAttribute('d-name') : null
             delete_targets = file_name ? [file_name] : getSelectedFiles()
             if(delete_targets.length === 0){
-                file_name_p.innerHTML = 'No files selected'
+                file_name_p.innerHTML = 'Файлы не выбраны'
                 return
             }
             if(delete_targets.length === 1){
                 file_name_p.innerHTML = delete_targets[0]
             }else{
-                file_name_p.innerHTML = `${delete_targets.length} files`
+                file_name_p.innerHTML = `${delete_targets.length} файлов`
             }
             console.log("open delete modal for files: " + JSON.stringify(delete_targets))
         })
@@ -603,7 +603,7 @@ block content
         function openPreviewModal(file_name, file_type){
             const title = document.getElementById('previewModalTitle')
             const body = document.getElementById('previewBody')
-            title.textContent = `Preview: ${file_name}`
+            title.textContent = `Просмотр: ${file_name}`
             body.innerHTML = ''
             const url = fileUrl(file_name)
             if (file_type === 'pic') {
@@ -613,17 +613,17 @@ block content
             } else if (file_type === 'sound') {
                 body.innerHTML = `<audio controls class="w-100"><source src="${url}"></audio>`
             } else if (file_type === 'script' || file_type === 'json') {
-                body.innerHTML = `<div class="mb-2">Text preview</div><pre id="previewText" class="p-2 bg-light border rounded" style="max-height:65vh; overflow:auto; white-space: pre-wrap; word-break: break-word"></pre>`
+                body.innerHTML = `<div class="mb-2">Текстовый просмотр</div><pre id="previewText" class="p-2 bg-light border rounded" style="max-height:65vh; overflow:auto; white-space: pre-wrap; word-break: break-word"></pre>`
                 fetch(url)
                     .then((res) => res.text())
                     .then((text) => {
                         document.getElementById('previewText').textContent = text
                     })
                     .catch((err) => {
-                        document.getElementById('previewText').textContent = 'Error loading preview: ' + err
+                        document.getElementById('previewText').textContent = 'Ошибка загрузки просмотра: ' + err
                     })
             } else {
-                body.innerHTML = `<p>No preview available for this file type.</p>`
+                body.innerHTML = `<p>Просмотр для этого типа файла недоступен.</p>`
             }
             if (window.modalManager) {
                 modalManager.show('previewModal')
@@ -636,7 +636,7 @@ block content
             editFileName = file_name
             const title = document.querySelector('#editModal .modal-title')
             const textarea = document.getElementById('edit_file_content')
-            title.textContent = `Edit: ${file_name}`
+            title.textContent = `Редактировать: ${file_name}`
             textarea.value = ''
             fetch(fileUrl(file_name))
                 .then((res) => res.text())
@@ -644,7 +644,7 @@ block content
                     textarea.value = text
                 })
                 .catch((err) => {
-                    textarea.value = 'Error loading file: ' + err
+                    textarea.value = 'Ошибка загрузки файла: ' + err
                 })
             if (window.modalManager) {
                 modalManager.show('editModal')
@@ -674,7 +674,7 @@ block content
                 })
                 if (!res.ok) {
                     const err = await res.text()
-                    alert('Save failed: ' + err)
+                    alert('Ошибка сохранения: ' + err)
                     return
                 }
                 if (window.modalManager) {
@@ -684,7 +684,7 @@ block content
                 }
                 window.location.reload()
             } catch (e) {
-                alert('Save failed: ' + e)
+                alert('Ошибка сохранения: ' + e)
             }
         }
 

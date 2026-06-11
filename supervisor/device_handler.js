@@ -5,6 +5,7 @@ var watch = require('node-watch')
 const fs = require("fs");
 const path = require("path");
 const mqtt = require("mqtt");
+const { mqttAuthOpts } = require('/home/playerok/playerok/meta/mqtt_auth.js');
 const { argv } = require('process');
 
 const scribbles = require('scribbles');
@@ -110,7 +111,7 @@ async function chek_dev_list() {
 //   process.exit(1);
 // }
 
-const client = mqtt.connect('mqtt://127.0.0.1:1883')
+const client = mqtt.connect('mqtt://127.0.0.1:1883', mqttAuthOpts())
 client.on('connect', function () {
   scribbles.log("mqtt brocker connected!")
   setTimeout(chek_dev_list, 1000)

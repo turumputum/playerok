@@ -1,18 +1,18 @@
 card.card(style='width: 300px;').card_shadow.h-100 
     .card-body
-        h5.card-title Time settings
+        h5.card-title Настройки времени
         p.card-text
     ul.list-group.list-group-flush
         li.list-group-item 
             .row.mb-2
                 .col
-                    span.input-group-text(style='width:8em;') NTP service
+                    span.input-group-text(style='width:8em;') Служба NTP
                 .col(style='transform: translate(-15px, 2px);')
-                    //input(type='checkbox' data-toggle='switchbutton' checked='off' data-onlabel='On' data-offlabel='Off')                       
-                    input#ntp_Enable_toggle(type='checkbox'  data-toggle="toggle" data-size="sm" data-onlabel='On' data-offlabel='Off' ) 
+                    //input(type='checkbox' data-toggle='switchbutton' checked='off' data-onlabel='On' data-offlabel='Off')
+                    input#ntp_Enable_toggle(type='checkbox'  data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл' )
             .row.mb-2
                 .input-group
-                    label.input-group-text(for='inputGroupSelect01' style='width:8em;') Timezone
+                    label.input-group-text(for='inputGroupSelect01' style='width:8em;') Часовой пояс
                     select#inputGroup_timezone.form-select
                         option(value='-12') UTC -12:00
                         option(value='-11') UTC -11:00
@@ -42,28 +42,28 @@ card.card(style='width: 300px;').card_shadow.h-100
 
             .row.mb-2
                 .input-group
-                    span.input-group-text(style='width:8em;') Set time 
+                    span.input-group-text(style='width:8em;') Время
                     input#e_time_new.form-control(type='time' disabled placeholder='' aria-label='')
-            
+
             .row.mb-2
                 .input-group
-                    span.input-group-text(style='width:8em;') Set date 
+                    span.input-group-text(style='width:8em;') Дата
                     input#e_date_new.form-control(type='date' placeholder='' aria-label='')
 
     .card-body
-        button.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' data-bs-target='#confirm_save_time_config_modal') Save
+        button.btn.btn-outline-secondary(type='button' data-bs-toggle='modal' data-bs-target='#confirm_save_time_config_modal') Сохранить
 
     #confirm_save_time_config_modal.modal.modal-m.fade(tabindex='-1' aria-labelledby='confirm_save_time_config_modal' aria-hidden='true' data-bs-backdrop="static")
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4.confirm_save_net_config_modal_title Save time settings
+                    h4.confirm_save_net_config_modal_title Сохранить настройки времени
                 .modal-body
-                    h4 Device will be rebooted! 
+                    h4 Устройство будет перезагружено!
 
                 .modal-footer
-                    button.btn.btn-secondary(onclick = 'save_time_settings()') Ok
-                    button.btn.btn-secondary(onclick = 'cancel_time_config()') Cancel
+                    button.btn.btn-secondary(onclick = 'save_time_settings()') Ок
+                    button.btn.btn-secondary(onclick = 'cancel_time_config()') Отмена
 
 script.
     
@@ -91,7 +91,7 @@ script.
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
             }
             }).then((res) => res.json()
             ).then((dat) => {
@@ -103,7 +103,7 @@ script.
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
             }
             }).then((res) => res.json()
             ).then((dat) => {
@@ -143,7 +143,7 @@ script.
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
                     "time": $('#e_time_new').val(),

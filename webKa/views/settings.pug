@@ -9,7 +9,7 @@ block content
     div(style='margin-top: 76px;')
         main.my-2.mx-auto(style='width: 950px;')
             #alert_config_save_ok.mx-auto.alert.alert-success(role='alert')
-                | Save config OK
+                | Настройки сохранены
             .row.mx-auto
                 .col
                     include cards/netSettings-card.pug
@@ -45,7 +45,7 @@ block content
                 method: 'POST',
                 headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
                 },
                 body: JSON.stringify(config)
             }).then((res) => {

@@ -10,6 +10,19 @@ meta/player_config.json
 meta/playlist-table.json
 meta/scheduler-table.json
 meta/screen_shot.png
+meta/.session_key
+
+# Playwright browsers cache (downloaded by @playwright/mcp on first use)
+.playwright/
+
+# Dev-only MCP tooling config (not needed on client devices)
+.mcp.json
+
+# Python bytecode cache
+__pycache__/
+
+# Device-local playlists (each device gets its own)
+data/playlists/
 
 # Logs
 logs

@@ -1,10 +1,31 @@
 var watch = require('node-watch')
 //var usbDetect = require('usb-detection');
 const fs = require("fs");
-const { exec } = require('child_process');
+const { exec, execFile } = require('child_process');
 const scribbles = require('scribbles');
 
 let usb_watcher = watch('/dev');
+
+// Device basename must look like a partition node (sdb1, sdc, mmcblk0p1...) —
+// reject anything weird before passing to mount/mkdir/rm. We're called from
+// /dev change events; on a sane system this is always safe, but a hostile
+// udev rule could create a node with a shell-meta name. Defense in depth.
+const SAFE_DEV_NAME_RE = /^[a-z][a-z0-9]{1,30}$/
+
+function isSafeDevName(name) {
+  return typeof name === 'string' && SAFE_DEV_NAME_RE.test(name)
+}
+
+function execFilePromise(file, args) {
+  return new Promise((resolve) => {
+    execFile(file, args, (error, stdout, stderr) => {
+      if (error) {
+        scribbles.warn(`execFile ${file} failed: ${error.code || error.message}`)
+      }
+      resolve(stdout || stderr)
+    })
+  })
+}
 
 function search_usb_storage_dev(path){
   let name = path.split('/').slice(-1)
@@ -56,21 +77,35 @@ let usb_storages = class{
   }
 
   static async mount(path){
-    let name = path.split('/').slice(-1)
+    const name = path.split('/').slice(-1)[0]
+    if (!isSafeDevName(name)) {
+      scribbles.warn(`mount rejected — unsafe device name: ${JSON.stringify(name)}`)
+      return
+    }
+    const mountpoint = `/home/playerok/playerok/data/${name}`
     try{
-      await execPromise(`mkdir /home/playerok/playerok/data/${name}`)
-      await execPromise(`chmod -R 777 /home/playerok/playerok/data/${name}`)
-      await execPromise(`mount ${path} /home/playerok/playerok/data/${name}`)
+      await execFilePromise('mkdir', ['-p', mountpoint])
+      // nosuid: ignore setuid bits on files (no privilege escalation via USB binaries)
+      // nodev: ignore device nodes (no /dev/* on the stick)
+      // noexec: don't execute binaries directly off the stick
+      await execFilePromise('mount', ['-o', 'nosuid,nodev,noexec', path, mountpoint])
     }catch(err){
-      scribbles.warn(`Umount FAIL: ${err}`)
+      scribbles.warn(`Mount FAIL: ${err}`)
     }
   }
-  
+
   static async unmount(path){
-    let name = path.split('/').slice(-1)
+    const name = path.split('/').slice(-1)[0]
+    if (!isSafeDevName(name)) {
+      scribbles.warn(`unmount rejected — unsafe device name: ${JSON.stringify(name)}`)
+      return
+    }
+    const mountpoint = `/home/playerok/playerok/data/${name}`
     try{
-      await execPromise(`umount /home/playerok/playerok/data/${name}`)
-      await execPromise(`rm -r /home/playerok/playerok/data/${name}`)
+      await execFilePromise('umount', [mountpoint])
+      // rmdir (NOT rm -r) — refuses to delete if the dir is non-empty, so a
+      // failed umount can't silently nuke files that look like USB content
+      await execFilePromise('rmdir', [mountpoint])
       scribbles.log(`unmount ${name} OK`)
     }catch(err){
       scribbles.warn(`Umount FAIL: ${err}`)

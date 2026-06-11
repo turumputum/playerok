@@ -1,4 +1,4 @@
-const { spawn, spawnSync, exec, execSync } = require('child_process');
+const { spawn, spawnSync, exec, execFile, execFileSync, execSync } = require('child_process');
 //const file_tools = require("../meta/tools/file_tools");
 const scribbles = require('scribbles');
 var watch = require('node-watch')
@@ -18,18 +18,42 @@ function execPromise(cmd) {
     })
   }
 
+  function execFilePromise(file, args) {
+    return new Promise((resolve) => {
+      execFile(file, args, (error, stdout, stderr) => {
+        if (error) {
+          scribbles.warn(`execFile ${file} failed: ${error.code || error.message}`)
+        }
+        resolve(stdout || stderr)
+      })
+    })
+  }
+
   async function syncSpawn(cmd, arg) {
     const childProcess = spawnSync(cmd, [arg],
         { stdio: [process.stdin, process.stdout, process.stderr] });
 }
 
-function set_ss_config(newConfig) {
-    
+// xrandr output names: connector ids like HDMI-1, DP-2, eDP1, VGA-0
+const OUTPUT_RE = /^[A-Za-z][A-Za-z0-9-]{0,31}$/
+// xrandr --mode accepts WxH (e.g. 1920x1080)
+const RESOLUTION_RE = /^\d{2,5}x\d{2,5}$/
+const ORIENTATION_ALLOWLIST = new Set(['normal', 'left', 'right', 'inverted'])
 
-    execPromise(`xrandr --output ${newConfig.screen.output_port} --mode ${newConfig.screen.resolution} --rotate ${newConfig.screen.orientation}`)
-    .then(response=>{
-        scribbles.log(response)
-    })
+function set_ss_config(newConfig) {
+    const port = newConfig.screen.output_port
+    const mode = newConfig.screen.resolution
+    const rotate = newConfig.screen.orientation
+    if (!OUTPUT_RE.test(port || '')) {
+        scribbles.warn(`Invalid screen.output_port ${JSON.stringify(port)} — skipping xrandr`)
+    } else if (!RESOLUTION_RE.test(mode || '')) {
+        scribbles.warn(`Invalid screen.resolution ${JSON.stringify(mode)} — skipping xrandr`)
+    } else if (!ORIENTATION_ALLOWLIST.has(rotate)) {
+        scribbles.warn(`Invalid screen.orientation ${JSON.stringify(rotate)} — skipping xrandr`)
+    } else {
+        execFilePromise('xrandr', ['--output', port, '--mode', mode, '--rotate', rotate])
+            .then(response => scribbles.log(response))
+    }
 
     if (newConfig.sound.output_device == "Audio Jack") {
         scribbles.log("Set audio jack output")
@@ -44,11 +68,22 @@ function set_ss_config(newConfig) {
         }
     }
 
-    let sink = execSync(`pactl info | grep 'Default Sink'`).toString().replace("\n", '').split(":")[1]
-    //console.log(sink)
-    execPromise(`pactl set-sink-volume ${sink} ${newConfig.sound.volume}%`)
-    execPromise(`pactl set-sink-mute ${sink} 0`)
-    //scribbles.log("Set screen&sound config OK")
+    // pactl info output line: "Default Sink: alsa_output.pci-0000_00_1f.3.analog-stereo"
+    let sink = ''
+    try {
+        const info = execFileSync('pactl', ['info']).toString()
+        const m = info.split('\n').find(l => l.startsWith('Default Sink:'))
+        if (m) sink = m.split(':')[1].trim()
+    } catch (e) {
+        scribbles.warn(`pactl info failed: ${e.message}`)
+    }
+    const volume = Number.parseInt(newConfig.sound.volume, 10)
+    if (sink && /^[A-Za-z0-9._-]+$/.test(sink) && Number.isInteger(volume) && volume >= 0 && volume <= 150) {
+        execFilePromise('pactl', ['set-sink-volume', sink, `${volume}%`])
+        execFilePromise('pactl', ['set-sink-mute', sink, '0'])
+    } else {
+        scribbles.warn(`Skipping pactl: sink=${JSON.stringify(sink)} volume=${JSON.stringify(newConfig.sound.volume)}`)
+    }
 }
 
 try {

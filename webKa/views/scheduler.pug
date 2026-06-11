@@ -10,25 +10,25 @@ mixin table-row(index, name, path, type, trigger, state)
         td(data-label="Trigger")= trigger
         td(data-label="state")= state
         td(data-label="Controls")
-            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' onclick=`open_edit_task(${index})`) edit
-            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' data-bs-toggle='modal' data-bs-target='#verify_delete' d-name=name d-index=index) delete
-            button.mx-1.btn.btn-outline-info.btn-sm(type='button' onclick=`show_task_logs(this)` data-type=type) logs
+            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' onclick=`open_edit_task(${index})`) изменить
+            button.mx-1.btn.btn-outline-secondary.btn-sm(type='button' data-bs-toggle='modal' data-bs-target='#verify_delete' d-name=name d-index=index) удалить
+            button.mx-1.btn.btn-outline-info.btn-sm(type='button' onclick=`show_task_logs(this)` data-type=type data-name=name) логи
 
 block content
     div(style='padding-top: 56px; ').container-xxl
         card.card.card_shadow.h-100.mt-4
             .bg-secondary.card-img-top
-                .h4.mx-2.mt-2 Tasks
+                .h4.mx-2.mt-2 Задачи
             .card_body.p-2
                 table.table#task_table
                     thead
                         tr
                             th(scope='col') #
-                            th(scope='col') Name
-                            th(scope='col') Path
-                            th(scope='col') Type
-                            th(scope='col') Trigger
-                            th(scope='col' style="width: 15%;") Controls
+                            th(scope='col') Имя
+                            th(scope='col') Путь
+                            th(scope='col') Тип
+                            th(scope='col') Триггер
+                            th(scope='col' style="width: 24%;") Действия
                     tbody
                         each task, index in tasks
                             //+table-row(index+1, task.task_name, task.playlist_path, task.type, task.trigger_type, task.state)
@@ -36,7 +36,7 @@ block content
                         tr
                             td(colspan='5')
                             td(data-label="Controls") 
-                                button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' onclick='add_task()') add
+                                button.btn.btn-outline-secondary.btn-sm.mx-1(type='button' onclick='add_task()') добавить
 
     //----------------------Edit task MODAL_2----------------------------
     
@@ -47,13 +47,13 @@ block content
         .modal-dialog.modal-dialog-centered
             .modal-content
                 .modal-header
-                    h1#verify_delete.modal-title.fs-5 Confirm delete
-                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                    h1#verify_delete.modal-title.fs-5 Подтвердите удаление
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
                 .modal-body
                     h2.name_to_delete
                 .modal-footer
-                    button.btn.btn-primary(onclick = 'delete_task()') Delete
-                    button.btn.btn-primary(data-bs-dismiss='modal') Cancel
+                    button.btn.btn-primary(onclick = 'delete_task()') Удалить
+                    button.btn.btn-primary(data-bs-dismiss='modal') Отмена
 
 
 
@@ -62,14 +62,15 @@ block content
         .modal-dialog.modal-xl
             .modal-content
                 .modal-header
-                    h1#task_logs_modal_title.modal-title.fs-5 Task Logs
-                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Close')
+                    h1#task_logs_modal_title.modal-title.fs-5 Логи задачи
+                    button.btn-close(type='button' data-bs-dismiss='modal' aria-label='Закрыть')
                 .modal-body
                     .tab-content.mt-3
                         #player-log-modal.tab-pane.fade.show.active
                             pre#player-log-modal-content(style="height: 400px; overflow-y: auto; white-space: pre-wrap; font-family: monospace; text-align: left;")
                 .modal-footer
-                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Close
+                    button#copy_log_btn.btn.btn-outline-secondary.me-auto(type='button' onclick='copyLogToClipboard()') Копировать лог
+                    button.btn.btn-secondary(type='button' data-bs-dismiss='modal') Закрыть
 
 
     script.
@@ -123,20 +124,20 @@ block content
                 newRow.insertCell().innerHTML = `<p>${task.task_path}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.type}</p>`
                 newRow.insertCell().innerHTML = `<p>${task.trigger_type}</p>`
-                newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_edit_task(${index+1})'>edit</button>
-                                                <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_delete_modal(${index})'>delete</button>
-                                                <button class="mx-1 mt-1 btn btn-outline-info btn-sm" type="button" onclick = 'show_task_logs(this)' data-type='${task.type}'>logs</button>`
+                newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_edit_task(${index+1})'>изменить</button>
+                                                <button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'open_delete_modal(${index})'>удалить</button>
+                                                <button class="mx-1 mt-1 btn btn-outline-info btn-sm" type="button" onclick = 'show_task_logs(this)' data-type='${task.type}' data-name='${String(task.task_name || '').replace(/'/g, '&#39;').replace(/"/g, '&quot;')}'>логи</button>`
             })
 
             let newRow = DOM_table.insertRow(DOM_table.rows.length)
             for (let index=0; index<5; index++){
                 newRow.insertCell()
             }
-            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'add_task()'>add</button>`
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = 'add_task()'>добавить</button>`
         
         
             let brokerAddress = `ws://${location.host}:1890/mqtt`
-            client = mqtt.connect(brokerAddress)
+            client = mqtt.connect(brokerAddress, { username: config.security.admin_login, password: config.security.admin_pass })
             client.on('connect', function () {
                 console.log("mqtt brocker connected!");
                 client.subscribe('scheduler/current_player_task')
@@ -278,27 +279,118 @@ block content
             return result;
         }
 
-        function loadTaskLogs(type) {
-            if (type === 'multimedia') {
-                fetch('/api/logs/player_log.log')
-                .then(response => response.text())
-                .then(data => {
-                    const lines = data.split('\n').filter(line => line.trim());
-                    const withGaps = insertLogGapSeparators(lines, 2000);
-                    $('#player-log-modal-content').text(withGaps.reverse().join('\n'));
-                })
-                .catch(err => console.error('Error loading player log:', err));
-            } else {
-                $('#player-log-modal-content').text('Task-specific log is not available for this task type.');
+        // Copy the currently displayed log to the clipboard.
+        // navigator.clipboard.writeText only works on secure contexts (https://
+        // or http://localhost) — on a LAN device served over http://, Chrome
+        // returns undefined for navigator.clipboard.writeText. So we always
+        // attempt the legacy execCommand path first, with the textarea placed
+        // INSIDE the open Bootstrap modal so its focus-trap doesn't steal the
+        // selection before execCommand fires.
+        function copyLogToClipboard() {
+            const text = $('#player-log-modal-content').text() || '';
+            const btn = document.getElementById('copy_log_btn');
+            const flash = (ok, label) => {
+                if (!btn) return;
+                btn.textContent = label || (ok ? 'Скопировано!' : 'Ошибка копирования');
+                btn.classList.toggle('btn-outline-success', ok);
+                btn.classList.toggle('btn-outline-danger', !ok);
+                setTimeout(() => {
+                    btn.textContent = 'Копировать лог';
+                    btn.classList.remove('btn-outline-success', 'btn-outline-danger');
+                }, 1800);
+            };
+
+            // Append textarea to the modal so it stays inside the focus-trap.
+            const host = document.getElementById('task_logs_modal') || document.body;
+            const ta = document.createElement('textarea');
+            ta.value = text;
+            ta.setAttribute('readonly', '');
+            // Off-screen but still in flow so the browser keeps it focusable.
+            ta.style.position = 'fixed';
+            ta.style.left = '0';
+            ta.style.top = '0';
+            ta.style.width = '1px';
+            ta.style.height = '1px';
+            ta.style.opacity = '0';
+            ta.style.zIndex = '99999';
+            host.appendChild(ta);
+            ta.focus();
+            ta.select();
+            ta.setSelectionRange(0, ta.value.length);
+
+            let ok = false;
+            try { ok = document.execCommand('copy'); } catch (e) { ok = false; }
+            ta.remove();
+
+            if (ok) {
+                flash(true);
+                return;
             }
+
+            // execCommand failed — try the modern API (works on https:// or
+            // http://localhost). If that's also unavailable, fall back to
+            // selecting the <pre> so the user can Ctrl+C manually.
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).then(
+                    () => flash(true),
+                    () => flash(false, 'Выделите и Ctrl+C')
+                );
+                return;
+            }
+
+            // Last resort: select the log <pre> so user can manually copy.
+            const pre = document.getElementById('player-log-modal-content');
+            if (pre && window.getSelection) {
+                const range = document.createRange();
+                range.selectNodeContents(pre);
+                const sel = window.getSelection();
+                sel.removeAllRanges();
+                sel.addRange(range);
+                flash(false, 'Выделено — Ctrl+C');
+            } else {
+                flash(false);
+            }
+        }
+
+        // Mirror of scheduler.js safeName() — must stay in sync, otherwise the
+        // log URL won't match the filename on disk.
+        function safeTaskName(name) {
+            return String(name || '').replace(/[^A-Za-z0-9._-]+/g, '_');
+        }
+
+        function renderLogs(text) {
+            const lines = text.split('\n').filter(line => line.trim());
+            if (lines.length === 0) {
+                $('#player-log-modal-content').text('(записей в логе пока нет)');
+                return;
+            }
+            const withGaps = insertLogGapSeparators(lines, 2000);
+            $('#player-log-modal-content').text(withGaps.reverse().join('\n'));
+        }
+
+        function loadTaskLogs(type, name) {
+            let url;
+            if (type === 'multimedia') {
+                url = '/api/logs/player_log.log';
+            } else if (type === 'script' && name) {
+                url = '/api/logs/script_' + encodeURIComponent(safeTaskName(name)) + '.log';
+            } else {
+                $('#player-log-modal-content').text('Лог для этого типа задачи недоступен.');
+                return;
+            }
+            fetch(url)
+                .then(response => response.text())
+                .then(renderLogs)
+                .catch(err => console.error('Error loading log:', err));
         }
 
         function show_task_logs(button) {
             const type = $(button).data('type');
-            console.log('show_task_logs called with type:', type);
-            
+            const name = $(button).data('name');
+            console.log('show_task_logs called with type:', type, 'name:', name);
+
             // Load logs immediately
-            loadTaskLogs(type);
+            loadTaskLogs(type, name);
 
             // Show modal first
             if (window.modalManager) {
@@ -306,7 +398,7 @@ block content
             } else {
                 $('#task_logs_modal').modal('show');
             }
-            
+
             // Activate the appropriate tab based on type (Bootstrap 5)
             setTimeout(function() {
                 // Move focus to modal content to avoid aria-hidden warning
@@ -318,7 +410,7 @@ block content
                 clearInterval(logsUpdateInterval);
             }
             logsUpdateInterval = setInterval(function() {
-                loadTaskLogs(type);
+                loadTaskLogs(type, name);
             }, 2000);
         }
 

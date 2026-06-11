@@ -3,34 +3,54 @@
 nav.navbar.navbar-light.bg-light.fixed-top.navbar-expand-md
   .container-xxl
     a.navbar-brand(href='/') playerOk
-    button.navbar-toggler(type='button' data-bs-toggle='collapse' data-bs-target='#navbarNav' aria-controls='navbarNav' aria-expanded='false' aria-label='Toggle navigation')
+    button.navbar-toggler(type='button' data-bs-toggle='collapse' data-bs-target='#navbarNav' aria-controls='navbarNav' aria-expanded='false' aria-label='Переключить навигацию')
       span.navbar-toggler-icon
 
     .collapse.navbar-collapse(id="navbarNav")
       ul.navbar-nav.mr-auto
         //a.nav-item(class='nav-link' href=path) #{path}
         li.nav-item(class = (pageName == 'home') ? 'activeNav' : '')
-          a.nav-link.mx-2.if(class="<% (activeNav === 'Home') { %>activeNav<%}%>" aria-current='page' href='/') Home
+          a.nav-link.mx-2.if(class="<% (activeNav === 'Home') { %>activeNav<%}%>" aria-current='page' href='/') Главная
         li.nav-item(class = (pageName == 'FileManager') ? 'activeNav' : '')
-          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/data') FileManager
+          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/data') Файлы
         li.nav-item(class = (pageName == 'Editor') ? 'activeNav' : '')
-          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Editor') Editor
+          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Editor') Плейлисты
         li.nav-item(class = (pageName == 'Scheduler') ? 'activeNav' : '')
-          a.nav-link.mx-2.if(class="<% (activeNav === 'Scheduler') { %>activeNav<%}%>" href='/Scheduler') Scheduler
+          a.nav-link.mx-2.if(class="<% (activeNav === 'Scheduler') { %>activeNav<%}%>" href='/Scheduler') Планировщик
         li.nav-item(class = (pageName == 'Settings') ? 'activeNav' : '')
-          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Settings') Settings
+          a.nav-link.mx-2.if(class="<% (activeNav === 'FileManager') { %>activeNav<%}%>" href='/Settings') Настройки
+
+    if security_warnings && security_warnings.length
+      .dropdown.me-2
+        button.btn.btn-outline-warning.position-relative(type='button' data-bs-toggle='dropdown' aria-expanded='false' title='Предупреждения безопасности')
+          span.bi.bi-shield-exclamation
+          span.position-absolute.top-0.start-100.translate-middle.badge.rounded-pill.bg-danger(style='font-size:0.6em;')
+            = security_warnings.length
+        ul.dropdown-menu.dropdown-menu-end.p-2(style='width: 380px; max-height: 70vh; overflow-y: auto;')
+          li.px-2.pb-1
+            strong Предупреждения безопасности
+          li
+            hr.dropdown-divider.my-1
+          each w in security_warnings
+            li.px-2.py-2
+              .d-flex.align-items-start
+                span.me-2(class='text-' + w.level)
+                  span.bi.bi-exclamation-triangle-fill
+                .flex-grow-1
+                  .small.fw-bold(class='text-' + w.level)= w.title
+                  .small.text-muted= w.message
+            li
+              hr.dropdown-divider.my-1
 
     a(href='/logout')
-      button#bt_logout.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Log out") 
+      button#bt_logout.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Выйти")
         span.bi.bi-box-arrow-right
-    
-    a(href='/reboot')
-      button#bt_reboot.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Reboot") 
-        span.bi.bi-bootstrap-reboot
 
-    a(href='/power_off')
-      button#bt_powerOff.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Power off") 
-        span.bi.bi-power
+    button#bt_reboot.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Перезагрузка" onclick="confirmAndPost('/reboot', 'Перезагрузить устройство?')")
+      span.bi.bi-bootstrap-reboot
+
+    button#bt_powerOff.btn.btn-outline-secondary.me-2(type='button' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Выключение" onclick="confirmAndPost('/power_off', 'Выключить устройство?')")
+      span.bi.bi-power
       
     #MyClockDisplay.p-2.rounded-3.clock(style='background-color: rgb(177, 220, 226);' onload='showTime()' data-bs-toggle="tooltip" data-bs-placement="bottom" data-original-title='bb')
 
@@ -50,7 +70,7 @@ script.
             method: 'GET',
             headers: {
                 'Accept': 'application/json',
-                'Content-Type': 'application/x-www-form-urlencoded'
+                'Content-Type': 'application/json'
             }
             }).then((res) => res.json()
             ).then((dat) => {
@@ -77,7 +97,7 @@ script.
       method: 'GET',
       headers: {
         'Accept': 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
+        'Content-Type': 'application/json'
       }
         }).then((res) => res.json()
         ).then((dat) => {

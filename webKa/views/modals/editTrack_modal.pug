@@ -2,34 +2,34 @@
         .modal-dialog.modal-xl.modal-fullscreen-xl-down
             .modal-content
                 .modal-header(style='background-color: rgb(177, 220, 226);')
-                    h4.editTrackModalTitle Edit track in playlist:
+                    h4.editTrackModalTitle Редактировать трек в плейлисте:
                 .modal-body
                     .input-group
-                        span.input-group-text.fs-5.fw-bold Track name:
+                        span.input-group-text.fs-5.fw-bold Имя трека:
                         input#track_name_input.fs-5.fw-bold.form-control(type="text" style='color: rgb(106, 143, 148)')
                     .card.mt-4
                         .card-header.text-center
                             ul#trackTabs.nav.nav-tabs.card-header-tabs
                                 li
-                                    button#track_main_tab.nav-link.active(aria-current='true' data-toggle="tab") Main settings
+                                    button#track_main_tab.nav-link.active(aria-current='true' data-toggle="tab") Основные настройки
                                 li
-                                    button#track_interactive_tab.nav-link(data-toggle="tab") Interactive settings
+                                    button#track_interactive_tab.nav-link(data-toggle="tab") Интерактивные настройки
                                 li
-                                    button#track_network_tab.nav-link(data-toggle="tab") Network audio streams
+                                    button#track_network_tab.nav-link(data-toggle="tab") Сетевые аудиопотоки
                     //-------------------CARD Main settings-----------------------------
                     #track_main_settings_tab
                         card.card.card_shadow.mt-4
                             .bg-secondary.card-img-top
-                                .h4.mx-2.mt-2 Main settings
+                                .h4.mx-2.mt-2 Основные настройки
                             .card_body.p-2
                                 table#editSipmpleTrack.table.table-hover
                                     thead
-                                        tr  
-                                            th(scope='col' style='width:8%') Order
-                                            th(scope='col' style='width:10%') Type
-                                            th(scope='col' style='width:25%') File name
-                                            th(scope='col' ) Path
-                                            th(scope='col' style='width:5%') Repeat
+                                        tr
+                                            th(scope='col' style='width:8%') Порядок
+                                            th(scope='col' style='width:10%') Тип
+                                            th(scope='col' style='width:25%') Имя файла
+                                            th(scope='col' ) Путь
+                                            th(scope='col' style='width:5%') Повтор
                                     tbody
                                         tr
                                             th 
@@ -48,63 +48,63 @@
 
                                 card.card.mt-4 
                                     .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                        .h5.mx-2.mt-2 Actions
+                                        .h5.mx-2.mt-2 Действия
                                     table.table#table_actions_topics.table-hover
                                         datalist#action_topics_list
                                         thead
                                             tr
-                                                th(scope='col' style="width: 15%;") Event
-                                                th(scope='col') Topic
-                                                th(scope='col' style="width: 15%;") Payload
-                                                th(scope='col' style="width: 15%;") Controls
+                                                th(scope='col' style="width: 15%;") Событие
+                                                th(scope='col') Топик
+                                                th(scope='col' style="width: 15%;") Сообщение
+                                                th(scope='col' style="width: 15%;") Действия
 
                                         tbody
                     //-------------------CARD Triggers and actions-----------------------------
                     #track_interactive_settings_tab(style='display: none;')
                         card.card.card_shadow.mt-4
                             .bg-secondary.card-img-top
-                                .h4.mx-2.mt-2 Interactive settings
+                                .h4.mx-2.mt-2 Интерактивные настройки
                             .card_body.p-2
-                              
+
                                 card.card.h-100.mt-2
                                     .card-img-top(style='background-color: rgb(177, 177, 177);')
-                                        .h5.mx-2.mt-2 Triggers
+                                        .h5.mx-2.mt-2 Триггеры
                                     table.table#table_triggers_topics.table-hover
                                         datalist#trigger_topics_list
                                         thead
                                             tr
-                                                th(scope='col' style="width: 15%;") Event
-                                                th(scope='col') Topic
-                                                th(scope='col' style="width: 15%;") Payload
-                                                th(scope='col' style="width: 15%;") Controls
+                                                th(scope='col' style="width: 15%;") Событие
+                                                th(scope='col') Топик
+                                                th(scope='col' style="width: 15%;") Сообщение
+                                                th(scope='col' style="width: 15%;") Действия
 
                                         tbody
 
                     #track_network_settings_tab(style='display: none;')
                         card.card.card_shadow.mt-4
                             .bg-secondary.card-img-top
-                                .h4.mx-2.mt-2 Network audio streams
+                                .h4.mx-2.mt-2 Сетевые аудиопотоки
                             .card_body.p-2
                                 .input-group.mt-2
-                                    span.input-group-text Video delay (µs)
+                                    span.input-group-text Задержка видео (мкс)
                                     input#video_start_delay_us_input.form-control(type='number' min='0' step='1000' value='0')
 
                                 table.table#table_network_audio_streams.table-hover.mt-3
                                     thead
                                         tr
-                                            th(scope='col' style='width: 26%;') Audio track
-                                            th(scope='col' style='width: 10%;') Codec
-                                            th(scope='col' style='width: 20%;') Multicast host
-                                            th(scope='col' style='width: 9%;') Port
-                                            th(scope='col' style='width: 12%;') Interface
-                                            th(scope='col' style='width: 8%;') Enabled
-                                            th(scope='col' style='width: 15%;') Controls
+                                            th(scope='col' style='width: 26%;') Аудиодорожка
+                                            th(scope='col' style='width: 10%;') Кодек
+                                            th(scope='col' style='width: 20%;') Multicast-адрес
+                                            th(scope='col' style='width: 9%;') Порт
+                                            th(scope='col' style='width: 12%;') Интерфейс
+                                            th(scope='col' style='width: 8%;') Включён
+                                            th(scope='col' style='width: 15%;') Действия
                                     tbody
 
                             
                 .modal-footer
-                    button.btn.btn-secondary(onclick = 'saveTrack()') Save
-                    button.btn.btn-secondary(onclick = 'cancelEditTrack()') Cancel
+                    button.btn.btn-secondary(onclick = 'saveTrack()') Сохранить
+                    button.btn.btn-secondary(onclick = 'cancelEditTrack()') Отмена
         
 script.
 
@@ -301,9 +301,9 @@ script.
             newRow.insertCell().innerHTML = `<input id='NA_port_${index}' class='form-control' type='number' min='1' max='65535' value='${stream.port || 0}'>`
             newRow.insertCell().innerHTML = `<select id='NA_iface_${index}' class='form-select'><option value='eth0'>eth0</option><option value='eth1'>eth1</option><option value='wlan0'>wlan0</option></select>`
             newRow.insertCell().innerHTML = `<input id='NA_enabled_${index}' class='form-check-input' type='checkbox' ${stream.enabled !== false ? 'checked' : ''}>`
-            newRow.insertCell().innerHTML = `<button class='btn btn-outline-secondary btn-sm' type='button' onclick='delete_network_audio_stream(${index})'>delete</button>`
+            newRow.insertCell().innerHTML = `<button class='btn btn-outline-secondary btn-sm' type='button' onclick='delete_network_audio_stream(${index})'>удалить</button>`
 
-            $(`#NA_audio_path_${index}`).append($('<option>', { value: '', text: '-- select audio --' }))
+            $(`#NA_audio_path_${index}`).append($('<option>', { value: '', text: '-- выберите аудио --' }))
             audioTracks.forEach(item => {
                 $(`#NA_audio_path_${index}`).append($('<option>', { value: item.path, text: item.name }))
             })
@@ -319,7 +319,7 @@ script.
         addRow.insertCell()
         addRow.insertCell()
         addRow.insertCell()
-        addRow.insertCell().innerHTML = `<button class='btn btn-outline-secondary btn-sm' type='button' onclick='add_network_audio_stream()'>add</button>`
+        addRow.insertCell().innerHTML = `<button class='btn btn-outline-secondary btn-sm' type='button' onclick='add_network_audio_stream()'>добавить</button>`
     }
 
     function add_topic(identify){
@@ -381,13 +381,13 @@ script.
             newRow.insertCell().innerHTML = `<input id='${identify}_payload_${topic_index}' class="form-control"></input>`
             $(`#${identify}_payload_${topic_index}`).val(topic.payload)
 
-            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic('${identify}','${topic_index}')">delete</button>`
+            newRow.insertCell().innerHTML = `<button class="mx-1 mt-1 btn btn-outline-secondary btn-sm" type="button" onclick = "delete_topic('${identify}','${topic_index}')">удалить</button>`
         }
         newRow = table.DOM_table.insertRow(table.DOM_table.rows.length)
         newRow.insertCell()
         newRow.insertCell()
         newRow.insertCell()
-        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic('${identify}')">add</button>`
+        newRow.insertCell().innerHTML = `<button class="mx-1 btn btn-outline-secondary btn-sm" type="button" onclick = "add_topic('${identify}')">добавить</button>`
     }
     //--------------end of interactive settings group-------------------
 
