@@ -135,7 +135,12 @@ scribbles.config({
 //---clean log---
 const logFiles = ['playerok.log', 'scheduler.log', 'webKa.log', 'player_log.log', 'supervisor.log', 'screen_sound_config.log', 'usb_storage.log', 'uart2mqtt.log'];
 logFiles.forEach(logFile => {
-  fs.writeFileSync(`/home/playerok/playerok/logs/${logFile}`, '');
+  const logPath = `/home/playerok/playerok/logs/${logFile}`;
+  fs.writeFileSync(logPath, '');
+  // supervisor runs as root, but scheduler/player.js run as `playerok` and
+  // must append to these files. Make them world-writable so a freshly created
+  // (root-owned) log file doesn't lock out the non-root services with EACCES.
+  try { fs.chmodSync(logPath, 0o666); } catch (e) { scribbles.warn(`chmod ${logFile} failed: ${e.message}`); }
 });
 scribbles.log(`Supervisor config OK`)
 
