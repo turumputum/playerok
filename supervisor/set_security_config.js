@@ -56,24 +56,44 @@ function setUnixPassword(login, password) {
     })
 }
 
-// Keep the MQTT broker password in sync with the admin password so the whole
-// appliance uses ONE credential (panel + SSH + MQTT). Regenerates the mosquitto
-// password file and bounces the broker. The broker only enforces it once
-// mqtt_auth_enable.sh has added `password_file` to mosquitto.conf — until then
-// this is a harmless no-op (file written, ignored by the still-anonymous broker).
-function syncMqttPassword(login, password) {
+// Configure the mosquitto broker to match the "Пароль MQTT" toggle
+// (config.security.MQTT):
+//   enabled  -> password_file + allow_anonymous false  (one password everywhere:
+//               panel + SSH + MQTT, all using admin_login/admin_pass)
+//   disabled -> allow_anonymous true  (open broker, no password)
+// Rewrites the global auth lines in mosquitto.conf — they must sit BEFORE the
+// first listener because per_listener_settings defaults to false — then bounces
+// the broker and the bus clients (scheduler cascades to player.js) so they
+// reconnect. Browser/services always SEND creds, so toggling is safe either way.
+function applyMqttAuth(enabled, login, password) {
+    const CONF = '/etc/mosquitto/mosquitto.conf'
     const PW = '/etc/mosquitto/passwd'
-    const r = spawnSync('sudo', ['mosquitto_passwd', '-b', '-c', PW, login, password])
-    if (r.status === 0) {
-        tryExecSync(`sudo chown mosquitto:mosquitto ${PW}`)
-        tryExecSync(`sudo chmod 600 ${PW}`)
-        scribbles.log('mosquitto password file updated')
+    try {
+        let txt = fs.readFileSync(CONF, 'utf8')
+        // Drop any prior global auth lines so we can re-insert cleanly.
+        txt = txt.replace(/^[ \t]*(allow_anonymous|password_file)\b.*\r?\n/gm, '')
+        let inject
+        if (enabled) {
+            const r = spawnSync('sudo', ['mosquitto_passwd', '-b', '-c', PW, login, password])
+            if (r.status !== 0) {
+                scribbles.warn(`mosquitto_passwd failed (code ${r.status}): ${r.stderr ? r.stderr.toString() : ''}`)
+                return
+            }
+            tryExecSync(`sudo chown mosquitto:mosquitto ${PW}`)
+            tryExecSync(`sudo chmod 600 ${PW}`)
+            inject = 'allow_anonymous false\npassword_file /etc/mosquitto/passwd\n'
+        } else {
+            inject = 'allow_anonymous true\n'
+        }
+        txt = txt.replace(/^listener /m, inject + 'listener ')
+        const tmp = '/tmp/mosquitto.conf.playerok'
+        fs.writeFileSync(tmp, txt)
+        tryExecSync(`sudo cp ${tmp} ${CONF}`)
         tryExecSync(`sudo systemctl restart mosquitto`)
-        // Bounce the bus clients so they reconnect with the new credential.
-        // (webka is restarted above; scheduler restart cascades to player.js.)
         tryExecSync(`sudo systemctl restart scheduler`)
-    } else {
-        scribbles.warn(`mosquitto_passwd failed (code ${r.status}): ${r.stderr ? r.stderr.toString() : ''}`)
+        scribbles.log(`MQTT auth ${enabled ? 'enabled' : 'disabled'}`)
+    } catch (e) {
+        scribbles.warn(`applyMqttAuth failed: ${e.message}`)
     }
 }
 
@@ -129,7 +149,18 @@ async function set_net_config() {
         scribbles.warn(`Skipping password change — admin_pass missing or contains forbidden chars (\\n, \\0)`)
     } else {
         await setUnixPassword(login, pass)
-        syncMqttPassword(login, pass)
+    }
+
+    // Apply the MQTT password toggle. Default ON when the flag is absent.
+    const mqttWanted = (config.security.MQTT === undefined) ? true : (config.security.MQTT == 1)
+    if (mqttWanted) {
+        if (isValidUsername(login) && isValidPassword(pass)) {
+            applyMqttAuth(true, login, pass)
+        } else {
+            scribbles.warn(`MQTT auth requested but admin creds invalid — leaving broker unchanged`)
+        }
+    } else {
+        applyMqttAuth(false, login, pass)
     }
 }
 

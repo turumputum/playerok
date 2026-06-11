@@ -8,7 +8,7 @@
                 p.card-text
             .col
                 .input-group.mb-1
-                    span#basic-addon1.input-group-text(style='width:8em;') Имя устройства
+                    span#basic-addon1.input-group-text(style='width:10em;') Имя устройства
                     input#mDNS.form-control(type='text' placeholder= config.net.mDNS_name aria-label='mdnsName' aria-describedby='basic-addon1')
 
         //| Some quick example text to build on the card title and make up the bulk of the card&apos;s content.
@@ -21,14 +21,14 @@
                         .col-6
                             span.input-group-text(style='width:7em;') Ethernet 0
                         .col(style='transform: translate(-15px, 2px);')                    
-                            input#eth0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
+                            input#eth0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл') 
                         .col 
                             i#eth0_carrier.bi.bi-ethernet(style="font-size: 25px;")
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
                         .col(style='transform: translate(-15px, 2px);')                     
-                            input#eth0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
+                            input#eth0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл') 
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') IP-адрес
                         input#eth0_ip_adress.form-control(type='text')
@@ -49,14 +49,14 @@
                         .col-6
                             span.input-group-text(style='width:7em;') Ethernet 1
                         .col(style='transform: translate(-15px, 2px);')                      
-                            input#eth1_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
+                            input#eth1_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл') 
                         .col 
                             i#eth1_carrier.bi.bi-ethernet(style="font-size: 25px;" disabled=true)
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:7em;') DHCP
                         .col(style='transform: translate(-15px, 2px);')                     
-                            input#eth1_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
+                            input#eth1_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл') 
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') IP-адрес
                         input#eth1_ip_adress.form-control(type='text')
@@ -77,7 +77,7 @@
                         .col-6
                             span.input-group-text(style='width:7em;') Wi-Fi
                         .col(style='transform: translate(-15px, 2px);')                     
-                            input#wlan0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
+                            input#wlan0_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл') 
                         .col
                             i#wifi_sig_high.bi.bi-wifi(style="font-size: 25px;" disabled=true)
                             i#wifi_sig_mid.bi.bi-wifi-2(style="font-size: 25px;" disabled=true)
@@ -94,7 +94,7 @@
                         .col
                             span.input-group-text(style='width:7em;') DHCP
                         .col(style='transform: translate(-15px, 2px);')                    
-                            input#wlan0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл') 
+                            input#wlan0_DHCP_enable_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл') 
                     .input-group.mb-2
                         span#basic-addon1.input-group-text(style='width:7em;') IP-адрес
                         input#wlan0_ip_adress.form-control(type='text' aria-label='IP_adress' aria-describedby='basic-addon1')

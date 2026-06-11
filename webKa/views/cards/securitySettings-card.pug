@@ -10,13 +10,19 @@ card.card(style='width: 620px;').card_shadow.h-100
                         .col
                             span.input-group-text(style='width:8em;' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Аутентификация для доступа к панели управления") Авторизация
                         .col(style='transform: translate(-15px, 3px);')
-                            input#turnOff_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл')
+                            input#turnOff_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл')
 
                     .row.mb-2
                         .col
                             span.input-group-text(style='width:8em;') Включить SSH
                         .col(style='transform: translate(-15px, 3px);')
-                            input#enableSSH_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-onlabel='Вкл' data-offlabel='Выкл')
+                            input#enableSSH_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл')
+
+                    .row.mb-2
+                        .col
+                            span.input-group-text(style='width:8em;' data-bs-toggle="tooltip" data-bs-placement="bottom" title="Требовать пароль для подключения к MQTT-брокеру") Пароль MQTT
+                        .col(style='transform: translate(-15px, 3px);')
+                            input#enableMQTT_toggle(type='checkbox' data-toggle="toggle" data-size="sm" data-on='Вкл' data-off='Выкл')
 
                     
                 .col
@@ -74,6 +80,14 @@ script.
             $('#enableSSH_toggle').bootstrapToggle('off')
         }
 
+        // MQTT password: default ON when the flag is absent (broker auth was
+        // enabled by mqtt_auth_enable.sh and is the recommended state).
+        if(config.security.MQTT==0){
+            $('#enableMQTT_toggle').bootstrapToggle('off')
+        }else{
+            $('#enableMQTT_toggle').bootstrapToggle('on')
+        }
+
         $('#inputLogin_auth').val(config.security.admin_login)
         $('#inputPassword_auth').val(config.security.admin_pass)
     })
@@ -87,6 +101,7 @@ script.
 
         config.security.auth = +$('#turnOff_toggle').prop('checked')
         config.security.SSH = +$('#enableSSH_toggle').prop('checked')
+        config.security.MQTT = +$('#enableMQTT_toggle').prop('checked')
         config.security.admin_pass = $('#inputPassword_auth').val()
         fetch_save_config()
     }
